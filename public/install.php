@@ -13,8 +13,12 @@ session_set_cookie_params([
 session_start();
 
 $root = dirname(__DIR__);
-$lockFile = $root . '/storage/installed.lock';
-$configFile = $root . '/config/config.php';
+$externalConfigFile = dirname($root) . '/cashback_config.php';
+$internalConfigFile = $root . '/config/config.php';
+$configFile = $externalConfigFile;
+$externalLockFile = dirname($root) . '/cashback_installed.lock';
+$internalLockFile = $root . '/storage/installed.lock';
+$lockFile = $externalLockFile;
 $schemaFile = $root . '/database/schema.sql';
 $errors = [];
 $success = false;
@@ -110,14 +114,14 @@ $requirements = [
         'detail' => function_exists('session_start') ? 'قابل استفاده است.' : 'session_start در PHP در دسترس نیست.',
     ],
     [
-        'label' => 'نوشتن تنظیمات',
+        'label' => 'نوشتن تنظیمات پایدار بیرون از پوشه برنامه',
         'ok' => is_writable(dirname($configFile)) && (!file_exists($configFile) || is_writable($configFile)),
-        'detail' => 'مسیر: ' . $configFile,
+        'detail' => 'مسیر هدف: ' . $configFile . ' | این فایل عمداً داخل پوشه برنامه ساخته نمی‌شود تا با آپدیت ZIP حذف نشود.',
     ],
     [
-        'label' => 'نوشتن در storage',
-        'ok' => is_writable($root . '/storage'),
-        'detail' => 'مسیر: ' . $root . '/storage',
+        'label' => 'نوشتن قفل نصب پایدار بیرون از پوشه برنامه',
+        'ok' => is_writable(dirname($lockFile)) && (!file_exists($lockFile) || is_writable($lockFile)),
+        'detail' => 'مسیر هدف: ' . $lockFile . ' | این فایل عمداً داخل پوشه برنامه ساخته نمی‌شود تا با آپدیت ZIP حذف نشود.',
     ],
     [
         'label' => 'خواندن schema.sql',
@@ -136,15 +140,20 @@ $phpDiagnostics = [
     'Document root' => $_SERVER['DOCUMENT_ROOT'] ?? 'نامشخص',
     'Project root' => $root,
     'Config file target' => $configFile,
+    'External config target' => $externalConfigFile,
+    'Old internal config path, read-only migration fallback' => $internalConfigFile,
+    'Install lock target' => $lockFile,
+    'External lock target' => $externalLockFile,
+    'Old internal lock path, read-only migration fallback' => $internalLockFile,
     'Storage path' => $root . '/storage',
     'Schema path' => $schemaFile,
     'PDO loaded' => extension_loaded('pdo') ? 'YES' : 'NO',
     'pdo_mysql loaded' => extension_loaded('pdo_mysql') ? 'YES' : 'NO',
     'curl loaded' => extension_loaded('curl') ? 'YES' : 'NO',
     'mbstring loaded' => extension_loaded('mbstring') ? 'YES' : 'NO',
-    'config directory writable' => is_writable(dirname($configFile)) ? 'YES' : 'NO',
+    'parent directory writable for persistent config' => is_writable(dirname($configFile)) ? 'YES' : 'NO',
     'config file writable/existing' => (!file_exists($configFile) || is_writable($configFile)) ? 'YES' : 'NO',
-    'storage writable' => is_writable($root . '/storage') ? 'YES' : 'NO',
+    'parent directory writable for install lock' => is_writable(dirname($lockFile)) ? 'YES' : 'NO',
     'schema readable' => is_readable($schemaFile) ? 'YES' : 'NO',
 ];
 
@@ -162,7 +171,7 @@ $values = [
     'create_database' => !isset($_POST['submitted']) || isset($_POST['create_database']),
 ];
 
-if (file_exists($lockFile)) {
+if (file_exists($externalLockFile) || file_exists($internalLockFile)) {
     http_response_code(404);
     $locked = true;
 } else {
@@ -230,11 +239,11 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             ]);
 
             if (file_put_contents($configFile, installer_config($values)) === false) {
-                throw new RuntimeException('نوشتن فایل config/config.php انجام نشد.');
+                throw new RuntimeException('نوشتن فایل تنظیمات انجام نشد: ' . $configFile);
             }
 
             if (file_put_contents($lockFile, 'Installed at ' . $now . PHP_EOL) === false) {
-                throw new RuntimeException('ایجاد فایل قفل نصب انجام نشد.');
+                throw new RuntimeException('ایجاد فایل قفل نصب انجام نشد: ' . $lockFile);
             }
 
             $success = true;

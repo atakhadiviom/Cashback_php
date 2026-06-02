@@ -2,7 +2,18 @@
 
 declare(strict_types=1);
 
-$GLOBALS['config'] = require dirname(__DIR__) . '/config/config.php';
+$rootPath = dirname(__DIR__);
+$externalConfig = dirname($rootPath) . '/cashback_config.php';
+$internalConfig = $rootPath . '/config/config.php';
+$exampleConfig = $rootPath . '/config/config.example.php';
+
+if (is_file($externalConfig)) {
+    $GLOBALS['config'] = require $externalConfig;
+} elseif (is_file($internalConfig)) {
+    $GLOBALS['config'] = require $internalConfig;
+} else {
+    $GLOBALS['config'] = require $exampleConfig;
+}
 require dirname(__DIR__) . '/app/helpers.php';
 
 date_default_timezone_set((string) config_value('app.timezone', 'Asia/Tehran'));
