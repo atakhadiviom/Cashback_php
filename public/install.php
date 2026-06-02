@@ -235,34 +235,18 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         .shell { max-width: 980px; margin: 0 auto; padding: 32px 16px; }
         .card { border-radius: 8px; border-color: #e5e7eb; }
         .ltr { direction: ltr; unicode-bidi: embed; }
-        .requirements-grid { display: grid; gap: 10px; }
-        .requirement-row {
-            display: grid;
-            grid-template-columns: minmax(150px, 220px) 110px minmax(0, 1fr);
-            gap: 12px;
-            align-items: center;
-            padding: 12px 14px;
-            border-bottom: 1px solid #eef0f4;
-        }
+        .requirements-list { display: block; }
+        .requirement-row { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #eef0f4; }
         .requirement-row:last-child { border-bottom: 0; }
+        .requirement-main { flex: 1 1 auto; min-width: 0; }
         .requirement-title { font-weight: 700; color: #111827; }
-        .requirement-detail { color: #4b5563; overflow-wrap: anywhere; }
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 88px;
-            padding: 7px 10px;
-            border-radius: 999px;
-            color: #fff;
-            font-weight: 800;
-            font-size: .82rem;
-        }
+        .requirement-detail { margin-top: 6px; color: #4b5563; overflow-wrap: anywhere; font-size: .9rem; }
+        .status-badge { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; min-width: 92px; padding: 7px 10px; border-radius: 999px; color: #fff; font-weight: 800; font-size: .82rem; }
         .status-ok { background: #198754; }
         .status-fail { background: #dc3545; }
         @media (max-width: 720px) {
-            .requirement-row { grid-template-columns: 1fr; }
-            .status-badge { justify-content: center; width: max-content; }
+            .requirement-row { display: block; }
+            .status-badge { margin-top: 10px; }
         }
     </style>
 </head>
@@ -283,23 +267,35 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         <?php foreach ($errors as $error): ?><div class="alert alert-danger"><?= installer_e($error) ?></div><?php endforeach; ?>
 
         <div class="card mb-4">
-            <div class="card-header bg-white">بررسی نیازمندی‌ها</div>
-            <div class="requirements-grid">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span>بررسی نیازمندی‌ها</span>
+                <span class="badge <?= $requirementsPassed ? 'bg-success' : 'bg-danger' ?>">
+                    <?= $requirementsPassed ? 'همه موارد موفق است' : 'برخی موارد ناموفق است' ?>
+                </span>
+            </div>
+            <div class="requirements-list">
                 <?php foreach ($requirements as $requirement): ?>
                     <div class="requirement-row">
-                        <div class="requirement-title"><?= installer_e($requirement['label']) ?></div>
-                        <div>
-                            <span class="status-badge <?= $requirement['ok'] ? 'status-ok' : 'status-fail' ?>">
-                                <?= $requirement['ok'] ? 'موفق' : 'ناموفق' ?>
-                            </span>
+                        <div class="requirement-main">
+                            <div class="requirement-title"><?= installer_e($requirement['label']) ?></div>
+                            <div class="requirement-detail ltr"><?= installer_e($requirement['detail']) ?></div>
                         </div>
-                        <div class="requirement-detail ltr"><?= installer_e($requirement['detail']) ?></div>
+                        <span class="status-badge <?= $requirement['ok'] ? 'status-ok' : 'status-fail' ?>">
+                            <?= $requirement['ok'] ? 'موفق' : 'ناموفق' ?>
+                        </span>
                     </div>
                 <?php endforeach; ?>
             </div>
         </div>
 
-        <form method="post" class="card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <a class="btn btn-outline-primary" href="#install-form">ادامه به فرم نصب</a>
+            <?php if (!$requirementsPassed): ?>
+                <span class="text-danger small">اگر موردی ناموفق است، ابتدا تنظیمات هاست یا دسترسی فایل‌ها را اصلاح کنید.</span>
+            <?php endif; ?>
+        </div>
+
+        <form method="post" class="card" id="install-form">
             <div class="card-body">
                 <input type="hidden" name="submitted" value="1">
                 <input type="hidden" name="_csrf" value="<?= installer_e(installer_token()) ?>">
