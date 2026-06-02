@@ -22,6 +22,11 @@ function e(mixed $value): string
 function url(string $path = ''): string
 {
     $base = rtrim((string) config_value('app.base_url', ''), '/');
+    if ($base === '' && PHP_SAPI !== 'cli') {
+        $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+        $dir = rtrim(str_replace('/public', '', dirname($script)), '/');
+        $base = $dir === '/' || $dir === '.' ? '' : $dir;
+    }
     return $base . '/' . ltrim($path, '/');
 }
 
