@@ -235,6 +235,35 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         .shell { max-width: 980px; margin: 0 auto; padding: 32px 16px; }
         .card { border-radius: 8px; border-color: #e5e7eb; }
         .ltr { direction: ltr; unicode-bidi: embed; }
+        .requirements-grid { display: grid; gap: 10px; }
+        .requirement-row {
+            display: grid;
+            grid-template-columns: minmax(150px, 220px) 110px minmax(0, 1fr);
+            gap: 12px;
+            align-items: center;
+            padding: 12px 14px;
+            border-bottom: 1px solid #eef0f4;
+        }
+        .requirement-row:last-child { border-bottom: 0; }
+        .requirement-title { font-weight: 700; color: #111827; }
+        .requirement-detail { color: #4b5563; overflow-wrap: anywhere; }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 88px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            color: #fff;
+            font-weight: 800;
+            font-size: .82rem;
+        }
+        .status-ok { background: #198754; }
+        .status-fail { background: #dc3545; }
+        @media (max-width: 720px) {
+            .requirement-row { grid-template-columns: 1fr; }
+            .status-badge { justify-content: center; width: max-content; }
+        }
     </style>
 </head>
 <body>
@@ -255,29 +284,18 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
         <div class="card mb-4">
             <div class="card-header bg-white">بررسی نیازمندی‌ها</div>
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead>
-                    <tr>
-                        <th>مورد</th>
-                        <th>وضعیت</th>
-                        <th>جزئیات</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($requirements as $requirement): ?>
-                        <tr>
-                            <td><?= installer_e($requirement['label']) ?></td>
-                            <td>
-                                <span class="badge <?= $requirement['ok'] ? 'bg-success' : 'bg-danger' ?>">
-                                    <?= $requirement['ok'] ? 'موفق' : 'ناموفق' ?>
-                                </span>
-                            </td>
-                            <td class="ltr text-start"><?= installer_e($requirement['detail']) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="requirements-grid">
+                <?php foreach ($requirements as $requirement): ?>
+                    <div class="requirement-row">
+                        <div class="requirement-title"><?= installer_e($requirement['label']) ?></div>
+                        <div>
+                            <span class="status-badge <?= $requirement['ok'] ? 'status-ok' : 'status-fail' ?>">
+                                <?= $requirement['ok'] ? 'موفق' : 'ناموفق' ?>
+                            </span>
+                        </div>
+                        <div class="requirement-detail ltr"><?= installer_e($requirement['detail']) ?></div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
 
