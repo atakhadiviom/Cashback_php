@@ -3,6 +3,12 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    RewriteRule ^app\.css$ public/assets/css/app.css [L]
+    RewriteRule ^bootstrap\.rtl\.min\.css$ public/assets/vendor/bootstrap/bootstrap.rtl.min.css [L]
+    RewriteRule ^bootstrap-icons\.min\.css$ public/assets/vendor/bootstrap-icons/bootstrap-icons.min.css [L]
+    RewriteRule ^app\.js$ public/assets/js/app.js [L]
+    RewriteRule ^bootstrap\.bundle\.min\.js$ public/assets/vendor/bootstrap/bootstrap.bundle.min.js [L]
+
     RewriteRule ^(app|bootstrap|config|cron|database|docs|resources|storage|tests)(/|$) - [F,L]
 
     RewriteRule ^install\.php$ public/install.php [L]

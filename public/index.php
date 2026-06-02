@@ -12,14 +12,22 @@ if (PHP_SAPI === 'cli-server') {
 
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $basename = basename($requestPath);
-if ($basename === 'app.css') {
-    header('Content-Type: text/css; charset=UTF-8');
-    readfile(__DIR__ . '/assets/css/app.css');
-    exit;
-}
-if ($basename === 'app.js') {
-    header('Content-Type: application/javascript; charset=UTF-8');
-    readfile(__DIR__ . '/assets/js/app.js');
+$assetAliases = [
+    'app.css' => ['assets/css/app.css', 'text/css; charset=UTF-8'],
+    'bootstrap.rtl.min.css' => ['assets/vendor/bootstrap/bootstrap.rtl.min.css', 'text/css; charset=UTF-8'],
+    'bootstrap-icons.min.css' => ['assets/vendor/bootstrap-icons/bootstrap-icons.min.css', 'text/css; charset=UTF-8'],
+    'app.js' => ['assets/js/app.js', 'application/javascript; charset=UTF-8'],
+    'bootstrap.bundle.min.js' => ['assets/vendor/bootstrap/bootstrap.bundle.min.js', 'application/javascript; charset=UTF-8'],
+];
+if (isset($assetAliases[$basename])) {
+    [$relativeFile, $contentType] = $assetAliases[$basename];
+    $file = __DIR__ . '/' . $relativeFile;
+    if (is_file($file)) {
+        header('Content-Type: ' . $contentType);
+        readfile($file);
+        exit;
+    }
+    http_response_code(404);
     exit;
 }
 
