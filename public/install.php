@@ -126,6 +126,7 @@ $requirements = [
     ],
 ];
 $requirementsPassed = count(array_filter($requirements, fn (array $item): bool => $item['ok'])) === count($requirements);
+$failedRequirements = array_values(array_filter($requirements, fn (array $item): bool => !$item['ok']));
 
 $values = [
     'db_host' => $_POST['db_host'] ?? 'localhost',
@@ -266,6 +267,20 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     <?php else: ?>
         <?php foreach ($errors as $error): ?><div class="alert alert-danger"><?= installer_e($error) ?></div><?php endforeach; ?>
 
+        <?php if ($failedRequirements): ?>
+            <div class="alert alert-danger">
+                <div class="fw-bold mb-2">موارد ناموفق که باید اصلاح شوند:</div>
+                <ul class="mb-0">
+                    <?php foreach ($failedRequirements as $requirement): ?>
+                        <li>
+                            <strong><?= installer_e($requirement['label']) ?>:</strong>
+                            <span class="ltr"><?= installer_e($requirement['detail']) ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+
         <div class="card mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <span>بررسی نیازمندی‌ها</span>
@@ -273,19 +288,19 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     <?= $requirementsPassed ? 'همه موارد موفق است' : 'برخی موارد ناموفق است' ?>
                 </span>
             </div>
-            <div class="requirements-list">
+            <ul class="list-group list-group-flush">
                 <?php foreach ($requirements as $requirement): ?>
-                    <div class="requirement-row">
-                        <div class="requirement-main">
-                            <div class="requirement-title"><?= installer_e($requirement['label']) ?></div>
-                            <div class="requirement-detail ltr"><?= installer_e($requirement['detail']) ?></div>
+                    <li class="list-group-item d-flex justify-content-between align-items-start gap-3">
+                        <div class="ms-auto">
+                            <div class="fw-bold"><?= installer_e($requirement['label']) ?></div>
+                            <div class="small text-muted ltr"><?= installer_e($requirement['detail']) ?></div>
                         </div>
-                        <span class="status-badge <?= $requirement['ok'] ? 'status-ok' : 'status-fail' ?>">
+                        <span class="badge <?= $requirement['ok'] ? 'bg-success' : 'bg-danger' ?>">
                             <?= $requirement['ok'] ? 'موفق' : 'ناموفق' ?>
                         </span>
-                    </div>
+                    </li>
                 <?php endforeach; ?>
-            </div>
+            </ul>
         </div>
 
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
