@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use App\Core\Csrf;
+use App\Core\Flash;
+use App\Core\Jalali;
+use App\Core\View;
+use App\Repositories\CustomerRepository;
+use App\Repositories\PurchaseRepository;
+use App\Repositories\WalletRepository;
+use App\Services\ActivityLogger;
+use App\Services\CustomerService;
+
+final class CustomerController
+{
+    public function index(): void
+    {
+        $filters = $_GET;
+        $customers = (new CustomerRepository())->search($filters);
+        View::render('customers/index', compact('customers', 'filters'));
+    }
+
+    public function create(): void
+    {
+        View::render('customers/create', ['customer' => [], 'errors' => []]);
+    }
+
+    public function store(): void
+    {
+        Csrf::requireValid();
+        $result = (new CustomerService())->create($_POST);
+        if (!$result['ok']) {
+            View::render('customers/create', ['customer' => $_POST, 'errors' => $result['errors']]);
+            return;
+        }
+        Flash::set('success', 'مشتری با موفقیت ثبت شد.');
+        \redirect('/customers/show?id=' . $result['id']);
+    }
+
+    public function edit(): void
+    {
+        $customer = (new CustomerRepository())->find((int) ($_GET['id'] ?? 0));
+        if (!$customer) {
+            Flash::set('danger', 'مشتری یافت نشد.');
+            \redirect('/customers');
+        }
+        View::render('customers/edit', ['customer' => $customer, 'errors' => []]);
+    }
+
+    public function update(): void
+    {
+        Csrf::requireValid();
+        $id = (int) ($_POST['id'] ?? 0);
+        $result = (new CustomerService())->update($id, $_POST);
+        if (!$result['ok']) {
+            View::render('customers/edit', ['customer' => array_merge($_POST, ['id' => $id]), 'errors' => $result['errors']]);
+            return;
+        }
+        Flash::set('success', 'اطلاعات مشتری ویرایش شد.');
+        \redirect('/customers/show?id=' . $id);
+    }
+
+    public function show(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $customers = new CustomerRepository();
+        $customer = $customers->find($id);
+        if (!$customer) {
+            Flash::set('danger', 'مشتری یافت نشد.');
+            \redirect('/customers');
+        }
+        View::render('customers/show', [
+            'customer' => $customer,
+            'purchases' => (new PurchaseRepository())->forCustomer($id),
+            'walletTransactions' => (new WalletRepository())->forCustomer($id),
+        ]);
+    }
+
+    public function export(): void
+    {
+        $customers = (new CustomerRepository())->search($_GET, 10000);
+        (new ActivityLogger())->log('report_export', 'خروجی CSV مشتریان دریافت شد.');
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="customers.csv"');
+        echo "\xEF\xBB\xBF";
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['نام', 'نام خانوادگی', 'کد ملی', 'موبایل', 'تولد', 'موجودی کیف پول', 'تاریخ ایجاد']);
+        foreach ($customers as $customer) {
+            fputcsv($out, [$customer['first_name'], $customer['last_name'], $customer['national_code'], $customer['phone_number'], Jalali::formatDate($customer['birthday']), $customer['wallet_balance'], $customer['created_at']]);
+        }
+        exit;
+    }
+}

@@ -1,0 +1,34 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+final class SmsTemplateRenderer
+{
+    public function render(string $template, array $customer, array $vars = []): string
+    {
+        $values = array_merge([
+            'first_name' => $customer['first_name'] ?? '',
+            'last_name' => $customer['last_name'] ?? '',
+            'full_name' => trim(($customer['first_name'] ?? '') . ' ' . ($customer['last_name'] ?? '')),
+            'purchase_amount' => '',
+            'cashback_amount' => '',
+            'wallet_balance' => isset($customer['wallet_balance']) ? \money($customer['wallet_balance']) : '',
+            'birthday' => $customer['birthday'] ?? '',
+            'date' => date('Y-m-d'),
+            'company_name' => \config_value('app.company_name', 'نوآوران زیبایی'),
+        ], $vars);
+
+        foreach (['purchase_amount', 'cashback_amount', 'wallet_balance'] as $moneyKey) {
+            if ($values[$moneyKey] !== '' && is_numeric($values[$moneyKey])) {
+                $values[$moneyKey] = \money($values[$moneyKey]);
+            }
+        }
+
+        return strtr($template, array_combine(
+            array_map(fn (string $key): string => '{' . $key . '}', array_keys($values)),
+            array_map(fn (mixed $value): string => (string) $value, array_values($values))
+        ));
+    }
+}

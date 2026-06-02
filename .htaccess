@@ -1,0 +1,17 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule ^(app|bootstrap|config|cron|database|docs|resources|storage|tests)(/|$) - [F,L]
+
+    RewriteRule ^install\.php$ public/install.php [L]
+    RewriteRule ^(assets/.*|favicon\.ico)$ public/$1 [L]
+
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    RewriteRule ^$ public/index.php [L]
+    RewriteRule ^(.*)$ public/index.php [L]
+</IfModule>
