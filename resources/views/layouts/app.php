@@ -9,9 +9,9 @@ use App\Core\Flash;
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(config_value('app.name')) ?></title>
-    <link href="<?= e(url('/bootstrap.rtl.min.css')) ?>" rel="stylesheet">
-    <link href="<?= e(url('/bootstrap-icons.min.css')) ?>" rel="stylesheet">
-    <link rel="stylesheet" href="<?= e(url('/app.css')) ?>">
+    <link href="<?= e(asset_url('vendor/bootstrap/bootstrap.rtl.min.css')) ?>" rel="stylesheet">
+    <link href="<?= e(asset_url('vendor/bootstrap-icons/bootstrap-icons.min.css')) ?>" rel="stylesheet">
+    <link rel="stylesheet" href="<?= e(asset_url('css/app.css')) ?>">
 </head>
 <body>
 <?php if (Auth::check()): ?>
@@ -94,7 +94,7 @@ $renderSidebar('d-none d-xl-flex');
         <?= $content ?>
     </main>
 </div>
-<script src="<?= e(url('/bootstrap.bundle.min.js')) ?>"></script>
-<script src="<?= e(url('/app.js')) ?>"></script>
+<script src="<?= e(asset_url('vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
+<script src="<?= e(asset_url('js/app.js')) ?>"></script>
 </body>
 </html>

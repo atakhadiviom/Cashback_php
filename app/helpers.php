@@ -19,15 +19,68 @@ function e(mixed $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+function normalize_base_url(string $base): string
+{
+    $base = trim($base);
+    if ($base === '' || $base === '/') {
+        return '';
+    }
+    if ($base[0] !== '/') {
+        $base = '/' . $base;
+    }
+    return rtrim($base, '/');
+}
+
+function infer_base_url(): string
+{
+    if (PHP_SAPI === 'cli') {
+        return '';
+    }
+
+    $requestPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
+    $docRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+
+    // If the web server docroot is the public folder, we want clean URLs.
+    if ($docRoot !== '' && str_ends_with($docRoot, '/public')) {
+        return '';
+    }
+
+    // If the app is being accessed through /public/... (rewrite disabled or docroot forced),
+    // keep /public in generated links to avoid broken routing and asset 404s.
+    if ($requestPath === '/public' || str_starts_with($requestPath, '/public/')) {
+        return '/public';
+    }
+
+    // Default: project root with rewrite enabled (clean URLs).
+    return '';
+}
+
 function url(string $path = ''): string
 {
-    $base = rtrim((string) config_value('app.base_url', ''), '/');
-    if ($base === '' && PHP_SAPI !== 'cli') {
-        $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-        $dir = rtrim(str_replace('/public', '', dirname($script)), '/');
-        $base = $dir === '/' || $dir === '.' ? '' : $dir;
+    $configuredBase = normalize_base_url((string) config_value('app.base_url', ''));
+    $base = $configuredBase !== '' ? $configuredBase : infer_base_url();
+    $path = ltrim($path, '/');
+    return $base . '/' . $path;
+}
+
+function asset_url(string $logicalPath): string
+{
+    $logicalPath = ltrim($logicalPath, '/');
+    $docRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+
+    // If docroot is /public, assets are directly available under /assets.
+    if ($docRoot !== '' && str_ends_with($docRoot, '/public')) {
+        return url('/assets/' . $logicalPath);
     }
-    return $base . '/' . ltrim($path, '/');
+
+    // If we are being accessed under /public (rewrite disabled), point directly to real files.
+    $requestPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
+    if ($requestPath === '/public' || str_starts_with($requestPath, '/public/')) {
+        return url('/public/assets/' . $logicalPath);
+    }
+
+    // Otherwise prefer clean /assets/... (served by .htaccess when rewrite is enabled).
+    return url('/assets/' . $logicalPath);
 }
 
 function redirect(string $path): never

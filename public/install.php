@@ -181,7 +181,15 @@ $values = [
     'create_database' => !isset($_POST['submitted']) || isset($_POST['create_database']),
 ];
 
-if (file_exists($externalLockFile) || file_exists($internalLockFile)) {
+$recommendedBaseUrl = '';
+try {
+    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $recommendedBaseUrl = ($requestPath === '/public/install.php' || str_starts_with($requestPath, '/public/')) ? '/public' : '';
+} catch (Throwable) {
+    $recommendedBaseUrl = '';
+}
+
+if (file_exists($externalLockFile) || file_exists($rootLockFile) || file_exists($internalLockFile)) {
     http_response_code(404);
     $locked = true;
 } else {
@@ -259,6 +267,15 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $success = true;
         } catch (Throwable $exception) {
             $errors[] = 'خطای نصب: ' . $exception->getMessage();
+
+            $message = $exception->getMessage();
+            if (str_contains($message, 'SQLSTATE[HY000] [2002]')) {
+                $errors[] = 'راهنما: خطای 2002 یعنی PHP نمی‌تواند به MySQL وصل شود. در هاست‌های اشتراکی معمولاً با یکی از موارد زیر حل می‌شود:';
+                $errors[] = '۱) به جای localhost، مقدار هاست دیتابیس را روی 127.0.0.1 بگذارید (در بسیاری از سرورها localhost به سوکت اشاره می‌کند).';
+                $errors[] = '۲) اگر پورت خاص دارید، هاست را به صورت host:port وارد کنید (مثلاً 127.0.0.1:3306).';
+                $errors[] = '۳) اگر هاست شما سوکت مشخص می‌دهد، می‌توانید مقدار هاست را به شکل DSN کامل وارد کنید، مثل: host=localhost;unix_socket=/path/to/mysql.sock';
+                $errors[] = '۴) مطمئن شوید مشخصات دیتابیس/یوزر و سطح دسترسی درست است و دیتابیس روی همین سرور فعال است.';
+            }
         }
     }
 }
@@ -369,6 +386,17 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             <?php endif; ?>
         </div>
 
+        <div class="alert alert-info">
+            <div style="font-weight:800;margin-bottom:6px;">راهنمای تنظیم Base URL</div>
+            <?php if ($recommendedBaseUrl !== ''): ?>
+                <div>با توجه به آدرس فعلی نصب، پیشنهاد می‌شود Base URL را روی مقدار زیر قرار دهید:</div>
+                <div class="ltr" style="font-weight:800; margin-top:6px;"><?= installer_e($recommendedBaseUrl) ?></div>
+            <?php else: ?>
+                <div>اگر برنامه مستقیماً از ریشه دامنه اجرا می‌شود، Base URL را خالی بگذارید.</div>
+            <?php endif; ?>
+            <div class="small text-muted ltr" style="margin-top:8px;">Current request path: <?= installer_e(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/') ?></div>
+        </div>
+
         <form method="post" class="card" id="install-form">
             <div class="card-body">
                 <input type="hidden" name="submitted" value="1">
@@ -385,7 +413,11 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
                 <h2 class="h5 mb-3">تنظیمات برنامه</h2>
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6"><label class="form-label">Base URL</label><input class="form-control ltr" name="base_url" placeholder="مثلاً /cashback یا خالی" value="<?= installer_e($values['base_url']) ?>"></div>
+                    <div class="col-md-6">
+                        <label class="form-label">Base URL</label>
+                        <input class="form-control ltr" name="base_url" placeholder="مثلاً /cashback یا خالی" value="<?= installer_e($values['base_url'] !== '' ? $values['base_url'] : $recommendedBaseUrl) ?>">
+                        <div class="form-text">اگر URLهای شما شامل <span class="ltr">/public</span> است، Base URL معمولاً باید <span class="ltr">/public</span> باشد.</div>
+                    </div>
                     <div class="col-md-6"><label class="form-label">منطقه زمانی</label><input class="form-control ltr" name="timezone" value="<?= installer_e($values['timezone']) ?>"></div>
                     <div class="col-md-6"><label class="form-label">نام شرکت</label><input class="form-control" name="company_name" placeholder="مثلاً نوآوران زیبایی" value="<?= installer_e($values['company_name']) ?>" required></div>
                     <div class="col-md-6 d-flex align-items-end">
