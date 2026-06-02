@@ -259,7 +259,7 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>نصب سیستم مدیریت کش بک</title>
-    <link href="assets/vendor/bootstrap/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="bootstrap.rtl.min.css" rel="stylesheet">
     <style>
         body { font-family: Tahoma, Arial, sans-serif; background: #f5f7fb; color: #1f2937; }
         .shell { max-width: 980px; margin: 0 auto; padding: 32px 16px; }

@@ -18,6 +18,8 @@ $assetAliases = [
     'bootstrap-icons.min.css' => ['assets/vendor/bootstrap-icons/bootstrap-icons.min.css', 'text/css; charset=UTF-8'],
     'app.js' => ['assets/js/app.js', 'application/javascript; charset=UTF-8'],
     'bootstrap.bundle.min.js' => ['assets/vendor/bootstrap/bootstrap.bundle.min.js', 'application/javascript; charset=UTF-8'],
+    'bootstrap-icons.woff' => ['assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff', 'font/woff'],
+    'bootstrap-icons.woff2' => ['assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2', 'font/woff2'],
 ];
 if (isset($assetAliases[$basename])) {
     [$relativeFile, $contentType] = $assetAliases[$basename];

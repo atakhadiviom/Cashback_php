@@ -8,6 +8,10 @@ Options -Indexes
     RewriteRule ^bootstrap-icons\.min\.css$ public/assets/vendor/bootstrap-icons/bootstrap-icons.min.css [L]
     RewriteRule ^app\.js$ public/assets/js/app.js [L]
     RewriteRule ^bootstrap\.bundle\.min\.js$ public/assets/vendor/bootstrap/bootstrap.bundle.min.js [L]
+    RewriteRule ^fonts/bootstrap-icons\.woff$ public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff [L]
+    RewriteRule ^fonts/bootstrap-icons\.woff2$ public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2 [L]
+    RewriteRule ^bootstrap-icons\.woff$ public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff [L]
+    RewriteRule ^bootstrap-icons\.woff2$ public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2 [L]
 
     RewriteRule ^(app|bootstrap|config|cron|database|docs|resources|storage|tests)(/|$) - [F,L]
 
