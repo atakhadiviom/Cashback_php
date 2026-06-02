@@ -127,6 +127,26 @@ $requirements = [
 ];
 $requirementsPassed = count(array_filter($requirements, fn (array $item): bool => $item['ok'])) === count($requirements);
 $failedRequirements = array_values(array_filter($requirements, fn (array $item): bool => !$item['ok']));
+$phpDiagnostics = [
+    'PHP_VERSION' => PHP_VERSION,
+    'PHP_SAPI' => PHP_SAPI,
+    'PHP_BINARY' => PHP_BINARY,
+    'php.ini' => php_ini_loaded_file() ?: 'php.ini پیدا نشد یا بارگذاری نشده است',
+    'Server software' => $_SERVER['SERVER_SOFTWARE'] ?? 'نامشخص',
+    'Document root' => $_SERVER['DOCUMENT_ROOT'] ?? 'نامشخص',
+    'Project root' => $root,
+    'Config file target' => $configFile,
+    'Storage path' => $root . '/storage',
+    'Schema path' => $schemaFile,
+    'PDO loaded' => extension_loaded('pdo') ? 'YES' : 'NO',
+    'pdo_mysql loaded' => extension_loaded('pdo_mysql') ? 'YES' : 'NO',
+    'curl loaded' => extension_loaded('curl') ? 'YES' : 'NO',
+    'mbstring loaded' => extension_loaded('mbstring') ? 'YES' : 'NO',
+    'config directory writable' => is_writable(dirname($configFile)) ? 'YES' : 'NO',
+    'config file writable/existing' => (!file_exists($configFile) || is_writable($configFile)) ? 'YES' : 'NO',
+    'storage writable' => is_writable($root . '/storage') ? 'YES' : 'NO',
+    'schema readable' => is_readable($schemaFile) ? 'YES' : 'NO',
+];
 
 $values = [
     'db_host' => $_POST['db_host'] ?? 'localhost',
@@ -245,9 +265,15 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         .status-badge { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; min-width: 92px; padding: 7px 10px; border-radius: 999px; color: #fff; font-weight: 800; font-size: .82rem; }
         .status-ok { background: #198754; }
         .status-fail { background: #dc3545; }
+        .plain-diagnostic { background: #111827; color: #f9fafb; border-radius: 8px; padding: 14px; font-family: Menlo, Consolas, monospace; direction: ltr; text-align: left; overflow: auto; }
+        .plain-diagnostic-row { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+        .plain-diagnostic-row:last-child { border-bottom: 0; }
+        .plain-diagnostic-key { color: #93c5fd; font-weight: 700; }
+        .plain-diagnostic-value { color: #f9fafb; overflow-wrap: anywhere; }
         @media (max-width: 720px) {
             .requirement-row { display: block; }
             .status-badge { margin-top: 10px; }
+            .plain-diagnostic-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -267,19 +293,33 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     <?php else: ?>
         <?php foreach ($errors as $error): ?><div class="alert alert-danger"><?= installer_e($error) ?></div><?php endforeach; ?>
 
-        <?php if ($failedRequirements): ?>
-            <div class="alert alert-danger">
-                <div class="fw-bold mb-2">موارد ناموفق که باید اصلاح شوند:</div>
-                <ul class="mb-0">
-                    <?php foreach ($failedRequirements as $requirement): ?>
-                        <li>
-                            <strong><?= installer_e($requirement['label']) ?>:</strong>
-                            <span class="ltr"><?= installer_e($requirement['detail']) ?></span>
-                        </li>
+        <div style="background:#fee2e2;border:1px solid #fca5a5;color:#7f1d1d;border-radius:8px;padding:16px;margin-bottom:16px;">
+            <div style="font-weight:800;font-size:18px;margin-bottom:10px;">موارد ناموفق که باید اصلاح شوند:</div>
+            <?php if ($failedRequirements): ?>
+                <?php foreach ($failedRequirements as $requirement): ?>
+                    <div style="background:#fff;border:1px solid #fecaca;border-radius:6px;padding:10px 12px;margin-top:8px;">
+                        <div style="font-weight:800;"><?= installer_e($requirement['label'] ?? 'نامشخص') ?></div>
+                        <div style="direction:ltr;text-align:left;overflow-wrap:anywhere;margin-top:4px;color:#991b1b;"><?= installer_e($requirement['detail'] ?? 'جزئیات موجود نیست') ?></div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div style="background:#fff;border:1px solid #bbf7d0;color:#14532d;border-radius:6px;padding:10px 12px;">هیچ مورد ناموفقی وجود ندارد. همه نیازمندی‌ها آماده هستند.</div>
+            <?php endif; ?>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-white">جزئیات کامل PHP و مسیرها</div>
+            <div class="card-body">
+                <div class="plain-diagnostic">
+                    <?php foreach ($phpDiagnostics as $key => $value): ?>
+                        <div class="plain-diagnostic-row">
+                            <div class="plain-diagnostic-key"><?= installer_e($key) ?></div>
+                            <div class="plain-diagnostic-value"><?= installer_e($value) ?></div>
+                        </div>
                     <?php endforeach; ?>
-                </ul>
+                </div>
             </div>
-        <?php endif; ?>
+        </div>
 
         <div class="card mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
