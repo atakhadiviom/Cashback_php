@@ -29,7 +29,7 @@ final class Validator
         if ($birthdayRequired && $birthday === '') {
             $errors['birthday'] = 'تاریخ تولد الزامی است.';
         } elseif ($birthday !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_digits($birthday))) {
-            $errors['birthday'] = 'تاریخ تولد باید به فرمت YYYY-MM-DD باشد.';
+            $errors['birthday'] = 'تاریخ تولد شمسی نامعتبر است. مثال: 1403/06/15';
         }
         return $errors;
     }

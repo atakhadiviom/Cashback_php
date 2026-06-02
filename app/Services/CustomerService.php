@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Core\Auth;
+use App\Core\Jalali;
 use App\Core\Validator;
 use App\Repositories\CustomerRepository;
 
@@ -67,7 +68,19 @@ final class CustomerService
             'last_name' => trim((string) ($data['last_name'] ?? '')),
             'national_code' => \normalize_digits(trim((string) ($data['national_code'] ?? ''))),
             'phone_number' => \normalize_digits(trim((string) ($data['phone_number'] ?? ''))),
-            'birthday' => \normalize_digits(trim((string) ($data['birthday'] ?? ''))),
+            'birthday' => $this->normalizeBirthday((string) ($data['birthday'] ?? '')),
         ];
+    }
+
+    private function normalizeBirthday(string $raw): string
+    {
+        $raw = trim(\normalize_digits($raw));
+        if ($raw === '') {
+            return '';
+        }
+
+        $gregorian = Jalali::parseInputToGregorian($raw);
+
+        return $gregorian ?? $raw;
     }
 }

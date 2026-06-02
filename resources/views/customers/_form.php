@@ -1,6 +1,14 @@
-<?php use App\Core\Csrf; ?>
+<?php use App\Core\Csrf; use App\Core\Jalali; ?>
 <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
 <?php if (!empty($customer['id'])): ?><input type="hidden" name="id" value="<?= e($customer['id']) ?>"><?php endif; ?>
+<?php
+$birthdayRaw = (string) ($customer['birthday'] ?? '');
+if ($birthdayRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_digits($birthdayRaw))) {
+    $birthdayDisplay = Jalali::toInputValue($birthdayRaw);
+} else {
+    $birthdayDisplay = $birthdayRaw;
+}
+?>
 <div class="row g-3">
     <div class="col-md-6">
         <label class="form-label">نام</label>
@@ -23,8 +31,19 @@
         <?php if (!empty($errors['phone_number'])): ?><div class="form-text-error"><?= e($errors['phone_number']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-4">
-        <label class="form-label">تاریخ تولد میلادی</label>
-        <input class="form-control ltr" type="date" name="birthday" value="<?= e($customer['birthday'] ?? '') ?>">
+        <label class="form-label">تاریخ تولد شمسی</label>
+        <input
+            class="form-control ltr"
+            type="text"
+            name="birthday"
+            id="customer-birthday"
+            data-jdp
+            data-jdp-only-date
+            placeholder="1403/06/15"
+            value="<?= e($birthdayDisplay) ?>"
+            autocomplete="off"
+        >
+        <div class="form-text">از تقویم شمسی انتخاب کنید. در پایگاه داده به‌صورت میلادی ذخیره می‌شود.</div>
         <?php if (!empty($errors['birthday'])): ?><div class="form-text-error"><?= e($errors['birthday']) ?></div><?php endif; ?>
     </div>
 </div>
@@ -32,3 +51,17 @@
     <button class="btn btn-primary">ذخیره</button>
     <a class="btn btn-outline-secondary" href="<?= e(url('/customers')) ?>">بازگشت</a>
 </div>
+<link href="<?= e(asset_url('vendor/jalalidatepicker/jalalidatepicker.min.css')) ?>" rel="stylesheet">
+<script src="<?= e(asset_url('vendor/jalalidatepicker/jalalidatepicker.min.js')) ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof jalaliDatepicker !== 'undefined') {
+        jalaliDatepicker.startWatch({
+            separatorChars: { date: '/' },
+            persianDigits: true,
+            autoShow: true,
+            autoHide: true,
+        });
+    }
+});
+</script>
