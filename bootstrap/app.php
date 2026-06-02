@@ -3,11 +3,16 @@
 declare(strict_types=1);
 
 $rootPath = dirname(__DIR__);
+$rootConfig = $rootPath . '/cashback_config.php';
 $externalConfig = dirname($rootPath) . '/cashback_config.php';
 $internalConfig = $rootPath . '/config/config.php';
 $exampleConfig = $rootPath . '/config/config.example.php';
 
-if (is_file($externalConfig)) {
+// Prefer WordPress-style config in the project root (public_html),
+// then fall back to the legacy parent-folder path, then the in-project config/.
+if (is_file($rootConfig)) {
+    $GLOBALS['config'] = require $rootConfig;
+} elseif (is_file($externalConfig)) {
     $GLOBALS['config'] = require $externalConfig;
 } elseif (is_file($internalConfig)) {
     $GLOBALS['config'] = require $internalConfig;

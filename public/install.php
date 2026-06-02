@@ -13,15 +13,25 @@ session_set_cookie_params([
 session_start();
 
 $root = dirname(__DIR__);
+$rootConfigFile = $root . '/cashback_config.php';
 $externalConfigFile = dirname($root) . '/cashback_config.php';
 $internalConfigFile = $root . '/config/config.php';
-$configFile = $externalConfigFile;
 $externalLockFile = dirname($root) . '/cashback_installed.lock';
+$rootLockFile = $root . '/cashback_installed.lock';
 $internalLockFile = $root . '/storage/installed.lock';
-$lockFile = $externalLockFile;
 $schemaFile = $root . '/database/schema.sql';
 $errors = [];
 $success = false;
+
+$canWriteRootConfig = is_writable(dirname($rootConfigFile)) && (!file_exists($rootConfigFile) || is_writable($rootConfigFile));
+$canWriteExternalConfig = is_writable(dirname($externalConfigFile)) && (!file_exists($externalConfigFile) || is_writable($externalConfigFile));
+$canWriteRootLock = is_writable(dirname($rootLockFile)) && (!file_exists($rootLockFile) || is_writable($rootLockFile));
+$canWriteExternalLock = is_writable(dirname($externalLockFile)) && (!file_exists($externalLockFile) || is_writable($externalLockFile));
+
+// Prefer WordPress-style config/lock in project root (public_html),
+// then the legacy parent-folder paths, then fall back to in-project paths.
+$configFile = $canWriteRootConfig ? $rootConfigFile : ($canWriteExternalConfig ? $externalConfigFile : $internalConfigFile);
+$lockFile = $canWriteRootLock ? $rootLockFile : ($canWriteExternalLock ? $externalLockFile : $internalLockFile);
 
 function installer_e(mixed $value): string
 {
