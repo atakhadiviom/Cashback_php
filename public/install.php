@@ -79,16 +79,53 @@ function installer_config(array $data): string
 }
 
 $requirements = [
-    'PHP 8.1+' => version_compare(PHP_VERSION, '8.1.0', '>='),
-    'PDO' => extension_loaded('pdo'),
-    'PDO MySQL' => extension_loaded('pdo_mysql'),
-    'cURL' => extension_loaded('curl'),
-    'mbstring' => extension_loaded('mbstring'),
-    'Session' => function_exists('session_start'),
-    'config writable' => is_writable(dirname($configFile)) && (!file_exists($configFile) || is_writable($configFile)),
-    'storage writable' => is_writable($root . '/storage'),
-    'schema readable' => is_readable($schemaFile),
+    [
+        'label' => 'نسخه PHP',
+        'ok' => version_compare(PHP_VERSION, '8.1.0', '>='),
+        'detail' => 'نسخه فعلی: ' . PHP_VERSION . '، حداقل مورد نیاز: 8.1',
+    ],
+    [
+        'label' => 'افزونه PDO',
+        'ok' => extension_loaded('pdo'),
+        'detail' => extension_loaded('pdo') ? 'فعال است.' : 'افزونه pdo در PHP فعال نیست.',
+    ],
+    [
+        'label' => 'افزونه PDO MySQL',
+        'ok' => extension_loaded('pdo_mysql'),
+        'detail' => extension_loaded('pdo_mysql') ? 'فعال است.' : 'افزونه pdo_mysql برای اتصال به MySQL فعال نیست.',
+    ],
+    [
+        'label' => 'افزونه cURL',
+        'ok' => extension_loaded('curl'),
+        'detail' => extension_loaded('curl') ? 'فعال است.' : 'افزونه curl برای ارسال پیامک ippanel فعال نیست.',
+    ],
+    [
+        'label' => 'افزونه mbstring',
+        'ok' => extension_loaded('mbstring'),
+        'detail' => extension_loaded('mbstring') ? 'فعال است.' : 'افزونه mbstring برای پردازش متن فارسی فعال نیست.',
+    ],
+    [
+        'label' => 'Session',
+        'ok' => function_exists('session_start'),
+        'detail' => function_exists('session_start') ? 'قابل استفاده است.' : 'session_start در PHP در دسترس نیست.',
+    ],
+    [
+        'label' => 'نوشتن تنظیمات',
+        'ok' => is_writable(dirname($configFile)) && (!file_exists($configFile) || is_writable($configFile)),
+        'detail' => 'مسیر: ' . $configFile,
+    ],
+    [
+        'label' => 'نوشتن در storage',
+        'ok' => is_writable($root . '/storage'),
+        'detail' => 'مسیر: ' . $root . '/storage',
+    ],
+    [
+        'label' => 'خواندن schema.sql',
+        'ok' => is_readable($schemaFile),
+        'detail' => 'مسیر: ' . $schemaFile,
+    ],
 ];
+$requirementsPassed = count(array_filter($requirements, fn (array $item): bool => $item['ok'])) === count($requirements);
 
 $values = [
     'db_host' => $_POST['db_host'] ?? 'localhost',
@@ -137,9 +174,9 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if ($adminPassword !== $adminPasswordConfirm) {
         $errors[] = 'تکرار رمز عبور مدیر با رمز عبور یکسان نیست.';
     }
-    foreach ($requirements as $label => $ok) {
-        if (!$ok) {
-            $errors[] = 'نیازمندی برقرار نیست: ' . $label;
+    foreach ($requirements as $requirement) {
+        if (!$requirement['ok']) {
+            $errors[] = 'نیازمندی برقرار نیست: ' . $requirement['label'] . ' - ' . $requirement['detail'];
         }
     }
 
@@ -218,15 +255,29 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
         <div class="card mb-4">
             <div class="card-header bg-white">بررسی نیازمندی‌ها</div>
-            <div class="card-body">
-                <div class="row g-2">
-                    <?php foreach ($requirements as $label => $ok): ?>
-                        <div class="col-md-4">
-                            <span class="badge <?= $ok ? 'bg-success' : 'bg-danger' ?>"><?= $ok ? 'OK' : 'FAIL' ?></span>
-                            <?= installer_e($label) ?>
-                        </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                    <tr>
+                        <th>مورد</th>
+                        <th>وضعیت</th>
+                        <th>جزئیات</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($requirements as $requirement): ?>
+                        <tr>
+                            <td><?= installer_e($requirement['label']) ?></td>
+                            <td>
+                                <span class="badge <?= $requirement['ok'] ? 'bg-success' : 'bg-danger' ?>">
+                                    <?= $requirement['ok'] ? 'موفق' : 'ناموفق' ?>
+                                </span>
+                            </td>
+                            <td class="ltr text-start"><?= installer_e($requirement['detail']) ?></td>
+                        </tr>
                     <?php endforeach; ?>
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -261,7 +312,10 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 </div>
 
                 <div class="mt-4">
-                    <button class="btn btn-primary">نصب و راه‌اندازی</button>
+                    <button class="btn btn-primary" <?= $requirementsPassed ? '' : 'disabled' ?>>نصب و راه‌اندازی</button>
+                    <?php if (!$requirementsPassed): ?>
+                        <div class="text-danger small mt-2">تا زمانی که همه نیازمندی‌ها موفق نباشند، نصب فعال نمی‌شود.</div>
+                    <?php endif; ?>
                 </div>
             </div>
         </form>
