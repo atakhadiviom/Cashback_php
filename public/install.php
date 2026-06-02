@@ -369,7 +369,13 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     <div class="col-md-6"><label class="form-label">Base URL</label><input class="form-control ltr" name="base_url" placeholder="مثلاً /cashback یا خالی" value="<?= installer_e($values['base_url']) ?>"></div>
                     <div class="col-md-6"><label class="form-label">منطقه زمانی</label><input class="form-control ltr" name="timezone" value="<?= installer_e($values['timezone']) ?>"></div>
                     <div class="col-md-6"><label class="form-label">نام شرکت</label><input class="form-control" name="company_name" placeholder="مثلاً نوآوران زیبایی" value="<?= installer_e($values['company_name']) ?>" required></div>
-                    <div class="col-md-6 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" name="birthday_required" id="birthday_required" <?= $values['birthday_required'] ? 'checked' : '' ?>><label class="form-check-label" for="birthday_required">تاریخ تولد الزامی باشد</label></div></div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="birthday_required" id="birthday_required" <?= $values['birthday_required'] ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="birthday_required">اجباری کردن تاریخ تولد مشتریان</label>
+                            <div class="form-text">پیش‌فرض: اختیاری است. فقط اگر می‌خواهید ثبت مشتری بدون تاریخ تولد ممکن نباشد، این گزینه را فعال کنید.</div>
+                        </div>
+                    </div>
                 </div>
 
                 <h2 class="h5 mb-3">مدیر اولیه</h2>
