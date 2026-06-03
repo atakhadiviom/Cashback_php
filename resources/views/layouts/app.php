@@ -31,7 +31,7 @@ $navItems = [
 if (Auth::isAdmin()) {
     $navItems[] = ['/admin/users', 'اپراتورها', 'bi-person-gear'];
     $navItems[] = ['/admin/activity-logs', 'فعالیت‌ها', 'bi-activity'];
-    $navItems[] = ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders'];
+    $navItems[] = ['/admin/sms-settings', 'تنظیمات', 'bi-sliders'];
 }
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $renderSidebar = function (string $extraClass = '') use ($navItems, $currentPath): void {

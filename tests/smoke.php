@@ -130,6 +130,17 @@ try {
     fail('database connection', $e->getMessage());
 }
 
+try {
+    $cashbackPercentage = (new App\Repositories\AppSettingsRepository())->cashbackPercentage();
+    if ($cashbackPercentage >= 0 && $cashbackPercentage <= 100) {
+        ok('cashback percentage setting');
+    } else {
+        fail('cashback percentage setting', (string) $cashbackPercentage);
+    }
+} catch (Throwable $e) {
+    fail('cashback percentage setting', $e->getMessage());
+}
+
 // --- HTTP checks (optional if server running) ---
 $checks = [
     ['login page', "{$baseUrl}/login", 200],

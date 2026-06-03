@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Core\Auth;
 use App\Core\Database;
+use App\Repositories\AppSettingsRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PurchaseRepository;
 use App\Repositories\WalletRepository;
@@ -26,7 +27,8 @@ final class PurchaseService
             return ['ok' => false, 'errors' => ['customer_id' => 'مشتری یافت نشد.']];
         }
 
-        $cashback = round($amount * 0.05, 2);
+        $cashbackPercentage = (new AppSettingsRepository())->cashbackPercentage();
+        $cashback = round($amount * ($cashbackPercentage / 100), 2);
         $pdo->beginTransaction();
         try {
             $purchaseId = (new PurchaseRepository())->create($customerId, $amount, $cashback, (int) Auth::id());

@@ -7,18 +7,30 @@ namespace App\Controllers\Admin;
 use App\Core\Csrf;
 use App\Core\Flash;
 use App\Core\View;
+use App\Repositories\AppSettingsRepository;
 use App\Repositories\SmsRepository;
 
 final class SettingsController
 {
     public function edit(): void
     {
-        View::render('admin/sms_settings', ['settings' => (new SmsRepository())->settings()]);
+        View::render('admin/sms_settings', [
+            'settings' => (new SmsRepository())->settings(),
+            'cashbackPercentage' => (new AppSettingsRepository())->cashbackPercentage(),
+        ]);
     }
 
     public function update(): void
     {
         Csrf::requireValid();
+        $cashbackPercentage = (float) str_replace(',', '.', \normalize_digits((string) ($_POST['cashback_percentage'] ?? '5')));
+        if ($cashbackPercentage < 0 || $cashbackPercentage > 100) {
+            Flash::set('danger', 'درصد کش‌بک باید بین ۰ تا ۱۰۰ باشد.');
+            \redirect('/admin/sms-settings');
+        }
+
+        (new AppSettingsRepository())->updateCashbackPercentage($cashbackPercentage);
+
         $repo = new SmsRepository();
         $token = trim((string) ($_POST['api_token'] ?? ''));
         $repo->updateSettings([
@@ -35,7 +47,7 @@ final class SettingsController
             'welcome_template' => (string) ($_POST['welcome_template'] ?? ''),
             'updated_at' => \current_datetime(),
         ], $token !== '');
-        Flash::set('success', 'تنظیمات پیامک ذخیره شد.');
+        Flash::set('success', 'تنظیمات ذخیره شد.');
         \redirect('/admin/sms-settings');
     }
 }

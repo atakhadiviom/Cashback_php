@@ -3,6 +3,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS birthday_sms_history;
 DROP TABLE IF EXISTS sms_logs;
+DROP TABLE IF EXISTS app_settings;
 DROP TABLE IF EXISTS sms_settings;
 DROP TABLE IF EXISTS activity_logs;
 DROP TABLE IF EXISTS wallet_transactions;
@@ -85,6 +86,12 @@ CREATE TABLE sms_settings (
   updated_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE app_settings (
+  setting_key VARCHAR(100) PRIMARY KEY,
+  setting_value TEXT NOT NULL,
+  updated_at DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE sms_logs (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id BIGINT UNSIGNED NULL,
@@ -139,3 +146,6 @@ INSERT INTO sms_settings (
   'سلام {full_name} عزیز، عضویت شما در {company_name} ثبت شد.',
   NOW()
 );
+
+INSERT INTO app_settings (setting_key, setting_value, updated_at) VALUES
+('cashback_percentage', '5.00', NOW());
