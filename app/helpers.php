@@ -68,19 +68,23 @@ function asset_url(string $logicalPath): string
     $logicalPath = ltrim($logicalPath, '/');
     $docRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
 
-    // If docroot is /public, assets are directly available under /assets.
+    // Docroot points at /public: files are served from /assets/...
     if ($docRoot !== '' && str_ends_with($docRoot, '/public')) {
         return url('/assets/' . $logicalPath);
     }
 
-    // If we are being accessed under /public (rewrite disabled), point directly to real files.
-    $requestPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
-    if ($requestPath === '/public' || str_starts_with($requestPath, '/public/')) {
-        return url('/public/assets/' . $logicalPath);
+    // If /public is already the active base path, avoid generating /public/public/assets.
+    $base = normalize_base_url((string) config_value('app.base_url', ''));
+    if ($base === '') {
+        $base = infer_base_url();
+    }
+    if ($base === '/public') {
+        return url('/assets/' . $logicalPath);
     }
 
-    // Otherwise prefer clean /assets/... (served by .htaccess when rewrite is enabled).
-    return url('/assets/' . $logicalPath);
+    // Docroot is project root (DirectAdmin/cPanel default): physical files live under /public/assets/.
+    // Do not rely on /assets/... rewrite; many shared hosts disable or ignore .htaccess rules.
+    return url('/public/assets/' . $logicalPath);
 }
 
 function redirect(string $path): never

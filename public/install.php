@@ -66,6 +66,27 @@ function installer_dsn(string $host, ?string $database = null): string
     return $dsn . ';charset=utf8mb4';
 }
 
+function installer_asset_url(string $relativePath): string
+{
+    $relativePath = ltrim($relativePath, '/');
+    $docRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+    if ($docRoot !== '' && str_ends_with($docRoot, '/public')) {
+        return '/assets/' . $relativePath;
+    }
+
+    return '/public/assets/' . $relativePath;
+}
+
+function installer_login_url(): string
+{
+    $docRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+    if ($docRoot !== '' && str_ends_with($docRoot, '/public')) {
+        return '/login';
+    }
+
+    return '/public/login';
+}
+
 function installer_config(array $data): string
 {
     $appName = 'سیستم مدیریت کش بک ' . $data['company_name'];
@@ -286,7 +307,7 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>نصب سیستم مدیریت کش بک</title>
-    <link href="bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="<?= installer_e(installer_asset_url('vendor/bootstrap/bootstrap.rtl.min.css')) ?>" rel="stylesheet">
     <style>
         body { font-family: Tahoma, Arial, sans-serif; background: #f5f7fb; color: #1f2937; }
         .shell { max-width: 980px; margin: 0 auto; padding: 32px 16px; }
@@ -322,10 +343,10 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
     <?php if ($locked): ?>
         <div class="alert alert-warning">نصب‌کننده غیرفعال است.</div>
-        <a class="btn btn-primary" href="login">ورود به برنامه</a>
+        <a class="btn btn-primary" href="<?= installer_e(installer_login_url()) ?>">ورود به برنامه</a>
     <?php elseif ($success): ?>
         <div class="alert alert-success">نصب با موفقیت انجام شد. فایل تنظیمات نوشته شد و نصب‌کننده قفل شد.</div>
-        <a class="btn btn-primary" href="login">ورود به برنامه</a>
+        <a class="btn btn-primary" href="<?= installer_e(installer_login_url()) ?>">ورود به برنامه</a>
     <?php else: ?>
         <?php foreach ($errors as $error): ?><div class="alert alert-danger"><?= installer_e($error) ?></div><?php endforeach; ?>
 
