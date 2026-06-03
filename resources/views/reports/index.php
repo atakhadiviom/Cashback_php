@@ -16,6 +16,7 @@
     <div class="col-md-2"><input class="form-control ltr" name="cashback_min" placeholder="حداقل کش‌بک" value="<?= e($filters['cashback_min'] ?? '') ?>"></div>
     <div class="col-md-2"><input class="form-control ltr" name="cashback_max" placeholder="حداکثر کش‌بک" value="<?= e($filters['cashback_max'] ?? '') ?>"></div>
     <div class="col-md-2"><input class="form-control ltr" name="birthday_month" placeholder="ماه تولد" value="<?= e($filters['birthday_month'] ?? '') ?>"></div>
+    <div class="col-md-2 d-flex align-items-center"><div class="form-check"><input class="form-check-input" type="checkbox" name="include_voided" value="1" id="include_voided" <?= !empty($filters['include_voided']) ? 'checked' : '' ?>><label class="form-check-label" for="include_voided">شامل ابطال</label></div></div>
     <div class="col-md-2"><button class="btn btn-secondary w-100">اعمال</button></div>
 </form>
 </div></div>
@@ -25,11 +26,24 @@
     <?php endforeach; ?>
 </div>
 <div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card stat"><div class="card-body"><div class="small text-muted">کش‌بک صادر شده (بازه)</div><div class="fw-bold"><?= e(money($liability['issued'] ?? 0)) ?> ریال</div></div></div></div>
+    <div class="col-md-4"><div class="card stat"><div class="card-body"><div class="small text-muted">استفاده از کیف پول (بازه)</div><div class="fw-bold"><?= e(money($liability['redeemed'] ?? 0)) ?> ریال</div></div></div></div>
+    <div class="col-md-4"><div class="card stat"><div class="card-body"><div class="small text-muted">تعهد کل کیف پول</div><div class="fw-bold"><?= e(money($outstandingLiability)) ?> ریال</div></div></div></div>
+</div>
+<div class="card mb-4"><div class="card-header bg-white">مشتریان غیرفعال (بدون خرید اخیر)</div><div class="card-body">
+<form class="row g-2 mb-3" method="get">
+    <?php foreach ($filters as $k => $v): if ($k === 'inactive_days') continue; ?><input type="hidden" name="<?= e($k) ?>" value="<?= e($v) ?>"><?php endforeach; ?>
+    <div class="col-md-3"><input class="form-control" name="inactive_days" value="<?= e($filters['inactive_days'] ?? '90') ?>" placeholder="روز"></div>
+    <div class="col-md-2"><button class="btn btn-secondary">به‌روزرسانی</button></div>
+</form>
+<?php foreach ($inactiveCustomers as $c): ?><div><?= e($c['first_name'] . ' ' . $c['last_name']) ?> — <?= e($c['phone_number']) ?></div><?php endforeach; if (!$inactiveCustomers): ?><span class="text-muted">موردی نیست.</span><?php endif; ?>
+</div></div>
+<div class="row g-3 mb-4">
     <div class="col-lg-6"><div class="card"><div class="card-header bg-white">۱۰ مشتری برتر بر اساس خرید</div><div class="table-responsive"><table class="table mb-0"><tbody><?php foreach ($topAmount as $row): ?><tr><td><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td><td><?= e(money($row['total'])) ?></td></tr><?php endforeach; ?></tbody></table></div></div></div>
     <div class="col-lg-6"><div class="card"><div class="card-header bg-white">۱۰ مشتری برتر بر اساس کش‌بک</div><div class="table-responsive"><table class="table mb-0"><tbody><?php foreach ($topCashback as $row): ?><tr><td><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td><td><?= e(money($row['total'])) ?></td></tr><?php endforeach; ?></tbody></table></div></div></div>
 </div>
-<div class="card mb-4"><div class="card-header bg-white">خریدهای فیلتر شده</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>مشتری</th><th>کد ملی</th><th>مبلغ</th><th>کش‌بک</th><th>اپراتور</th><th>تاریخ</th></tr></thead><tbody>
-<?php foreach ($purchases as $row): ?><tr><td><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td><td><?= e($row['national_code']) ?></td><td><?= e(money($row['amount'])) ?></td><td><?= e(money($row['cashback_amount'])) ?></td><td><?= e($row['created_by_name']) ?></td><td><?= e($row['created_at']) ?></td></tr><?php endforeach; ?>
+<div class="card mb-4"><div class="card-header bg-white">خریدهای فیلتر شده</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>مشتری</th><th>کد ملی</th><th>مبلغ</th><th>کش‌بک</th><th>وضعیت</th><th>اپراتور</th><th>تاریخ</th></tr></thead><tbody>
+<?php foreach ($purchases as $row): ?><tr><td><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td><td><?= e($row['national_code']) ?></td><td><?= e(money($row['amount'])) ?></td><td><?= e(money($row['cashback_amount'])) ?></td><td><?= ($row['status'] ?? 'active') === 'voided' ? 'ابطال' : 'فعال' ?></td><td><?= e($row['created_by_name']) ?></td><td><?= e($row['created_at']) ?></td></tr><?php endforeach; ?>
 </tbody></table></div></div>
 <div class="row g-3">
     <?php foreach (['تولدهای امروز' => $birthdaysToday, 'تولدهای هفته' => $birthdaysWeek, 'تولدهای ماه' => $birthdaysMonth] as $title => $rows): ?>

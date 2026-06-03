@@ -26,13 +26,15 @@ final class CustomerService
             return ['ok' => false, 'errors' => $errors];
         }
         $now = \current_datetime();
+        $referredBy = (int) ($data['referred_by_customer_id'] ?? 0);
         $id = $this->customers->create([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'national_code' => $data['national_code'],
             'phone_number' => $data['phone_number'],
             'birthday' => $data['birthday'] ?: null,
-            'created_by' => Auth::id(),
+            'created_by' => SystemUserService::actorId(),
+            'referred_by_customer_id' => $referredBy > 0 ? $referredBy : null,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
@@ -69,6 +71,7 @@ final class CustomerService
             'national_code' => \normalize_digits(trim((string) ($data['national_code'] ?? ''))),
             'phone_number' => \normalize_digits(trim((string) ($data['phone_number'] ?? ''))),
             'birthday' => $this->normalizeBirthday((string) ($data['birthday'] ?? '')),
+            'referred_by_customer_id' => (int) ($data['referred_by_customer_id'] ?? 0),
         ];
     }
 

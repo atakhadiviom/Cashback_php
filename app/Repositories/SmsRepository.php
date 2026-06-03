@@ -61,13 +61,44 @@ final class SmsRepository
 
     public function updateLog(int $id, string $status, string $response): void
     {
-        $stmt = $this->pdo->prepare('UPDATE sms_logs SET status = :status, provider_response = :provider_response, sent_at = :sent_at WHERE id = :id');
+        $stmt = $this->pdo->prepare('UPDATE sms_logs SET status = :status, provider_response = :provider_response, sent_at = :sent_at, next_retry_at = NULL WHERE id = :id');
         $stmt->execute([
             'status' => $status,
             'provider_response' => $response,
             'sent_at' => $status === 'sent' ? \current_datetime() : null,
             'id' => $id,
         ]);
+    }
+
+    public function scheduleRetry(int $id, string $response, int $retryCount = 1): void
+    {
+        $maxRetries = 3;
+        if ($retryCount >= $maxRetries) {
+            $this->updateLog($id, 'failed', $response);
+            return;
+        }
+        $delayMinutes = min(60, (int) pow(2, $retryCount) * 5);
+        $next = date('Y-m-d H:i:s', time() + $delayMinutes * 60);
+        $stmt = $this->pdo->prepare(
+            'UPDATE sms_logs SET status = :status, provider_response = :provider_response, retry_count = :retry_count, next_retry_at = :next_retry_at WHERE id = :id'
+        );
+        $stmt->execute([
+            'status' => 'pending',
+            'provider_response' => $response,
+            'retry_count' => $retryCount,
+            'next_retry_at' => $next,
+            'id' => $id,
+        ]);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function dueForRetry(): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM sms_logs WHERE status = 'pending' AND next_retry_at IS NOT NULL AND next_retry_at <= :now AND retry_count < 3 ORDER BY id ASC LIMIT 50"
+        );
+        $stmt->execute(['now' => \current_datetime()]);
+        return $stmt->fetchAll();
     }
 
     public function search(array $filters): array

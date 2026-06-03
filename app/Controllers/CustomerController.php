@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\Flash;
 use App\Core\Jalali;
@@ -67,6 +68,7 @@ final class CustomerController
     {
         $id = (int) ($_GET['id'] ?? 0);
         $customers = new CustomerRepository();
+        $purchases = new PurchaseRepository();
         $customer = $customers->find($id);
         if (!$customer) {
             Flash::set('danger', 'مشتری یافت نشد.');
@@ -74,8 +76,10 @@ final class CustomerController
         }
         View::render('customers/show', [
             'customer' => $customer,
-            'purchases' => (new PurchaseRepository())->forCustomer($id),
+            'purchases' => $purchases->forCustomer($id),
             'walletTransactions' => (new WalletRepository())->forCustomer($id),
+            'lifetimeEarned' => $purchases->lifetimeCashbackEarned($id),
+            'canVoid' => Auth::can('void_purchase'),
         ]);
     }
 
@@ -92,5 +96,25 @@ final class CustomerController
             fputcsv($out, [$customer['first_name'], $customer['last_name'], $customer['national_code'], $customer['phone_number'], Jalali::formatDate($customer['birthday']), $customer['wallet_balance'], $customer['created_at']]);
         }
         exit;
+    }
+
+    public function delete(): void
+    {
+        Csrf::requireValid();
+        $id = (int) ($_POST['id'] ?? 0);
+        (new CustomerRepository())->softDelete($id);
+        (new ActivityLogger())->log('customer_delete', 'مشتری حذف نرم شد.', $id);
+        Flash::set('success', 'مشتری حذف شد.');
+        \redirect('/customers');
+    }
+
+    public function anonymize(): void
+    {
+        Csrf::requireValid();
+        $id = (int) ($_POST['id'] ?? 0);
+        (new CustomerRepository())->anonymize($id);
+        (new ActivityLogger())->log('customer_anonymize', 'مشتری ناشناس‌سازی شد.', $id);
+        Flash::set('success', 'اطلاعات شخصی مشتری حذف شد.');
+        \redirect('/customers');
     }
 }

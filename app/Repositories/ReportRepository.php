@@ -19,13 +19,52 @@ final class ReportRepository
     public function dashboard(): array
     {
         return [
-            'customers' => (int) $this->pdo->query('SELECT COUNT(*) FROM customers')->fetchColumn(),
-            'purchases' => (int) $this->pdo->query('SELECT COUNT(*) FROM purchases')->fetchColumn(),
-            'purchase_amount' => (float) $this->pdo->query('SELECT COALESCE(SUM(amount),0) FROM purchases')->fetchColumn(),
-            'cashback' => (float) $this->pdo->query('SELECT COALESCE(SUM(cashback_amount),0) FROM purchases')->fetchColumn(),
-            'wallets' => (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers')->fetchColumn(),
-            'birthdays_today' => (int) $this->pdo->query('SELECT COUNT(*) FROM customers WHERE birthday IS NOT NULL AND MONTH(birthday) = MONTH(CURDATE()) AND DAY(birthday) = DAY(CURDATE())')->fetchColumn(),
+            'customers' => (int) $this->pdo->query('SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL')->fetchColumn(),
+            'purchases' => (int) $this->pdo->query("SELECT COUNT(*) FROM purchases WHERE status = 'active'")->fetchColumn(),
+            'purchase_amount' => (float) $this->pdo->query("SELECT COALESCE(SUM(amount),0) FROM purchases WHERE status = 'active'")->fetchColumn(),
+            'cashback' => (float) $this->pdo->query("SELECT COALESCE(SUM(cashback_amount),0) FROM purchases WHERE status = 'active'")->fetchColumn(),
+            'wallets' => (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers WHERE deleted_at IS NULL')->fetchColumn(),
+            'birthdays_today' => (int) $this->pdo->query('SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL AND birthday IS NOT NULL AND MONTH(birthday) = MONTH(CURDATE()) AND DAY(birthday) = DAY(CURDATE())')->fetchColumn(),
+            'cashback_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(cashback_amount),0) FROM purchases WHERE status = 'active' AND YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())")->fetchColumn(),
+            'reductions_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(amount),0) FROM wallet_transactions WHERE type = 'reduction' AND YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())")->fetchColumn(),
+            'outstanding_liability' => $this->outstandingLiability(),
         ];
+    }
+
+    public function outstandingLiability(): float
+    {
+        return (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers WHERE deleted_at IS NULL')->fetchColumn();
+    }
+
+    public function cashbackIssuedVsRedeemed(string $from, string $to): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT
+                (SELECT COALESCE(SUM(cashback_amount),0) FROM purchases WHERE status = 'active' AND created_at BETWEEN :from1 AND :to1) AS issued,
+                (SELECT COALESCE(SUM(amount),0) FROM wallet_transactions WHERE type = 'reduction' AND created_at BETWEEN :from2 AND :to2) AS redeemed"
+        );
+        $stmt->execute([
+            'from1' => $from . ' 00:00:00',
+            'to1' => $to . ' 23:59:59',
+            'from2' => $from . ' 00:00:00',
+            'to2' => $to . ' 23:59:59',
+        ]);
+        return $stmt->fetch() ?: ['issued' => 0, 'redeemed' => 0];
+    }
+
+    public function inactiveCustomers(int $days, int $limit = 50): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT c.* FROM customers c
+             WHERE c.deleted_at IS NULL
+             AND NOT EXISTS (
+                SELECT 1 FROM purchases p WHERE p.customer_id = c.id AND p.status = 'active'
+                AND p.created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+             )
+             ORDER BY c.id DESC LIMIT " . $limit
+        );
+        $stmt->execute(['days' => $days]);
+        return $stmt->fetchAll();
     }
 
     public function summary(array $filters): array
@@ -44,12 +83,12 @@ final class ReportRepository
 
     public function topByAmount(): array
     {
-        return $this->pdo->query('SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id GROUP BY c.id ORDER BY total DESC LIMIT 10')->fetchAll();
+        return $this->pdo->query("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' GROUP BY c.id ORDER BY total DESC LIMIT 10")->fetchAll();
     }
 
     public function topByCashback(): array
     {
-        return $this->pdo->query('SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.cashback_amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id GROUP BY c.id ORDER BY total DESC LIMIT 10')->fetchAll();
+        return $this->pdo->query("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.cashback_amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' GROUP BY c.id ORDER BY total DESC LIMIT 10")->fetchAll();
     }
 
     public function birthdays(string $period): array
@@ -59,7 +98,7 @@ final class ReportRepository
             'week' => 'birthday IS NOT NULL AND DAYOFYEAR(birthday) BETWEEN DAYOFYEAR(CURDATE()) AND DAYOFYEAR(DATE_ADD(CURDATE(), INTERVAL 7 DAY))',
             default => 'MONTH(birthday) = MONTH(CURDATE())',
         };
-        return $this->pdo->query("SELECT * FROM customers WHERE birthday IS NOT NULL AND {$condition} ORDER BY DAY(birthday)")->fetchAll();
+        return $this->pdo->query("SELECT * FROM customers WHERE deleted_at IS NULL AND birthday IS NOT NULL AND {$condition} ORDER BY DAY(birthday)")->fetchAll();
     }
 
     public function purchases(array $filters, int $limit = 300): array
@@ -120,6 +159,9 @@ final class ReportRepository
         if (!empty($filters['created_by'])) {
             $where[] = 'p.created_by = :created_by';
             $params['created_by'] = (int) $filters['created_by'];
+        }
+        if (empty($filters['include_voided'])) {
+            $where[] = "p.status = 'active'";
         }
         return [$where, $params];
     }

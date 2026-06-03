@@ -6,13 +6,13 @@ namespace App\Core;
 
 final class View
 {
-    public static function render(string $view, array $data = []): void
+    public static function render(string $view, array $data = [], string $layout = 'app'): void
     {
         extract($data, EXTR_SKIP);
         $viewFile = dirname(__DIR__, 2) . '/resources/views/' . $view . '.php';
         ob_start();
         require $viewFile;
         $content = ob_get_clean();
-        require dirname(__DIR__, 2) . '/resources/views/layouts/app.php';
+        require dirname(__DIR__, 2) . '/resources/views/layouts/' . $layout . '.php';
     }
 }

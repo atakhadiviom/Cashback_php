@@ -18,5 +18,14 @@ return [
     ],
     'security' => [
         'session_name' => 'cashback_session',
+        'session_lifetime_minutes' => 120,
+        'login_max_attempts' => 5,
+        'login_lockout_minutes' => 15,
+    ],
+    'portal' => [
+        'enabled' => true,
+        'otp_ttl_seconds' => 300,
+        'otp_max_attempts' => 5,
+        'otp_rate_limit_per_hour' => 5,
     ],
 ];

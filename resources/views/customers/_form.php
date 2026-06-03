@@ -31,6 +31,10 @@ if ($birthdayRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_digits
         <?php if (!empty($errors['phone_number'])): ?><div class="form-text-error"><?= e($errors['phone_number']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-4">
+        <label class="form-label">شناسه معرف (اختیاری)</label>
+        <input class="form-control ltr" name="referred_by_customer_id" value="<?= e($customer['referred_by_customer_id'] ?? '') ?>" placeholder="ID مشتری معرف">
+    </div>
+    <div class="col-md-4">
         <label class="form-label">تاریخ تولد شمسی</label>
         <input
             class="form-control ltr"

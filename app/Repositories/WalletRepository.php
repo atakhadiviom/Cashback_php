@@ -31,9 +31,13 @@ final class WalletRepository
         ]);
     }
 
-    public function forCustomer(int $customerId): array
+    public function forCustomer(int $customerId, int $limit = 0): array
     {
-        $stmt = $this->pdo->prepare('SELECT w.*, u.name AS created_by_name FROM wallet_transactions w LEFT JOIN users u ON u.id = w.created_by WHERE w.customer_id = :customer_id ORDER BY w.id DESC');
+        $sql = 'SELECT w.*, u.name AS created_by_name FROM wallet_transactions w LEFT JOIN users u ON u.id = w.created_by WHERE w.customer_id = :customer_id ORDER BY w.id DESC';
+        if ($limit > 0) {
+            $sql .= ' LIMIT ' . $limit;
+        }
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['customer_id' => $customerId]);
         return $stmt->fetchAll();
     }

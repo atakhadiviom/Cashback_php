@@ -50,14 +50,17 @@ final class UserRepository
 
     public function create(array $data): int
     {
-        $stmt = $this->pdo->prepare('INSERT INTO users (name, username, password_hash, role, is_active, created_at, updated_at) VALUES (:name, :username, :password_hash, :role, :is_active, :created_at, :updated_at)');
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO users (name, username, password_hash, role, permissions, is_active, created_at, updated_at)
+             VALUES (:name, :username, :password_hash, :role, :permissions, :is_active, :created_at, :updated_at)'
+        );
         $stmt->execute($data);
         return (int) $this->pdo->lastInsertId();
     }
 
     public function update(int $id, array $data): void
     {
-        $fields = ['name = :name', 'username = :username', 'role = :role', 'is_active = :is_active', 'updated_at = :updated_at'];
+        $fields = ['name = :name', 'username = :username', 'role = :role', 'permissions = :permissions', 'is_active = :is_active', 'updated_at = :updated_at'];
         if (!empty($data['password_hash'])) {
             $fields[] = 'password_hash = :password_hash';
         } else {
@@ -66,5 +69,13 @@ final class UserRepository
         $data['id'] = $id;
         $stmt = $this->pdo->prepare('UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = :id');
         $stmt->execute($data);
+    }
+
+    public static function defaultPermissionsJson(string $role): string
+    {
+        $perms = $role === 'admin'
+            ? \App\Core\Auth::permissionsFromUser(['role' => 'admin', 'permissions' => null])
+            : \App\Core\Auth::permissionsFromUser(['role' => 'operator', 'permissions' => null]);
+        return json_encode($perms, JSON_UNESCAPED_UNICODE);
     }
 }

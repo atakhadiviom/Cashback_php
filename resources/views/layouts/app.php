@@ -2,6 +2,25 @@
 use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\Flash;
+
+$navItems = [
+    ['/dashboard', 'داشبورد', 'bi-speedometer2', null],
+    ['/customers', 'مشتریان', 'bi-people', null],
+    ['/customers/create', 'افزودن مشتری', 'bi-person-plus', null],
+    ['/purchases/create', 'ثبت خرید', 'bi-receipt', 'purchase'],
+    ['/reports', 'گزارش‌ها', 'bi-bar-chart-line', null],
+    ['/sms/logs', 'لاگ پیامک', 'bi-chat-dots', null],
+];
+if (Auth::isAdmin()) {
+    $navItems[] = ['/admin/users', 'اپراتورها', 'bi-person-gear', 'manage_users'];
+    $navItems[] = ['/admin/activity-logs', 'فعالیت‌ها', 'bi-activity', null];
+    $navItems[] = ['/admin/cashback-settings', 'تنظیمات کش‌بک', 'bi-percent', 'manage_settings'];
+    $navItems[] = ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders', 'manage_settings'];
+    $navItems[] = ['/admin/loyalty', 'سطوح و پروموشن', 'bi-trophy', 'manage_loyalty'];
+    $navItems[] = ['/admin/api-keys', 'کلید API', 'bi-key', 'manage_api'];
+    $navItems[] = ['/admin/customers/import', 'ورود CSV', 'bi-upload', 'import_customers'];
+}
+$navItems = array_values(array_filter($navItems, static fn (array $item): bool => $item[3] === null || Auth::can($item[3])));
 ?>
 <!doctype html>
 <html lang="fa" dir="rtl">
@@ -18,21 +37,7 @@ use App\Core\Flash;
 <button class="sidebar-toggle btn btn-light d-xl-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-label="باز کردن منو">
     <i class="bi bi-list"></i>
 </button>
-
 <?php
-$navItems = [
-    ['/dashboard', 'داشبورد', 'bi-speedometer2'],
-    ['/customers', 'مشتریان', 'bi-people'],
-    ['/customers/create', 'افزودن مشتری', 'bi-person-plus'],
-    ['/purchases/create', 'ثبت خرید', 'bi-receipt'],
-    ['/reports', 'گزارش‌ها', 'bi-bar-chart-line'],
-    ['/sms/logs', 'لاگ پیامک', 'bi-chat-dots'],
-];
-if (Auth::isAdmin()) {
-    $navItems[] = ['/admin/users', 'اپراتورها', 'bi-person-gear'];
-    $navItems[] = ['/admin/activity-logs', 'فعالیت‌ها', 'bi-activity'];
-    $navItems[] = ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders'];
-}
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $renderSidebar = function (string $extraClass = '') use ($navItems, $currentPath): void {
 ?>
@@ -56,6 +61,7 @@ $renderSidebar = function (string $extraClass = '') use ($navItems, $currentPath
             </a>
         <?php endforeach; ?>
     </nav>
+    <div class="p-3"><a class="btn btn-outline-secondary btn-sm w-100" href="<?= e(url('/portal')) ?>" target="_blank">پرتال مشتری</a></div>
 </aside>
 <?php
 };

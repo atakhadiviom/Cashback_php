@@ -30,12 +30,14 @@ final class UserController
             View::render('admin/users/create', ['user' => $_POST, 'errors' => $errors]);
             return;
         }
+        $role = $_POST['role'] === 'admin' ? 'admin' : 'operator';
         $now = \current_datetime();
         (new UserRepository())->create([
             'name' => trim((string) $_POST['name']),
             'username' => trim((string) $_POST['username']),
             'password_hash' => password_hash((string) $_POST['password'], PASSWORD_DEFAULT),
-            'role' => $_POST['role'] === 'admin' ? 'admin' : 'operator',
+            'role' => $role,
+            'permissions' => $this->permissionsJson($role, $_POST),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'created_at' => $now,
             'updated_at' => $now,
@@ -52,6 +54,9 @@ final class UserController
             Flash::set('danger', 'کاربر یافت نشد.');
             \redirect('/admin/users');
         }
+        if (!empty($user['permissions']) && is_string($user['permissions'])) {
+            $user['permissions'] = json_decode($user['permissions'], true);
+        }
         View::render('admin/users/edit', ['user' => $user, 'errors' => []]);
     }
 
@@ -64,11 +69,13 @@ final class UserController
             View::render('admin/users/edit', ['user' => $_POST, 'errors' => $errors]);
             return;
         }
+        $role = $_POST['role'] === 'admin' ? 'admin' : 'operator';
         $data = [
             'name' => trim((string) $_POST['name']),
             'username' => trim((string) $_POST['username']),
             'password_hash' => trim((string) ($_POST['password'] ?? '')) !== '' ? password_hash((string) $_POST['password'], PASSWORD_DEFAULT) : '',
-            'role' => $_POST['role'] === 'admin' ? 'admin' : 'operator',
+            'role' => $role,
+            'permissions' => $this->permissionsJson($role, $_POST),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'updated_at' => \current_datetime(),
         ];
@@ -76,6 +83,19 @@ final class UserController
         (new ActivityLogger())->log('operator_edit', 'کاربر ویرایش شد: ' . $data['username']);
         Flash::set('success', 'کاربر ویرایش شد.');
         \redirect('/admin/users');
+    }
+
+    private function permissionsJson(string $role, array $post): string
+    {
+        if ($role === 'admin') {
+            return UserRepository::defaultPermissionsJson('admin');
+        }
+        $keys = ['purchase', 'reduce_wallet', 'export', 'void_purchase', 'manage_settings', 'import_customers', 'manage_api', 'manage_loyalty'];
+        $perms = [];
+        foreach ($keys as $key) {
+            $perms[$key] = isset($post['perm_' . $key]);
+        }
+        return json_encode($perms, JSON_UNESCAPED_UNICODE);
     }
 
     private function validate(array $data, bool $requirePassword, ?int $exceptId = null): array

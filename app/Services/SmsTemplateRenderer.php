@@ -20,6 +20,10 @@ final class SmsTemplateRenderer
             'company_name' => \config_value('app.company_name', 'نوآوران زیبایی'),
         ], $vars);
 
+        if (isset($vars['otp_code'])) {
+            $values['otp_code'] = (string) $vars['otp_code'];
+        }
+
         foreach (['purchase_amount', 'cashback_amount', 'wallet_balance'] as $moneyKey) {
             if ($values[$moneyKey] !== '' && is_numeric($values[$moneyKey])) {
                 $values[$moneyKey] = \money($values[$moneyKey]);

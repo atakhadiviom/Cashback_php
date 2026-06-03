@@ -16,6 +16,8 @@ final class ReportController
     {
         $repo = new ReportRepository();
         $filters = $_GET;
+        $from = (string) ($filters['liability_from'] ?? date('Y-m-01'));
+        $to = (string) ($filters['liability_to'] ?? date('Y-m-d'));
         View::render('reports/index', [
             'filters' => $filters,
             'summary' => $repo->summary($filters),
@@ -26,6 +28,9 @@ final class ReportController
             'birthdaysWeek' => $repo->birthdays('week'),
             'birthdaysMonth' => $repo->birthdays('month'),
             'users' => (new UserRepository())->activeOperatorsAndAdmins(),
+            'liability' => $repo->cashbackIssuedVsRedeemed($from, $to),
+            'outstandingLiability' => $repo->outstandingLiability(),
+            'inactiveCustomers' => $repo->inactiveCustomers((int) ($filters['inactive_days'] ?? 90)),
         ]);
     }
 
@@ -37,9 +42,19 @@ final class ReportController
         header('Content-Disposition: attachment; filename="report.csv"');
         echo "\xEF\xBB\xBF";
         $out = fopen('php://output', 'w');
-        fputcsv($out, ['نام', 'کد ملی', 'موبایل', 'تاریخ تولد', 'مبلغ خرید', 'کش‌بک', 'اپراتور', 'تاریخ']);
+        fputcsv($out, ['نام', 'کد ملی', 'موبایل', 'تاریخ تولد', 'مبلغ خرید', 'کش‌بک', 'وضعیت', 'اپراتور', 'تاریخ']);
         foreach ($rows as $row) {
-            fputcsv($out, [trim($row['first_name'] . ' ' . $row['last_name']), $row['national_code'], $row['phone_number'], Jalali::formatDate($row['birthday']), $row['amount'], $row['cashback_amount'], $row['created_by_name'], $row['created_at']]);
+            fputcsv($out, [
+                trim($row['first_name'] . ' ' . $row['last_name']),
+                $row['national_code'],
+                $row['phone_number'],
+                Jalali::formatDate($row['birthday']),
+                $row['amount'],
+                $row['cashback_amount'],
+                $row['status'] ?? 'active',
+                $row['created_by_name'],
+                $row['created_at'],
+            ]);
         }
         exit;
     }

@@ -1,5 +1,7 @@
 config/config.php
 storage/installed.lock
+/vendor/
+composer.lock
 *.log
 .DS_Store
 

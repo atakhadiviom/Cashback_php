@@ -27,6 +27,14 @@ storage/installed.lock   -> ../cashback_installed.lock
 
 After extracting a new ZIP:
 
-1. Open `/login`.
-2. Do not rerun `/install.php` on an existing database.
-3. If the installer opens, restore the config and lock files above.
+1. Run database migrations from cPanel Terminal or SSH:
+
+```bash
+php /home/CPANEL_USER/public_html/database/migrate.php
+```
+
+2. Open `/login`.
+3. Do not rerun `/install.php` on an existing database.
+4. If the installer opens, restore the config and lock files above.
+
+Migration files live in `database/migrations/`. Each file runs once and is recorded in `schema_migrations`. For a brand-new database, importing `database/schema.sql` already includes all tables; migrations are for existing installs upgrading from an older version.

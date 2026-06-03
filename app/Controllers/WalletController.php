@@ -26,7 +26,15 @@ final class WalletController
     {
         Csrf::requireValid();
         $customerId = (int) ($_POST['customer_id'] ?? 0);
-        $result = (new WalletService())->reduce($customerId, $_POST['amount'] ?? 0, trim((string) ($_POST['reason'] ?? '')));
+        $result = (new WalletService())->reduce(
+            $customerId,
+            $_POST['amount'] ?? 0,
+            trim((string) ($_POST['reason'] ?? '')),
+            [
+                'purchase_id' => !empty($_POST['purchase_id']) ? (int) $_POST['purchase_id'] : null,
+                'related_purchase_amount' => (float) str_replace(',', '', \normalize_digits((string) ($_POST['related_purchase_amount'] ?? '0'))),
+            ]
+        );
         if (!$result['ok']) {
             View::render('wallet/reduce', [
                 'customer' => (new CustomerRepository())->find($customerId),

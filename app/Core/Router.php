@@ -8,14 +8,14 @@ final class Router
 {
     private array $routes = [];
 
-    public function get(string $path, array $handler, bool $auth = true, ?string $role = null): void
+    public function get(string $path, array $handler, bool $auth = true, ?string $role = null, ?string $permission = null): void
     {
-        $this->routes['GET'][$path] = compact('handler', 'auth', 'role');
+        $this->routes['GET'][$path] = compact('handler', 'auth', 'role', 'permission');
     }
 
-    public function post(string $path, array $handler, bool $auth = true, ?string $role = null): void
+    public function post(string $path, array $handler, bool $auth = true, ?string $role = null, ?string $permission = null): void
     {
-        $this->routes['POST'][$path] = compact('handler', 'auth', 'role');
+        $this->routes['POST'][$path] = compact('handler', 'auth', 'role', 'permission');
     }
 
     public function dispatch(): void
@@ -29,6 +29,11 @@ final class Router
         $path = '/' . trim($path, '/');
         if ($path !== '/' && str_ends_with($path, '/')) {
             $path = rtrim($path, '/');
+        }
+
+        if (str_starts_with($path, '/api/v1')) {
+            $this->dispatchApi($method, $path);
+            return;
         }
 
         $route = $this->routes[$method][$path] ?? null;
@@ -45,8 +50,36 @@ final class Router
             Flash::set('danger', 'شما به این بخش دسترسی ندارید.');
             \redirect('/dashboard');
         }
+        if ($route['permission'] && !Auth::can($route['permission'])) {
+            Flash::set('danger', 'شما به این بخش دسترسی ندارید.');
+            \redirect('/dashboard');
+        }
 
         [$class, $methodName] = $route['handler'];
         (new $class())->{$methodName}();
+    }
+
+    private function dispatchApi(string $method, string $path): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+        $auth = new \App\Services\ApiAuthService();
+        $keyRow = $auth->authenticate($apiKey);
+        if (!$keyRow) {
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'error' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $controller = new \App\Controllers\Api\V1Controller();
+        match ([$method, $path]) {
+            ['POST', '/api/v1/purchases'] => $controller->createPurchase(),
+            ['GET', '/api/v1/customers/by-phone'] => $controller->customerByPhone(),
+            ['POST', '/api/v1/wallet/reduce'] => $controller->reduceWallet(),
+            default => (function () {
+                http_response_code(404);
+                echo json_encode(['ok' => false, 'error' => 'Not found'], JSON_UNESCAPED_UNICODE);
+            })(),
+        };
     }
 }

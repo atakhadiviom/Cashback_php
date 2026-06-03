@@ -90,15 +90,59 @@ storage/installed.lock
 3. اگر هاست شما از فایل‌های قدیمی داخل پروژه استفاده می‌کرد، قبل از آپدیت از `config/config.php` و `storage/installed.lock` بکاپ بگیرید.
 4. بعد از آپدیت `/login` را باز کنید. نصب‌کننده نباید باز شود.
 
-## Cron تولد
+## Cron
 
-در cPanel > Cron Jobs یک job روزانه بسازید:
+در cPanel > Cron Jobs:
+
+**تولد (روزانه):**
 
 ```bash
 /usr/local/bin/php /home/CPANEL_USER/public_html/cron/send_birthday_sms.php
 ```
 
+**تلاش مجدد پیامک (هر ۱۵ دقیقه):**
+
+```bash
+/usr/local/bin/php /home/CPANEL_USER/public_html/cron/retry_failed_sms.php
+```
+
 اگر مسیر PHP متفاوت است، از پشتیبانی هاست مسیر درست را بگیرید.
+
+## ارتقاء دیتابیس (نصب قبلی)
+
+```bash
+php database/migrate.php
+```
+
+## پرتال مشتری
+
+آدرس عمومی (بدون ورود کارمند): `/portal` — مشتری با OTP پیامکی موجودی کیف پول را می‌بیند.
+
+## API (POS)
+
+هدرها:
+
+```text
+X-Api-Key: PREFIX.SECRET
+X-Idempotency-Key: unique-key-optional
+Content-Type: application/json
+```
+
+**ثبت خرید** `POST /api/v1/purchases`
+
+```json
+{"customer_id": 1, "amount": 1000000, "invoice_ref": "INV-1001", "confirm_duplicate": false}
+```
+
+**جستجوی مشتری** `GET /api/v1/customers/by-phone?phone=09123456789`
+
+**کسر کیف پول** `POST /api/v1/wallet/reduce`
+
+```json
+{"customer_id": 1, "amount": 50000, "reason": "پرداخت فاکتور", "related_purchase_amount": 200000}
+```
+
+کلید API از منوی **کلید API** (مدیر) ساخته می‌شود.
 
 ## بکاپ پیشنهادی
 

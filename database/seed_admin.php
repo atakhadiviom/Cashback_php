@@ -5,6 +5,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/bootstrap/app.php';
 
 use App\Core\Database;
+use App\Repositories\UserRepository;
 
 $username = $argv[1] ?? null;
 $password = $argv[2] ?? null;
@@ -24,11 +25,12 @@ if ($stmt->fetch()) {
 }
 
 $now = current_datetime();
-$stmt = $pdo->prepare('INSERT INTO users (name, username, password_hash, role, is_active, created_at, updated_at) VALUES (:name, :username, :password_hash, "admin", 1, :created_at, :updated_at)');
+$stmt = $pdo->prepare('INSERT INTO users (name, username, password_hash, role, permissions, is_active, created_at, updated_at) VALUES (:name, :username, :password_hash, "admin", :permissions, 1, :created_at, :updated_at)');
 $stmt->execute([
     'name' => $name,
     'username' => $username,
     'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+    'permissions' => UserRepository::defaultPermissionsJson('admin'),
     'created_at' => $now,
     'updated_at' => $now,
 ]);

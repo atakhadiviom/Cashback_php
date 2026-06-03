@@ -18,6 +18,8 @@ final class Validator
         $nationalCode = \normalize_digits((string) ($data['national_code'] ?? ''));
         if (!preg_match('/^\d{10}$/', $nationalCode)) {
             $errors['national_code'] = 'کد ملی باید دقیقاً ۱۰ رقم باشد.';
+        } elseif (!self::isValidIranianNationalCode($nationalCode)) {
+            $errors['national_code'] = 'کد ملی نامعتبر است.';
         } elseif ($nationalCodeExists) {
             $errors['national_code'] = 'این کد ملی قبلاً ثبت شده است.';
         }
@@ -38,5 +40,19 @@ final class Validator
     {
         $amount = (float) str_replace(',', '', \normalize_digits((string) $amount));
         return $amount > 0 ? [] : [$field => 'مبلغ باید مثبت باشد.'];
+    }
+
+    public static function isValidIranianNationalCode(string $code): bool
+    {
+        if (!preg_match('/^\d{10}$/', $code) || preg_match('/^(\d)\1{9}$/', $code)) {
+            return false;
+        }
+        $check = (int) $code[9];
+        $sum = 0;
+        for ($i = 0; $i < 9; $i++) {
+            $sum += (int) $code[$i] * (10 - $i);
+        }
+        $remainder = $sum % 11;
+        return ($remainder < 2 && $check === $remainder) || ($remainder >= 2 && $check === 11 - $remainder);
     }
 }
