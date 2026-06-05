@@ -19,10 +19,10 @@ final class PromotionRepository
     public function activeNow(): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM promotions WHERE is_active = 1 AND starts_at <= :now AND ends_at >= :now ORDER BY id DESC LIMIT 1'
+            'SELECT * FROM promotions WHERE is_active = 1 AND starts_at <= :now_start AND ends_at >= :now_end ORDER BY id DESC LIMIT 1'
         );
         $now = \current_datetime();
-        $stmt->execute(['now' => $now]);
+        $stmt->execute(['now_start' => $now, 'now_end' => $now]);
         return $stmt->fetch() ?: null;
     }
 

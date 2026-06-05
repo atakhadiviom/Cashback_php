@@ -50,8 +50,11 @@ final class ActivityLogRepository
             $params['activity_type'] = $filters['activity_type'];
         }
         if (!empty($filters['customer'])) {
-            $where[] = '(c.first_name LIKE :customer OR c.last_name LIKE :customer OR c.national_code LIKE :customer)';
-            $params['customer'] = '%' . $filters['customer'] . '%';
+            $where[] = '(c.first_name LIKE :customer1 OR c.last_name LIKE :customer2 OR c.national_code LIKE :customer3)';
+            $term = '%' . $filters['customer'] . '%';
+            $params['customer1'] = $term;
+            $params['customer2'] = $term;
+            $params['customer3'] = $term;
         }
         $sql = 'SELECT a.*, u.name AS user_name, c.first_name, c.last_name, c.national_code FROM activity_logs a LEFT JOIN users u ON u.id = a.user_id LEFT JOIN customers c ON c.id = a.customer_id';
         if ($where) {

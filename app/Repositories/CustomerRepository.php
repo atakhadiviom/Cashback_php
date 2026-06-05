@@ -126,8 +126,12 @@ final class CustomerRepository
             }
         }
         if (($filters['q'] ?? '') !== '') {
-            $where[] = '(c.first_name LIKE :q OR c.last_name LIKE :q OR c.national_code LIKE :q OR c.phone_number LIKE :q)';
-            $params['q'] = '%' . \normalize_digits((string) $filters['q']) . '%';
+            $where[] = '(c.first_name LIKE :q1 OR c.last_name LIKE :q2 OR c.national_code LIKE :q3 OR c.phone_number LIKE :q4)';
+            $term = '%' . \normalize_digits((string) $filters['q']) . '%';
+            $params['q1'] = $term;
+            $params['q2'] = $term;
+            $params['q3'] = $term;
+            $params['q4'] = $term;
         }
         if (($filters['birthday'] ?? '') !== '') {
             $where[] = 'c.birthday = :birthday';
