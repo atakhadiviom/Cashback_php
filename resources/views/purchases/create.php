@@ -1,32 +1,30 @@
 <?php use App\Core\Csrf; ?>
 <h1 class="h3 mb-4">ثبت خرید</h1>
 <div class="card"><div class="card-body">
-<form method="get" action="<?= e(url('/purchases/create')) ?>" class="row g-2 mb-3">
-    <div class="col-md-9">
-        <label class="form-label">جستجوی مشتری</label>
-        <input type="search" class="form-control" name="q" id="purchase-customer-search" placeholder="نام، نام خانوادگی، کد ملی یا شماره موبایل" value="<?= e($filters['q'] ?? '') ?>" autocomplete="off">
-    </div>
-    <div class="col-md-3 d-flex align-items-end gap-2">
-        <button type="submit" class="btn btn-secondary w-100">جستجو</button>
-        <?php if (($filters['q'] ?? '') !== ''): ?><a class="btn btn-outline-secondary" href="<?= e(url('/purchases/create')) ?>">پاک کردن</a><?php endif; ?>
-    </div>
-</form>
-
 <form method="post" action="<?= e(url('/purchases/create')) ?>" class="row g-3">
     <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
-    <?php if (($filters['q'] ?? '') !== ''): ?><input type="hidden" name="search_q" value="<?= e($filters['q']) ?>"><?php endif; ?>
+    <?php
+    $selectedId = (string) ($_POST['customer_id'] ?? $_GET['customer_id'] ?? '');
+    $selectedLabel = '';
+    $customerOptions = [];
+    foreach ($customers as $customer) {
+        $label = $customer['first_name'] . ' ' . $customer['last_name'] . ' - ' . $customer['national_code'] . ' - ' . $customer['phone_number'];
+        $customerOptions[] = ['id' => (string) $customer['id'], 'label' => $label];
+        if ((string) $customer['id'] === $selectedId) {
+            $selectedLabel = $label;
+        }
+    }
+    ?>
     <div class="col-md-6">
         <label class="form-label">مشتری</label>
-        <select class="form-select" name="customer_id" id="purchase-customer-select" required>
-            <option value="">انتخاب کنید</option>
-            <?php
-            $selectedId = (string) ($_POST['customer_id'] ?? $_GET['customer_id'] ?? '');
-            foreach ($customers as $customer):
-                $label = $customer['first_name'] . ' ' . $customer['last_name'] . ' - ' . $customer['national_code'] . ' - ' . $customer['phone_number'];
-            ?>
-                <option value="<?= e($customer['id']) ?>" <?= (string) $customer['id'] === $selectedId ? 'selected' : '' ?>><?= e($label) ?></option>
+        <input type="hidden" name="customer_id" id="purchase-customer-id" value="<?= e($selectedId) ?>">
+        <input class="form-control" id="purchase-customer-picker" list="purchase-customer-options" value="<?= e($selectedLabel) ?>" placeholder="نام، کد ملی یا شماره موبایل را تایپ کنید" autocomplete="off" required>
+        <datalist id="purchase-customer-options">
+            <?php foreach ($customerOptions as $option): ?>
+                <option value="<?= e($option['label']) ?>" data-id="<?= e($option['id']) ?>"></option>
             <?php endforeach; ?>
-        </select>
+        </datalist>
+        <div class="form-text">برای انتخاب مشتری، نام یا شماره موبایل را تایپ کنید و از لیست انتخاب کنید.</div>
         <?php if (!empty($errors['customer_id'])): ?><div class="form-text-error"><?= e($errors['customer_id']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-6">

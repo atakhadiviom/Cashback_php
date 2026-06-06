@@ -15,10 +15,8 @@ final class PurchaseController
 {
     public function create(): void
     {
-        $filters = $this->customerSearchFilters();
         View::render('purchases/create', [
-            'customers' => (new CustomerRepository())->search($filters, 1000),
-            'filters' => $filters,
+            'customers' => (new CustomerRepository())->search([], 1000),
             'errors' => [],
             'settings' => (new CashbackSettingsRepository())->settings(),
         ]);
@@ -32,10 +30,8 @@ final class PurchaseController
             'confirm_duplicate' => isset($_POST['confirm_duplicate']),
         ]);
         if (!$result['ok']) {
-            $filters = $this->customerSearchFilters();
             View::render('purchases/create', [
-                'customers' => (new CustomerRepository())->search($filters, 1000),
-                'filters' => $filters,
+                'customers' => (new CustomerRepository())->search([], 1000),
                 'errors' => $result['errors'],
                 'needs_confirm' => !empty($result['needs_confirm']),
                 'settings' => (new CashbackSettingsRepository())->settings(),
@@ -44,13 +40,5 @@ final class PurchaseController
         }
         Flash::set('success', 'خرید ثبت شد و مبلغ ' . \money($result['cashback']) . ' ریال کش‌بک (نرخ ' . $result['percent_applied'] . '٪) به کیف پول مشتری اضافه شد.');
         \redirect('/customers/show?id=' . (int) $_POST['customer_id']);
-    }
-
-    /** @return array<string, string> */
-    private function customerSearchFilters(): array
-    {
-        $q = trim((string) ($_GET['q'] ?? $_POST['search_q'] ?? ''));
-
-        return $q !== '' ? ['q' => $q] : [];
     }
 }
