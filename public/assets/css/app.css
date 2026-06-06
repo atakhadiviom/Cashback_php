@@ -363,30 +363,41 @@ a {
     z-index: 1060;
     max-height: 280px;
     overflow-y: auto;
-    border: 1px solid var(--line);
+    padding: 6px;
+    border: 1px solid #d0d5dd;
     border-radius: 3px;
     background: var(--panel);
+    box-shadow: 0 12px 28px rgba(16, 24, 40, .12);
 }
 
 .customer-result-item {
     display: block;
     width: 100%;
-    padding: 10px 12px;
+    min-height: 42px;
+    padding: 9px 11px;
     border: 0;
-    border-bottom: 1px solid var(--line);
+    border-radius: 3px;
+    appearance: none;
     background: transparent;
     color: var(--text);
+    font: inherit;
+    font-size: .92rem;
+    line-height: 1.6;
     text-align: right;
+    cursor: pointer;
 }
 
 .customer-result-item:hover,
 .customer-result-item:focus {
     background: var(--primary-soft);
+    color: var(--primary-strong);
+    outline: 0;
 }
 
 .customer-results-empty {
-    padding: 12px;
+    padding: 10px 12px;
     color: var(--muted);
+    font-size: .88rem;
 }
 
 .ltr {

@@ -31,7 +31,7 @@ $navItems = array_values(array_filter($navItems, static fn (array $item): bool =
     <title><?= e(config_value('app.name')) ?></title>
     <link href="<?= e(asset_url('vendor/bootstrap/bootstrap.rtl.min.css')) ?>" rel="stylesheet">
     <link href="<?= e(asset_url('vendor/bootstrap-icons/bootstrap-icons.min.css')) ?>" rel="stylesheet">
-    <link rel="stylesheet" href="<?= e(asset_url('css/app.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset_url('css/app.css')) ?>?v=<?= e(app_version()) ?>">
 </head>
 <body>
 <?php if (Auth::check()): ?>
