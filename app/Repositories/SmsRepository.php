@@ -24,25 +24,35 @@ final class SmsRepository
 
     public function updateSettings(array $data, bool $updateToken): void
     {
-        $fields = [
-            'sender_number = :sender_number',
-            'sms_enabled = :sms_enabled',
-            'purchase_sms_enabled = :purchase_sms_enabled',
-            'birthday_sms_enabled = :birthday_sms_enabled',
-            'wallet_reduction_sms_enabled = :wallet_reduction_sms_enabled',
-            'welcome_sms_enabled = :welcome_sms_enabled',
-            'purchase_template = :purchase_template',
-            'birthday_template = :birthday_template',
-            'wallet_reduction_template = :wallet_reduction_template',
-            'welcome_template = :welcome_template',
-            'updated_at = :updated_at',
-        ];
-        if ($updateToken) {
-            $fields[] = 'api_token = :api_token';
-        } else {
-            unset($data['api_token']);
+        if (!$updateToken) {
+            $current = $this->settings();
+            $data['api_token'] = (string) ($current['api_token'] ?? '');
         }
-        $stmt = $this->pdo->prepare('UPDATE sms_settings SET ' . implode(', ', $fields) . ' WHERE id = 1');
+
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO sms_settings (
+                id, api_token, sender_number, sms_enabled, purchase_sms_enabled, birthday_sms_enabled,
+                wallet_reduction_sms_enabled, welcome_sms_enabled, purchase_template, birthday_template,
+                wallet_reduction_template, welcome_template, updated_at
+            ) VALUES (
+                1, :api_token, :sender_number, :sms_enabled, :purchase_sms_enabled, :birthday_sms_enabled,
+                :wallet_reduction_sms_enabled, :welcome_sms_enabled, :purchase_template, :birthday_template,
+                :wallet_reduction_template, :welcome_template, :updated_at
+            )
+            ON DUPLICATE KEY UPDATE
+                api_token = VALUES(api_token),
+                sender_number = VALUES(sender_number),
+                sms_enabled = VALUES(sms_enabled),
+                purchase_sms_enabled = VALUES(purchase_sms_enabled),
+                birthday_sms_enabled = VALUES(birthday_sms_enabled),
+                wallet_reduction_sms_enabled = VALUES(wallet_reduction_sms_enabled),
+                welcome_sms_enabled = VALUES(welcome_sms_enabled),
+                purchase_template = VALUES(purchase_template),
+                birthday_template = VALUES(birthday_template),
+                wallet_reduction_template = VALUES(wallet_reduction_template),
+                welcome_template = VALUES(welcome_template),
+                updated_at = VALUES(updated_at)'
+        );
         $stmt->execute($data);
     }
 

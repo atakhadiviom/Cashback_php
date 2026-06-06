@@ -21,9 +21,10 @@ final class SettingsController
         Csrf::requireValid();
         $repo = new SmsRepository();
         $token = trim((string) ($_POST['api_token'] ?? ''));
+        $senderNumber = \normalize_digits(trim((string) ($_POST['sender_number'] ?? '')));
         $repo->updateSettings([
             'api_token' => $token,
-            'sender_number' => trim((string) ($_POST['sender_number'] ?? '')),
+            'sender_number' => $senderNumber,
             'sms_enabled' => isset($_POST['sms_enabled']) ? 1 : 0,
             'purchase_sms_enabled' => isset($_POST['purchase_sms_enabled']) ? 1 : 0,
             'birthday_sms_enabled' => isset($_POST['birthday_sms_enabled']) ? 1 : 0,

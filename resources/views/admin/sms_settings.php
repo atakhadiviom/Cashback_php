@@ -4,8 +4,12 @@
 <form method="post" action="<?= e(url('/admin/sms-settings')) ?>">
     <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
     <div class="row g-3">
-        <div class="col-md-6"><label class="form-label">توکن API</label><input class="form-control ltr" name="api_token" placeholder="برای عدم تغییر خالی بگذارید"></div>
-        <div class="col-md-6"><label class="form-label">شماره فرستنده</label><input class="form-control ltr" name="sender_number" value="<?= e($settings['sender_number'] ?? '') ?>"></div>
+        <div class="col-md-6">
+            <label class="form-label">توکن API</label>
+            <input class="form-control ltr" name="api_token" placeholder="<?= !empty($settings['api_token']) ? 'توکن ذخیره شده است؛ برای تغییر مقدار جدید وارد کنید' : 'توکن ippanel را وارد کنید' ?>" autocomplete="off">
+            <div class="form-text"><?= !empty($settings['api_token']) ? 'توکن ippanel در دیتابیس ذخیره شده است.' : 'هنوز توکنی در دیتابیس ذخیره نشده است.' ?></div>
+        </div>
+        <div class="col-md-6"><label class="form-label">شماره فرستنده</label><input class="form-control ltr" name="sender_number" value="<?= e($settings['sender_number'] ?? '') ?>" placeholder="مثلاً 3000..." autocomplete="off"></div>
         <?php foreach (['sms_enabled'=>'فعال‌سازی کلی', 'purchase_sms_enabled'=>'پیامک خرید', 'birthday_sms_enabled'=>'پیامک تولد', 'wallet_reduction_sms_enabled'=>'پیامک کسر کیف پول', 'welcome_sms_enabled'=>'پیامک خوشامد'] as $name=>$label): ?>
             <div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="<?= e($name) ?>" name="<?= e($name) ?>" <?= !empty($settings[$name]) ? 'checked' : '' ?>><label class="form-check-label" for="<?= e($name) ?>"><?= e($label) ?></label></div></div>
         <?php endforeach; ?>
