@@ -16,7 +16,7 @@ final class PurchaseService
     /**
      * @param array{invoice_ref?: string, confirm_duplicate?: bool, idempotency_key?: string, created_by?: int} $options
      */
-    public function create(int $customerId, mixed $amount, array $options = []): array
+    public function create(int $customerId, $amount, array $options = []): array
     {
         $amount = (float) str_replace(',', '', \normalize_digits((string) $amount));
         if ($amount <= 0) {

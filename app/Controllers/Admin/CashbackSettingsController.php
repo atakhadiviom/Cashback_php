@@ -20,7 +20,7 @@ final class CashbackSettingsController
     public function update(): void
     {
         Csrf::requireValid();
-        $nullableFloat = static fn (mixed $v): ?float => trim((string) $v) === '' ? null : (float) str_replace(',', '', \normalize_digits((string) $v));
+        $nullableFloat = static fn ($v): ?float => trim((string) $v) === '' ? null : (float) str_replace(',', '', \normalize_digits((string) $v));
 
         (new CashbackSettingsRepository())->update([
             'cashback_percent' => (float) str_replace(',', '', \normalize_digits((string) ($_POST['cashback_percent'] ?? '5'))),

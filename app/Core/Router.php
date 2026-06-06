@@ -72,14 +72,20 @@ final class Router
         }
 
         $controller = new \App\Controllers\Api\V1Controller();
-        match ([$method, $path]) {
-            ['POST', '/api/v1/purchases'] => $controller->createPurchase(),
-            ['GET', '/api/v1/customers/by-phone'] => $controller->customerByPhone(),
-            ['POST', '/api/v1/wallet/reduce'] => $controller->reduceWallet(),
-            default => (function () {
-                http_response_code(404);
-                echo json_encode(['ok' => false, 'error' => 'Not found'], JSON_UNESCAPED_UNICODE);
-            })(),
-        };
+        if ($method === 'POST' && $path === '/api/v1/purchases') {
+            $controller->createPurchase();
+            return;
+        }
+        if ($method === 'GET' && $path === '/api/v1/customers/by-phone') {
+            $controller->customerByPhone();
+            return;
+        }
+        if ($method === 'POST' && $path === '/api/v1/wallet/reduce') {
+            $controller->reduceWallet();
+            return;
+        }
+
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'error' => 'Not found'], JSON_UNESCAPED_UNICODE);
     }
 }

@@ -18,15 +18,27 @@ final class SmsService
     public function sendEvent(string $eventType, array $customer, array $vars = []): ?int
     {
         $settings = $this->sms->settings();
-        $flag = match ($eventType) {
-            'purchase' => 'purchase_sms_enabled',
-            'birthday' => 'birthday_sms_enabled',
-            'wallet_reduction' => 'wallet_reduction_sms_enabled',
-            'welcome' => 'welcome_sms_enabled',
-            'purchase_void' => 'purchase_sms_enabled',
-            'referral_bonus' => 'purchase_sms_enabled',
-            default => 'sms_enabled',
-        };
+        switch ($eventType) {
+            case 'purchase':
+                $flag = 'purchase_sms_enabled';
+                break;
+            case 'birthday':
+                $flag = 'birthday_sms_enabled';
+                break;
+            case 'wallet_reduction':
+                $flag = 'wallet_reduction_sms_enabled';
+                break;
+            case 'welcome':
+                $flag = 'welcome_sms_enabled';
+                break;
+            case 'purchase_void':
+            case 'referral_bonus':
+                $flag = 'purchase_sms_enabled';
+                break;
+            default:
+                $flag = 'sms_enabled';
+                break;
+        }
         if (empty($settings['sms_enabled'])) {
             return null;
         }
@@ -34,12 +46,20 @@ final class SmsService
             return null;
         }
 
-        $templateKey = match ($eventType) {
-            'purchase_void' => 'purchase_void_template',
-            'referral_bonus' => 'referral_template',
-            'otp' => 'otp_template',
-            default => $eventType . '_template',
-        };
+        switch ($eventType) {
+            case 'purchase_void':
+                $templateKey = 'purchase_void_template';
+                break;
+            case 'referral_bonus':
+                $templateKey = 'referral_template';
+                break;
+            case 'otp':
+                $templateKey = 'otp_template';
+                break;
+            default:
+                $templateKey = $eventType . '_template';
+                break;
+        }
         $template = (string) ($settings[$templateKey] ?? '');
         if ($eventType === 'otp' && $template === '' && !empty($vars['message'])) {
             $message = (string) $vars['message'];

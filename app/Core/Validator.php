@@ -36,7 +36,7 @@ final class Validator
         return $errors;
     }
 
-    public static function positiveAmount(mixed $amount, string $field = 'amount'): array
+    public static function positiveAmount($amount, string $field = 'amount'): array
     {
         $amount = (float) str_replace(',', '', \normalize_digits((string) $amount));
         return $amount > 0 ? [] : [$field => 'مبلغ باید مثبت باشد.'];

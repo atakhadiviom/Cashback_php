@@ -32,7 +32,7 @@ final class SmsTemplateRenderer
 
         return strtr($template, array_combine(
             array_map(fn (string $key): string => '{' . $key . '}', array_keys($values)),
-            array_map(fn (mixed $value): string => (string) $value, array_values($values))
+            array_map(fn ($value): string => (string) $value, array_values($values))
         ));
     }
 }

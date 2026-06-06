@@ -33,7 +33,7 @@ $canWriteExternalLock = is_writable(dirname($externalLockFile)) && (!file_exists
 $configFile = $canWriteRootConfig ? $rootConfigFile : ($canWriteExternalConfig ? $externalConfigFile : $internalConfigFile);
 $lockFile = $canWriteRootLock ? $rootLockFile : ($canWriteExternalLock ? $externalLockFile : $internalLockFile);
 
-function installer_e(mixed $value): string
+function installer_e($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
@@ -191,7 +191,7 @@ $values = [
 $recommendedBaseUrl = '';
 try {
     $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-    $recommendedBaseUrl = ($requestPath === '/public/install.php' || str_starts_with($requestPath, '/public/')) ? '/public' : '';
+    $recommendedBaseUrl = ($requestPath === '/public/install.php' || substr($requestPath, 0, 8) === '/public/') ? '/public' : '';
 } catch (Throwable) {
     $recommendedBaseUrl = '';
 }

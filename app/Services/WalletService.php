@@ -15,7 +15,7 @@ final class WalletService
     /**
      * @param array{purchase_id?: int, related_purchase_amount?: float} $options
      */
-    public function reduce(int $customerId, mixed $amount, string $reason, array $options = []): array
+    public function reduce(int $customerId, $amount, string $reason, array $options = []): array
     {
         $amount = (float) str_replace(',', '', \normalize_digits((string) $amount));
         if ($amount <= 0) {

@@ -2,7 +2,21 @@
 
 declare(strict_types=1);
 
-function config_value(string $key, mixed $default = null): mixed
+if (!function_exists('str_starts_with')) {
+    function str_starts_with(string $haystack, string $needle): bool
+    {
+        return $needle === '' || strncmp($haystack, $needle, strlen($needle)) === 0;
+    }
+}
+
+if (!function_exists('str_ends_with')) {
+    function str_ends_with(string $haystack, string $needle): bool
+    {
+        return $needle === '' || substr($haystack, -strlen($needle)) === $needle;
+    }
+}
+
+function config_value(string $key, $default = null)
 {
     $value = $GLOBALS['config'] ?? [];
     foreach (explode('.', $key) as $segment) {
@@ -14,7 +28,7 @@ function config_value(string $key, mixed $default = null): mixed
     return $value;
 }
 
-function e(mixed $value): string
+function e($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
@@ -99,7 +113,7 @@ function normalize_digits(string $value): string
     ]);
 }
 
-function money(mixed $amount): string
+function money($amount): string
 {
     return number_format((float) $amount, 0, '.', ',');
 }
@@ -114,12 +128,12 @@ function request_ip(): string
     return substr($_SERVER['REMOTE_ADDR'] ?? 'cli', 0, 45);
 }
 
-function post_value(string $key, mixed $default = ''): mixed
+function post_value(string $key, $default = '')
 {
     return $_POST[$key] ?? $default;
 }
 
-function query_value(string $key, mixed $default = ''): mixed
+function query_value(string $key, $default = '')
 {
     return $_GET[$key] ?? $default;
 }

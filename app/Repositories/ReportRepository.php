@@ -93,11 +93,17 @@ final class ReportRepository
 
     public function birthdays(string $period): array
     {
-        $condition = match ($period) {
-            'today' => 'MONTH(birthday) = MONTH(CURDATE()) AND DAY(birthday) = DAY(CURDATE())',
-            'week' => 'birthday IS NOT NULL AND DAYOFYEAR(birthday) BETWEEN DAYOFYEAR(CURDATE()) AND DAYOFYEAR(DATE_ADD(CURDATE(), INTERVAL 7 DAY))',
-            default => 'MONTH(birthday) = MONTH(CURDATE())',
-        };
+        switch ($period) {
+            case 'today':
+                $condition = 'MONTH(birthday) = MONTH(CURDATE()) AND DAY(birthday) = DAY(CURDATE())';
+                break;
+            case 'week':
+                $condition = 'birthday IS NOT NULL AND DAYOFYEAR(birthday) BETWEEN DAYOFYEAR(CURDATE()) AND DAYOFYEAR(DATE_ADD(CURDATE(), INTERVAL 7 DAY))';
+                break;
+            default:
+                $condition = 'MONTH(birthday) = MONTH(CURDATE())';
+                break;
+        }
         return $this->pdo->query("SELECT * FROM customers WHERE deleted_at IS NULL AND birthday IS NOT NULL AND {$condition} ORDER BY DAY(birthday)")->fetchAll();
     }
 
