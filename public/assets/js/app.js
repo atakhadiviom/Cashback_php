@@ -9,14 +9,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const customerPicker = document.getElementById('purchase-customer-picker');
   const customerId = document.getElementById('purchase-customer-id');
-  const customerOptions = document.getElementById('purchase-customer-options');
-  if (customerPicker && customerId && customerOptions) {
-    const optionsByLabel = new Map(
-      [...customerOptions.options].map((option) => [option.value, option.dataset.id || ''])
-    );
+  const customerResults = document.getElementById('purchase-customer-results');
+  if (customerPicker && customerId && customerResults) {
+    const resultItems = Array.from(customerResults.querySelectorAll('.customer-result-item'));
+    const emptyState = customerResults.querySelector('[data-empty]');
+
+    const normalizeCustomerText = (value) =>
+      value.replace(/[۰-۹٠-٩]/g, (ch) => {
+        const map = {
+          '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+          '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+          '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+          '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+        };
+        return map[ch] || ch;
+      });
+
+    const selectCustomer = (item) => {
+      customerPicker.value = item.dataset.label || item.textContent.trim();
+      customerId.value = item.dataset.id || '';
+      customerPicker.setCustomValidity('');
+      customerResults.hidden = true;
+    };
+
+    const renderCustomerResults = () => {
+      const query = normalizeCustomerText(customerPicker.value.trim().toLowerCase());
+      let visibleCount = 0;
+      let exactMatch = false;
+
+      resultItems.forEach((item) => {
+        const label = item.dataset.label || item.textContent.trim();
+        const haystack = normalizeCustomerText((item.dataset.search || label).toLowerCase());
+        const matches = query === '' || haystack.includes(query);
+        const shouldShow = matches && visibleCount < 20;
+        item.hidden = !shouldShow;
+
+        if (matches) {
+          visibleCount += 1;
+        }
+        if (query !== '' && normalizeCustomerText(label.toLowerCase()) === query) {
+          exactMatch = true;
+          customerId.value = item.dataset.id || '';
+        }
+      });
+
+      if (emptyState) {
+        emptyState.hidden = visibleCount !== 0;
+      }
+      customerResults.hidden = false;
+
+      if (query === '') {
+        customerId.value = '';
+        customerPicker.setCustomValidity('');
+      } else if (!exactMatch) {
+        customerId.value = '';
+        customerPicker.setCustomValidity('لطفاً یک مشتری را از لیست انتخاب کنید.');
+      } else {
+        customerPicker.setCustomValidity('');
+      }
+    };
 
     const syncCustomerId = () => {
-      customerId.value = optionsByLabel.get(customerPicker.value.trim()) || '';
       if (customerPicker.value.trim() !== '' && customerId.value === '') {
         customerPicker.setCustomValidity('لطفاً یک مشتری را از لیست انتخاب کنید.');
       } else {
@@ -24,7 +77,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    customerPicker.addEventListener('input', syncCustomerId);
+    customerPicker.addEventListener('input', renderCustomerResults);
+    customerPicker.addEventListener('focus', renderCustomerResults);
+    resultItems.forEach((item) => {
+      item.addEventListener('click', () => selectCustomer(item));
+    });
+    document.addEventListener('click', (event) => {
+      if (!customerResults.contains(event.target) && event.target !== customerPicker) {
+        customerResults.hidden = true;
+      }
+    });
     if (customerPicker.form) {
       customerPicker.form.addEventListener('submit', syncCustomerId);
     }

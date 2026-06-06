@@ -18,12 +18,26 @@
     <div class="col-md-6">
         <label class="form-label">مشتری</label>
         <input type="hidden" name="customer_id" id="purchase-customer-id" value="<?= e($selectedId) ?>">
-        <input class="form-control" id="purchase-customer-picker" list="purchase-customer-options" value="<?= e($selectedLabel) ?>" placeholder="نام، کد ملی یا شماره موبایل را تایپ کنید" autocomplete="off" required>
-        <datalist id="purchase-customer-options">
-            <?php foreach ($customerOptions as $option): ?>
-                <option value="<?= e($option['label']) ?>" data-id="<?= e($option['id']) ?>"></option>
-            <?php endforeach; ?>
-        </datalist>
+        <div class="customer-combobox">
+            <input class="form-control" id="purchase-customer-picker" value="<?= e($selectedLabel) ?>" placeholder="نام، کد ملی یا شماره موبایل را تایپ کنید" autocomplete="off" required>
+            <div class="customer-results shadow-sm" id="purchase-customer-results" hidden>
+                <div class="customer-results-empty" data-empty hidden>مشتری پیدا نشد.</div>
+                <div class="customer-results-list">
+                    <?php foreach ($customerOptions as $option): ?>
+                        <button
+                            type="button"
+                            class="customer-result-item"
+                            data-id="<?= e($option['id']) ?>"
+                            data-label="<?= e($option['label']) ?>"
+                            data-search="<?= e($option['label']) ?>"
+                            hidden
+                        >
+                            <?= e($option['label']) ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
         <div class="form-text">برای انتخاب مشتری، نام یا شماره موبایل را تایپ کنید و از لیست انتخاب کنید.</div>
         <?php if (!empty($errors['customer_id'])): ?><div class="form-text-error"><?= e($errors['customer_id']) ?></div><?php endif; ?>
     </div>
