@@ -18,8 +18,6 @@ final class Validator
         $nationalCode = \normalize_digits((string) ($data['national_code'] ?? ''));
         if (!preg_match('/^\d{10}$/', $nationalCode)) {
             $errors['national_code'] = 'کد ملی باید دقیقاً ۱۰ رقم باشد.';
-        } elseif (!self::isValidIranianNationalCode($nationalCode)) {
-            $errors['national_code'] = 'کد ملی نامعتبر است.';
         } elseif ($nationalCodeExists) {
             $errors['national_code'] = 'این کد ملی قبلاً ثبت شده است.';
         }
