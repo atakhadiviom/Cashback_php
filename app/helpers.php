@@ -97,6 +97,18 @@ function asset_url(string $logicalPath): string
     return url('/assets/' . $logicalPath);
 }
 
+function app_version(): string
+{
+    static $version = null;
+    if (is_string($version)) {
+        return $version;
+    }
+
+    $versionFile = dirname(__DIR__) . '/VERSION';
+    $version = is_file($versionFile) ? trim((string) file_get_contents($versionFile)) : 'dev';
+    return $version !== '' ? $version : 'dev';
+}
+
 function redirect(string $path): never
 {
     header('Location: ' . url($path));

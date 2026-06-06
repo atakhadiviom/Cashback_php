@@ -51,6 +51,7 @@ $renderSidebar = function (string $extraClass = '') use ($navItems, $currentPath
                 <small><?= e(config_value('app.company_name', '')) ?></small>
             </span>
         </a>
+        <div class="mt-2 small text-muted ltr">v<?= e(app_version()) ?></div>
     </div>
     <div class="sidebar-section">منوی اصلی</div>
     <nav class="sidebar-nav">
@@ -78,6 +79,7 @@ $renderSidebar('d-none d-xl-flex');
             <div>
                 <div class="topbar-kicker">پنل مدیریت</div>
                 <h1><?= e(config_value('app.name')) ?></h1>
+                <div class="text-muted small ltr">Version <?= e(app_version()) ?></div>
             </div>
             <div class="topbar-actions">
                 <div class="user-chip">

@@ -13,6 +13,10 @@
                 <div class="ltr"><?= e($status['branch']) ?></div>
             </div>
             <div class="col-md-3">
+                <div class="text-muted small">نسخه نصب‌شده</div>
+                <div class="ltr">v<?= e($status['version']) ?></div>
+            </div>
+            <div class="col-md-3">
                 <div class="text-muted small">وضعیت</div>
                 <div><?= $status['enabled'] ? 'فعال' : 'غیرفعال در تنظیمات' ?></div>
             </div>

@@ -36,6 +36,7 @@ final class AppUpdaterService
             'owner' => (string) \config_value('updater.github_owner', ''),
             'repo' => (string) \config_value('updater.github_repo', ''),
             'branch' => (string) \config_value('updater.branch', 'main'),
+            'version' => \app_version(),
             'zip_available' => class_exists(ZipArchive::class),
             'curl_available' => function_exists('curl_init'),
             'backup_dir' => $this->backupDir(),
