@@ -7,6 +7,7 @@
 - PHP 8.1 یا PHP 8.2 به بالا
 - MySQL یا MariaDB
 - افزونه‌های PHP: `pdo_mysql`, `curl`, `mbstring`
+- برای آپدیت خودکار از GitHub: افزونه‌های `curl` و `zip`
 - امکان اجرای cron در cPanel
 
 ## نصب محلی
@@ -89,6 +90,24 @@ storage/installed.lock
 2. ZIP جدید را داخل پوشه برنامه extract کنید.
 3. اگر هاست شما از فایل‌های قدیمی داخل پروژه استفاده می‌کرد، قبل از آپدیت از `config/config.php` و `storage/installed.lock` بکاپ بگیرید.
 4. بعد از آپدیت `/login` را باز کنید. نصب‌کننده نباید باز شود.
+
+## آپدیت خودکار از GitHub
+
+ادمین می‌تواند از مسیر `مدیریت > به‌روزرسانی` آخرین نسخه شاخه `main` را از GitHub دریافت و نصب کند. این قابلیت روی هاست‌های اشتراکی cPanel/DirectAdmin بدون نیاز به SSH کار می‌کند، ولی باید افزونه‌های PHP `curl` و `zip` فعال باشند.
+
+برای فعال‌سازی، در فایل تنظیمات پایدار هاست (`../cashback_config.php` یا `cashback_config.php`) بخش زیر را اضافه یا ویرایش کنید:
+
+```php
+'updater' => [
+    'enabled' => true,
+    'github_owner' => 'atakhadiviom',
+    'github_repo' => 'Cashback_php',
+    'branch' => 'main',
+    'github_token' => '',
+],
+```
+
+اگر مخزن خصوصی است، یک GitHub token با دسترسی خواندن مخزن در `github_token` قرار دهید. آپدیتر قبل از جایگزینی فایل‌ها در `storage/backups` بکاپ می‌سازد و مسیرهای محلی مثل `cashback_config.php`، `config/config.php`، `storage`، `.env`، `.git` و `vendor` را overwrite نمی‌کند.
 
 ## Cron
 

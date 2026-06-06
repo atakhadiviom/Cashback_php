@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\Admin\ActivityLogController;
+use App\Controllers\Admin\AppUpdateController;
 use App\Controllers\Admin\ApiKeyController;
 use App\Controllers\Admin\CashbackSettingsController;
 use App\Controllers\Admin\CustomerImportController;
@@ -74,5 +75,7 @@ $router->post('/admin/loyalty/promotions', [LoyaltyController::class, 'storeProm
 $router->get('/admin/api-keys', [ApiKeyController::class, 'index'], true, 'admin');
 $router->post('/admin/api-keys', [ApiKeyController::class, 'store'], true, 'admin');
 $router->post('/admin/api-keys/deactivate', [ApiKeyController::class, 'deactivate'], true, 'admin');
+$router->get('/admin/app-update', [AppUpdateController::class, 'index'], true, 'admin');
+$router->post('/admin/app-update', [AppUpdateController::class, 'update'], true, 'admin');
 
 return $router;

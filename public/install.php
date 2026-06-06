@@ -89,6 +89,13 @@ function installer_config(array $data): string
         "    'security' => [\n" .
         "        'session_name' => 'cashback_session',\n" .
         "    ],\n" .
+        "    'updater' => [\n" .
+        "        'enabled' => false,\n" .
+        "        'github_owner' => 'atakhadiviom',\n" .
+        "        'github_repo' => 'Cashback_php',\n" .
+        "        'branch' => 'main',\n" .
+        "        'github_token' => '',\n" .
+        "    ],\n" .
         "];\n";
 }
 

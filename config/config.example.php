@@ -28,4 +28,11 @@ return [
         'otp_max_attempts' => 5,
         'otp_rate_limit_per_hour' => 5,
     ],
+    'updater' => [
+        'enabled' => false,
+        'github_owner' => 'atakhadiviom',
+        'github_repo' => 'Cashback_php',
+        'branch' => 'main',
+        'github_token' => '',
+    ],
 ];
