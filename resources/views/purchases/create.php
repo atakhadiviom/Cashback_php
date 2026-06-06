@@ -29,7 +29,7 @@
     </div>
     <div class="col-md-6">
         <label class="form-label">مبلغ خرید (ریال)</label>
-        <input class="form-control ltr" name="amount" value="<?= e($_POST['amount'] ?? '') ?>" required>
+        <input class="form-control ltr" name="amount" value="<?= e($_POST['amount'] ?? '') ?>" inputmode="numeric" data-money required>
         <?php if (!empty($errors['amount'])): ?><div class="form-text-error"><?= e($errors['amount']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-6">

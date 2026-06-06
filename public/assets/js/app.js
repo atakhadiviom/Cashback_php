@@ -28,4 +28,25 @@ document.addEventListener('DOMContentLoaded', () => {
     customerPicker.form?.addEventListener('submit', syncCustomerId);
     syncCustomerId();
   }
+
+  document.querySelectorAll('[data-money]').forEach((input) => {
+    const normalizeDigits = (value) =>
+      value.replace(/[۰-۹٠-٩]/g, (ch) => {
+        const map = {
+          '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+          '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+          '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+          '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+        };
+        return map[ch] ?? ch;
+      });
+
+    const formatMoney = () => {
+      const raw = normalizeDigits(input.value).replace(/[^\d]/g, '');
+      input.value = raw === '' ? '' : raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    };
+
+    input.addEventListener('input', formatMoney);
+    formatMoney();
+  });
 });
