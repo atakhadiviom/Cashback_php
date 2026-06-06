@@ -25,7 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     customerPicker.addEventListener('input', syncCustomerId);
-    customerPicker.form?.addEventListener('submit', syncCustomerId);
+    if (customerPicker.form) {
+      customerPicker.form.addEventListener('submit', syncCustomerId);
+    }
     syncCustomerId();
   }
 
@@ -38,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
           '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
           '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
         };
-        return map[ch] ?? ch;
+        return map[ch] || ch;
       });
 
     const formatMoney = () => {

@@ -104,6 +104,6 @@ $renderSidebar('d-none d-xl-flex');
     </main>
 </div>
 <script src="<?= e(asset_url('vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
-<script src="<?= e(asset_url('js/app.js')) ?>"></script>
+<script src="<?= e(asset_url('js/app.js')) ?>?v=<?= e(app_version()) ?>"></script>
 </body>
 </html>
