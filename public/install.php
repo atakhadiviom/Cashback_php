@@ -22,6 +22,7 @@ $internalLockFile = $root . '/storage/installed.lock';
 $schemaFile = $root . '/database/schema.sql';
 $errors = [];
 $success = false;
+$htaccessNotice = [];
 
 $canWriteRootConfig = is_writable(dirname($rootConfigFile)) && (!file_exists($rootConfigFile) || is_writable($rootConfigFile));
 $canWriteExternalConfig = is_writable(dirname($externalConfigFile)) && (!file_exists($externalConfigFile) || is_writable($externalConfigFile));
@@ -64,6 +65,103 @@ function installer_dsn(string $host, ?string $database = null): string
     }
 
     return $dsn . ';charset=utf8mb4';
+}
+
+function installer_needs_root_htaccess(): bool
+{
+    $docRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+
+    return $docRoot === '' || !str_ends_with($docRoot, '/public');
+}
+
+function installer_root_htaccess_template(): string
+{
+    return <<<'HTACCESS'
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule ^app\.css$ public/assets/css/app.css [L]
+    RewriteRule ^bootstrap\.rtl\.min\.css$ public/assets/vendor/bootstrap/bootstrap.rtl.min.css [L]
+    RewriteRule ^bootstrap-icons\.min\.css$ public/assets/vendor/bootstrap-icons/bootstrap-icons.min.css [L]
+    RewriteRule ^app\.js$ public/assets/js/app.js [L]
+    RewriteRule ^bootstrap\.bundle\.min\.js$ public/assets/vendor/bootstrap/bootstrap.bundle.min.js [L]
+    RewriteRule ^fonts/bootstrap-icons\.woff$ public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff [L]
+    RewriteRule ^fonts/bootstrap-icons\.woff2$ public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2 [L]
+    RewriteRule ^bootstrap-icons\.woff$ public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff [L]
+    RewriteRule ^bootstrap-icons\.woff2$ public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2 [L]
+
+    RewriteRule ^(app|bootstrap|config|cron|database|docs|resources|storage|tests)(/|$) - [F,L]
+
+    RewriteRule ^install\.php$ public/install.php [L]
+    RewriteRule ^(assets/.*|favicon\.ico)$ public/$1 [L]
+
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    RewriteRule ^$ public/index.php [L]
+    RewriteRule ^(.*)$ public/index.php [L]
+</IfModule>
+
+HTACCESS;
+}
+
+function installer_public_htaccess_template(): string
+{
+    return <<<'HTACCESS'
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteCond %{DOCUMENT_ROOT}/../storage/installed.lock -f
+    RewriteRule ^install\.php$ - [R=404,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+HTACCESS;
+}
+
+/**
+ * @return array{created: list<string>, skipped: list<string>, errors: list<string>}
+ */
+function installer_ensure_htaccess_files(string $root): array
+{
+    $result = ['created' => [], 'skipped' => [], 'errors' => []];
+
+    $publicHtaccess = $root . '/public/.htaccess';
+    if (is_file($publicHtaccess)) {
+        $result['skipped'][] = 'public/.htaccess';
+    } elseif (!is_writable(dirname($publicHtaccess))) {
+        $result['errors'][] = 'پوشه public برای نوشتن .htaccess قابل نوشتن نیست.';
+    } elseif (file_put_contents($publicHtaccess, installer_public_htaccess_template()) === false) {
+        $result['errors'][] = 'نوشتن public/.htaccess انجام نشد.';
+    } else {
+        $result['created'][] = 'public/.htaccess';
+    }
+
+    if (!installer_needs_root_htaccess()) {
+        return $result;
+    }
+
+    $rootHtaccess = $root . '/.htaccess';
+    if (is_file($rootHtaccess)) {
+        $result['skipped'][] = '.htaccess';
+    } elseif (!is_writable($root)) {
+        $result['errors'][] = 'ریشه پروژه برای نوشتن .htaccess قابل نوشتن نیست: ' . $root;
+    } elseif (file_put_contents($rootHtaccess, installer_root_htaccess_template()) === false) {
+        $result['errors'][] = 'نوشتن .htaccess در ریشه پروژه انجام نشد.';
+    } else {
+        $result['created'][] = '.htaccess';
+    }
+
+    return $result;
 }
 
 function installer_config(array $data): string
@@ -145,6 +243,13 @@ $requirements = [
         'ok' => is_readable($schemaFile),
         'detail' => 'مسیر: ' . $schemaFile,
     ],
+    [
+        'label' => 'نوشتن .htaccess برای مسیریابی و فایل‌های CSS/JS',
+        'ok' => is_writable($root . '/public') && (!installer_needs_root_htaccess() || is_writable($root)),
+        'detail' => installer_needs_root_htaccess()
+            ? 'در docroot پروژه، فایل‌های .htaccess و public/.htaccess برای آدرس‌های تمیز و بارگذاری assets لازم هستند.'
+            : 'docroot روی public است؛ فقط public/.htaccess برای مسیریابی لازم است.',
+    ],
 ];
 $requirementsPassed = count(array_filter($requirements, fn (array $item): bool => $item['ok'])) === count($requirements);
 $failedRequirements = array_values(array_filter($requirements, fn (array $item): bool => !$item['ok']));
@@ -172,6 +277,9 @@ $phpDiagnostics = [
     'config file writable/existing' => (!file_exists($configFile) || is_writable($configFile)) ? 'YES' : 'NO',
     'parent directory writable for install lock' => is_writable(dirname($lockFile)) ? 'YES' : 'NO',
     'schema readable' => is_readable($schemaFile) ? 'YES' : 'NO',
+    'Needs root .htaccess' => installer_needs_root_htaccess() ? 'YES' : 'NO',
+    'Root .htaccess path' => $root . '/.htaccess',
+    'Public .htaccess path' => $root . '/public/.htaccess',
 ];
 
 $values = [
@@ -201,6 +309,13 @@ if (file_exists($externalLockFile) || file_exists($rootLockFile) || file_exists(
     $locked = true;
 } else {
     $locked = false;
+    $htaccessResult = installer_ensure_htaccess_files($root);
+    if ($htaccessResult['created'] !== []) {
+        $htaccessNotice[] = 'فایل‌های مسیریابی ساخته شدند: ' . implode('، ', $htaccessResult['created']);
+    }
+    foreach ($htaccessResult['errors'] as $htaccessError) {
+        $htaccessNotice[] = $htaccessError;
+    }
 }
 
 if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
@@ -271,6 +386,14 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 throw new RuntimeException('ایجاد فایل قفل نصب انجام نشد: ' . $lockFile);
             }
 
+            $htaccessResult = installer_ensure_htaccess_files($root);
+            if ($htaccessResult['errors'] !== []) {
+                throw new RuntimeException('نصب دیتابیس انجام شد اما .htaccess ساخته نشد: ' . implode(' ', $htaccessResult['errors']));
+            }
+            if ($htaccessResult['created'] !== []) {
+                $htaccessNotice[] = 'فایل‌های مسیریابی ساخته شدند: ' . implode('، ', $htaccessResult['created']);
+            }
+
             $success = true;
         } catch (Throwable $exception) {
             $errors[] = 'خطای نصب: ' . $exception->getMessage();
@@ -331,10 +454,12 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         <div class="alert alert-warning">نصب‌کننده غیرفعال است.</div>
         <a class="btn btn-primary" href="login">ورود به برنامه</a>
     <?php elseif ($success): ?>
-        <div class="alert alert-success">نصب با موفقیت انجام شد. فایل تنظیمات نوشته شد و نصب‌کننده قفل شد.</div>
+        <div class="alert alert-success">نصب با موفقیت انجام شد. فایل تنظیمات نوشته شد، فایل‌های .htaccess بررسی شدند و نصب‌کننده قفل شد.</div>
+        <?php foreach ($htaccessNotice as $notice): ?><div class="alert alert-info"><?= installer_e($notice) ?></div><?php endforeach; ?>
         <a class="btn btn-primary" href="login">ورود به برنامه</a>
     <?php else: ?>
         <?php foreach ($errors as $error): ?><div class="alert alert-danger"><?= installer_e($error) ?></div><?php endforeach; ?>
+        <?php foreach ($htaccessNotice as $notice): ?><div class="alert alert-info"><?= installer_e($notice) ?></div><?php endforeach; ?>
 
         <div style="background:#fee2e2;border:1px solid #fca5a5;color:#7f1d1d;border-radius:8px;padding:16px;margin-bottom:16px;">
             <div style="font-weight:800;font-size:18px;margin-bottom:10px;">موارد ناموفق که باید اصلاح شوند:</div>
