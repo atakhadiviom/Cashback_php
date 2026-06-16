@@ -12,6 +12,7 @@ use ZipArchive;
 final class AppUpdaterService
 {
     private string $rootPath;
+    private ?\Closure $remoteVersionProvider;
 
     /** @var string[] */
     private array $protectedPaths = [
@@ -23,20 +24,34 @@ final class AppUpdaterService
         'vendor',
     ];
 
-    public function __construct(?string $rootPath = null)
+    public function __construct(?string $rootPath = null, ?\Closure $remoteVersionProvider = null)
     {
         $this->rootPath = rtrim($rootPath ?? dirname(__DIR__, 2), '/');
+        $this->remoteVersionProvider = $remoteVersionProvider;
     }
 
     /** @return array<string, mixed> */
     public function status(): array
     {
+        $version = \app_version();
+        $remoteVersion = null;
+        $remoteError = null;
+
+        try {
+            $remoteVersion = $this->remoteVersion();
+        } catch (Throwable $exception) {
+            $remoteError = $exception->getMessage();
+        }
+
         return [
             'enabled' => (bool) \config_value('updater.enabled', false),
             'owner' => (string) \config_value('updater.github_owner', ''),
             'repo' => (string) \config_value('updater.github_repo', ''),
             'branch' => (string) \config_value('updater.branch', 'main'),
-            'version' => \app_version(),
+            'version' => $version,
+            'remote_version' => $remoteVersion,
+            'remote_error' => $remoteError,
+            'update_available' => is_string($remoteVersion) && version_compare($remoteVersion, $version, '>'),
             'zip_available' => class_exists(ZipArchive::class),
             'curl_available' => function_exists('curl_init'),
             'backup_dir' => $this->backupDir(),
@@ -56,7 +71,7 @@ final class AppUpdaterService
             $zipPath = $workspace . '/source.zip';
             $extractPath = $workspace . '/extract';
 
-            $messages[] = 'Downloading update package from GitHub main branch...';
+            $messages[] = 'Downloading update package from GitHub ' . $this->branch() . ' branch...';
             $this->downloadZip($zipPath);
 
             $messages[] = 'Extracting update package...';
@@ -161,6 +176,59 @@ final class AppUpdaterService
             @unlink($targetPath);
             throw new RuntimeException('Downloaded update package is empty or invalid.');
         }
+    }
+
+    private function remoteVersion(): ?string
+    {
+        if ($this->remoteVersionProvider instanceof \Closure) {
+            $version = trim((string) ($this->remoteVersionProvider)());
+            return $version !== '' ? ltrim($version, "vV \t\n\r\0\x0B") : null;
+        }
+
+        if ($this->githubOwner() === '' || $this->githubRepo() === '') {
+            return null;
+        }
+        if (!function_exists('curl_init')) {
+            throw new RuntimeException('PHP cURL extension is not available on this hosting account.');
+        }
+
+        $url = sprintf(
+            'https://raw.githubusercontent.com/%s/%s/%s/VERSION',
+            rawurlencode($this->githubOwner()),
+            rawurlencode($this->githubRepo()),
+            rawurlencode($this->branch())
+        );
+
+        $curl = curl_init($url);
+        if ($curl === false) {
+            throw new RuntimeException('Could not initialize cURL.');
+        }
+
+        $headers = ['User-Agent: Cashback-App-Updater'];
+        $token = trim((string) \config_value('updater.github_token', ''));
+        if ($token !== '') {
+            $headers[] = 'Authorization: Bearer ' . $token;
+        }
+
+        curl_setopt_array($curl, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 10,
+        ]);
+
+        $body = curl_exec($curl);
+        $statusCode = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+        $error = curl_error($curl);
+        curl_close($curl);
+
+        if (!is_string($body) || $statusCode < 200 || $statusCode >= 300) {
+            throw new RuntimeException('GitHub version check failed' . ($error !== '' ? ': ' . $error : " with HTTP {$statusCode}."));
+        }
+
+        $version = ltrim(trim($body), "vV \t\n\r\0\x0B");
+        return $version !== '' ? $version : null;
     }
 
     private function extractZip(string $zipPath, string $extractPath): string
