@@ -176,15 +176,30 @@ final class CustomerImportController
                 throw new \RuntimeException('ساختار فایل Excel نامعتبر است.');
             }
 
+            $mainNamespace = $this->xlsxMainNamespace($sheet);
+            if ($mainNamespace !== null) {
+                $sheet->registerXPathNamespace('x', $mainNamespace);
+                $sheetRows = $sheet->xpath('//x:sheetData/x:row') ?: [];
+            } else {
+                $sheetRows = iterator_to_array($sheet->sheetData->row ?? []);
+            }
+
             $rows = [];
-            foreach ($sheet->sheetData->row ?? [] as $row) {
+            foreach ($sheetRows as $row) {
                 $rowNum = (int) ($row['r'] ?? 0);
                 if ($rowNum <= 1) {
                     continue;
                 }
 
                 $values = [];
-                foreach ($row->c ?? [] as $cell) {
+                if ($mainNamespace !== null) {
+                    $row->registerXPathNamespace('x', $mainNamespace);
+                    $cells = $row->xpath('x:c') ?: [];
+                } else {
+                    $cells = iterator_to_array($row->c ?? []);
+                }
+
+                foreach ($cells as $cell) {
                     $reference = (string) ($cell['r'] ?? '');
                     $column = $this->xlsxColumnIndex($reference);
                     if ($column === null) {
@@ -193,11 +208,11 @@ final class CustomerImportController
 
                     $type = (string) ($cell['t'] ?? '');
                     if ($type === 's') {
-                        $value = $sharedStrings[(int) ($cell->v ?? 0)] ?? '';
+                        $value = $sharedStrings[(int) $this->xlsxNodeText($cell, 'v', $mainNamespace)] ?? '';
                     } elseif ($type === 'inlineStr') {
-                        $value = (string) ($cell->is->t ?? '');
+                        $value = $this->xlsxNodeText($cell, 'is/t', $mainNamespace);
                     } else {
-                        $value = (string) ($cell->v ?? '');
+                        $value = $this->xlsxNodeText($cell, 'v', $mainNamespace);
                     }
                     $values[$column] = $value;
                 }
@@ -240,20 +255,63 @@ final class CustomerImportController
         }
 
         $values = [];
-        foreach ($sharedStrings->si ?? [] as $item) {
-            if (isset($item->t)) {
-                $values[] = (string) $item->t;
+        $mainNamespace = $this->xlsxMainNamespace($sharedStrings);
+        if ($mainNamespace !== null) {
+            $sharedStrings->registerXPathNamespace('x', $mainNamespace);
+            $items = $sharedStrings->xpath('//x:si') ?: [];
+        } else {
+            $items = iterator_to_array($sharedStrings->si ?? []);
+        }
+
+        foreach ($items as $item) {
+            $plainText = $this->xlsxNodeText($item, 't', $mainNamespace);
+            if ($plainText !== '') {
+                $values[] = $plainText;
                 continue;
             }
 
             $text = '';
-            foreach ($item->r ?? [] as $run) {
-                $text .= (string) ($run->t ?? '');
+            if ($mainNamespace !== null) {
+                $item->registerXPathNamespace('x', $mainNamespace);
+                $runs = $item->xpath('x:r') ?: [];
+            } else {
+                $runs = iterator_to_array($item->r ?? []);
+            }
+            foreach ($runs as $run) {
+                $text .= $this->xlsxNodeText($run, 't', $mainNamespace);
             }
             $values[] = $text;
         }
 
         return $values;
+    }
+
+    private function xlsxMainNamespace(\SimpleXMLElement $xml): ?string
+    {
+        $namespaces = $xml->getNamespaces(true);
+
+        return $namespaces[''] ?? $namespaces['x'] ?? null;
+    }
+
+    private function xlsxNodeText(\SimpleXMLElement $node, string $path, ?string $mainNamespace): string
+    {
+        if ($mainNamespace !== null) {
+            $node->registerXPathNamespace('x', $mainNamespace);
+            $parts = array_map(static fn (string $part): string => 'x:' . $part, explode('/', $path));
+            $matches = $node->xpath(implode('/', $parts)) ?: [];
+
+            return isset($matches[0]) ? (string) $matches[0] : '';
+        }
+
+        $current = $node;
+        foreach (explode('/', $path) as $part) {
+            if (!isset($current->{$part})) {
+                return '';
+            }
+            $current = $current->{$part};
+        }
+
+        return (string) $current;
     }
 
     private function xlsxColumnIndex(string $reference): ?int

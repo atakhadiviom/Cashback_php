@@ -4,4 +4,5 @@ storage/installed.lock
 composer.lock
 *.log
 .DS_Store
-
+outputs/cashback_import_ready_ooj.xlsx
+outputs/*.inspect.ndjson
