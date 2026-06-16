@@ -31,4 +31,30 @@ final class NationalCodeTest extends TestCase
 
         $this->assertArrayNotHasKey('national_code', $errors);
     }
+
+    public function testCustomerValidationAcceptsElevenDigitCompanyCode(): void
+    {
+        $errors = Validator::customer([
+            'first_name' => 'Test',
+            'last_name' => 'Company',
+            'national_code' => '12345678901',
+            'phone_number' => '09123456789',
+        ], false, false);
+
+        $this->assertArrayNotHasKey('national_code', $errors);
+    }
+
+    public function testCustomerValidationRejectsUnsupportedIdentifierLengths(): void
+    {
+        foreach (['123456789', '123456789012'] as $nationalCode) {
+            $errors = Validator::customer([
+                'first_name' => 'Test',
+                'last_name' => 'Customer',
+                'national_code' => $nationalCode,
+                'phone_number' => '09123456789',
+            ], false, false);
+
+            $this->assertArrayHasKey('national_code', $errors);
+        }
+    }
 }

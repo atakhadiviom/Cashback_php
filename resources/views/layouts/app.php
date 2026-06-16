@@ -18,7 +18,7 @@ if (Auth::isAdmin()) {
     $navItems[] = ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders', 'manage_settings'];
     $navItems[] = ['/admin/loyalty', 'سطوح و پروموشن', 'bi-trophy', 'manage_loyalty'];
     $navItems[] = ['/admin/api-keys', 'کلید API', 'bi-key', 'manage_api'];
-    $navItems[] = ['/admin/customers/import', 'ورود CSV', 'bi-upload', 'import_customers'];
+    $navItems[] = ['/admin/customers/import', 'ورود فایل', 'bi-upload', 'import_customers'];
     $navItems[] = ['/admin/app-update', 'به‌روزرسانی', 'bi-cloud-download', 'manage_settings'];
 }
 $navItems = array_values(array_filter($navItems, static fn (array $item): bool => $item[3] === null || Auth::can($item[3])));

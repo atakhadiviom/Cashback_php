@@ -46,7 +46,7 @@ CREATE TABLE customers (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
-  national_code CHAR(10) NOT NULL UNIQUE,
+  national_code VARCHAR(11) NOT NULL UNIQUE,
   phone_number CHAR(11) NOT NULL,
   birthday DATE NULL,
   wallet_balance DECIMAL(15,2) NOT NULL DEFAULT 0,

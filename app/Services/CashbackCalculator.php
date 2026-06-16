@@ -11,12 +11,29 @@ use App\Repositories\TierRepository;
 
 final class CashbackCalculator
 {
+    private \Closure $settingsProvider;
+    private \Closure $lifetimeSpendProvider;
+    private \Closure $tierProvider;
+    private \Closure $promotionProvider;
+
+    public function __construct(
+        ?\Closure $settingsProvider = null,
+        ?\Closure $lifetimeSpendProvider = null,
+        ?\Closure $tierProvider = null,
+        ?\Closure $promotionProvider = null
+    ) {
+        $this->settingsProvider = $settingsProvider ?? static fn (): array => (new CashbackSettingsRepository())->settings();
+        $this->lifetimeSpendProvider = $lifetimeSpendProvider ?? static fn (int $customerId): float => (new PurchaseRepository())->lifetimeSpend($customerId);
+        $this->tierProvider = $tierProvider ?? static fn (float $lifetime): ?array => (new TierRepository())->forLifetimeSpend($lifetime);
+        $this->promotionProvider = $promotionProvider ?? static fn (): ?array => (new PromotionRepository())->activeNow();
+    }
+
     /**
      * @return array{cashback: float, percent_applied: float, promotion_id: ?int, errors: array<string, string>}
      */
     public function calculate(float $amount, ?array $customer = null): array
     {
-        $settings = (new CashbackSettingsRepository())->settings();
+        $settings = ($this->settingsProvider)();
         $errors = [];
 
         $minPurchase = isset($settings['min_purchase_amount']) ? (float) $settings['min_purchase_amount'] : null;
@@ -27,16 +44,16 @@ final class CashbackCalculator
 
         $percent = (float) ($settings['cashback_percent'] ?? 5.0);
         if ($customer) {
-            $lifetime = (new PurchaseRepository())->lifetimeSpend((int) $customer['id']);
-            $tier = (new TierRepository())->forLifetimeSpend($lifetime);
-            if ($tier) {
+            $lifetime = ($this->lifetimeSpendProvider)((int) $customer['id']);
+            $tier = ($this->tierProvider)($lifetime);
+            if ($tier && (float) $tier['min_lifetime_spend'] > 0) {
                 $percent = (float) $tier['cashback_percent'];
             }
         }
 
         $cashback = round($amount * ($percent / 100), 2);
         $promotionId = null;
-        $promo = (new PromotionRepository())->activeNow();
+        $promo = ($this->promotionProvider)();
         if ($promo) {
             $promotionId = (int) $promo['id'];
             $bonusPercent = (float) $promo['percent_bonus'];

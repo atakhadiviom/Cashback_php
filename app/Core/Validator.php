@@ -16,8 +16,8 @@ final class Validator
             $errors['last_name'] = 'نام خانوادگی الزامی است.';
         }
         $nationalCode = \normalize_digits((string) ($data['national_code'] ?? ''));
-        if (!preg_match('/^\d{10}$/', $nationalCode)) {
-            $errors['national_code'] = 'کد ملی باید دقیقاً ۱۰ رقم باشد.';
+        if (!preg_match('/^(?:\d{10}|\d{11})$/', $nationalCode)) {
+            $errors['national_code'] = 'کد ملی باید ۱۰ رقم یا شناسه ملی شرکت باید ۱۱ رقم باشد.';
         } elseif ($nationalCodeExists) {
             $errors['national_code'] = 'این کد ملی قبلاً ثبت شده است.';
         }

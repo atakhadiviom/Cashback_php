@@ -18,7 +18,7 @@
 - Confirm birthday is stored as Gregorian `DATE` and displayed as Jalali.
 - Search by name, national code, phone, birthday date, birthday month, and birthday day.
 - Export customers to CSV and confirm Persian text opens correctly.
-- Import customers via admin CSV (preview then import).
+- Import customers via admin CSV and XLSX (preview then import).
 - Invalid national code checksum is rejected.
 
 ## Purchases and Wallet
