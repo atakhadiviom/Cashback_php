@@ -3,7 +3,7 @@ use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\Flash;
 
-$navItems = [
+$mainNavItems = [
     ['/dashboard', 'داشبورد', 'bi-speedometer2', null],
     ['/customers', 'مشتریان', 'bi-people', null],
     ['/customers/create', 'افزودن مشتری', 'bi-person-plus', null],
@@ -11,17 +11,22 @@ $navItems = [
     ['/reports', 'گزارش‌ها', 'bi-bar-chart-line', null],
     ['/sms/logs', 'لاگ پیامک', 'bi-chat-dots', null],
 ];
+$adminNavItems = [];
 if (Auth::isAdmin()) {
-    $navItems[] = ['/admin/users', 'اپراتورها', 'bi-person-gear', 'manage_users'];
-    $navItems[] = ['/admin/activity-logs', 'فعالیت‌ها', 'bi-activity', null];
-    $navItems[] = ['/admin/cashback-settings', 'تنظیمات کش‌بک', 'bi-percent', 'manage_settings'];
-    $navItems[] = ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders', 'manage_settings'];
-    $navItems[] = ['/admin/loyalty', 'سطوح و پروموشن', 'bi-trophy', 'manage_loyalty'];
-    $navItems[] = ['/admin/api-keys', 'کلید API', 'bi-key', 'manage_api'];
-    $navItems[] = ['/admin/customers/import', 'ورود فایل', 'bi-upload', 'import_customers'];
-    $navItems[] = ['/admin/app-update', 'به‌روزرسانی', 'bi-cloud-download', 'manage_settings'];
+    $adminNavItems = [
+        ['/admin/users', 'اپراتورها', 'bi-person-gear', 'manage_users'],
+        ['/admin/activity-logs', 'فعالیت‌ها', 'bi-activity', null],
+        ['/admin/cashback-settings', 'تنظیمات کش‌بک', 'bi-percent', 'manage_settings'],
+        ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders', 'manage_settings'],
+        ['/admin/loyalty', 'سطوح و پروموشن', 'bi-trophy', 'manage_loyalty'],
+        ['/admin/api-keys', 'کلید API', 'bi-key', 'manage_api'],
+        ['/admin/customers/import', 'ورود فایل', 'bi-upload', 'import_customers'],
+        ['/admin/app-update', 'به‌روزرسانی', 'bi-cloud-download', 'manage_settings'],
+    ];
 }
-$navItems = array_values(array_filter($navItems, static fn (array $item): bool => $item[3] === null || Auth::can($item[3])));
+$canSeeNavItem = static fn (array $item): bool => $item[3] === null || Auth::can($item[3]);
+$mainNavItems = array_values(array_filter($mainNavItems, $canSeeNavItem));
+$adminNavItems = array_values(array_filter($adminNavItems, $canSeeNavItem));
 ?>
 <!doctype html>
 <html lang="fa" dir="rtl">
@@ -40,7 +45,15 @@ $navItems = array_values(array_filter($navItems, static fn (array $item): bool =
 </button>
 <?php
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-$renderSidebar = function (string $extraClass = '') use ($navItems, $currentPath): void {
+$renderSidebar = function (string $extraClass = '') use ($mainNavItems, $adminNavItems, $currentPath): void {
+$isActive = static fn (string $path): bool => $currentPath === $path || ($path !== '/dashboard' && str_starts_with($currentPath, $path));
+$adminActive = false;
+foreach ($adminNavItems as [$path]) {
+    if ($isActive($path)) {
+        $adminActive = true;
+        break;
+    }
+}
 ?>
 <aside class="app-sidebar <?= e($extraClass) ?>">
     <div class="brand-block">
@@ -55,14 +68,32 @@ $renderSidebar = function (string $extraClass = '') use ($navItems, $currentPath
     </div>
     <div class="sidebar-section">منوی اصلی</div>
     <nav class="sidebar-nav">
-        <?php foreach ($navItems as [$path, $label, $icon]): ?>
-            <?php $active = $currentPath === $path || ($path !== '/dashboard' && str_starts_with($currentPath, $path)); ?>
+        <?php foreach ($mainNavItems as [$path, $label, $icon]): ?>
+            <?php $active = $isActive($path); ?>
             <a class="sidebar-link <?= $active ? 'active' : '' ?>" href="<?= e(url($path)) ?>">
                 <i class="bi <?= e($icon) ?>"></i>
                 <span><?= e($label) ?></span>
             </a>
         <?php endforeach; ?>
     </nav>
+    <?php if ($adminNavItems): ?>
+        <details class="sidebar-group" <?= $adminActive ? 'open' : '' ?>>
+            <summary class="sidebar-group-toggle <?= $adminActive ? 'active' : '' ?>">
+                <i class="bi bi-grid-1x2"></i>
+                <span>مدیریت سیستم</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </summary>
+            <nav class="sidebar-subnav">
+                <?php foreach ($adminNavItems as [$path, $label, $icon]): ?>
+                    <?php $active = $isActive($path); ?>
+                    <a class="sidebar-link sidebar-link-sub <?= $active ? 'active' : '' ?>" href="<?= e(url($path)) ?>">
+                        <i class="bi <?= e($icon) ?>"></i>
+                        <span><?= e($label) ?></span>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+        </details>
+    <?php endif; ?>
     <div class="p-3"><a class="btn btn-outline-secondary btn-sm w-100" href="<?= e(url('/portal')) ?>" target="_blank">پرتال مشتری</a></div>
 </aside>
 <?php
