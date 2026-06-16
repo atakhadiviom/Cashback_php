@@ -68,4 +68,40 @@ final class CashbackMathTest extends TestCase
         $this->assertSame(120_000.0, $result['cashback']);
         $this->assertSame(12.0, $result['percent_applied']);
     }
+
+    public function testMinimumPurchaseAmountBlocksCashback(): void
+    {
+        $calculator = new CashbackCalculator(
+            static fn (): array => ['cashback_percent' => 10.0, 'min_purchase_amount' => 500_000],
+            static fn (int $customerId): float => 0.0,
+            static fn (float $lifetime): ?array => null,
+            static fn (): ?array => null
+        );
+
+        $result = $calculator->calculate(250_000.0, ['id' => 1]);
+
+        $this->assertSame(0.0, $result['cashback']);
+        $this->assertSame(0.0, $result['percent_applied']);
+        $this->assertArrayHasKey('amount', $result['errors']);
+    }
+
+    public function testPromotionBonusesAndMaxCapAreApplied(): void
+    {
+        $calculator = new CashbackCalculator(
+            static fn (): array => ['cashback_percent' => 10.0, 'max_cashback_per_purchase' => 150_000],
+            static fn (int $customerId): float => 0.0,
+            static fn (float $lifetime): ?array => null,
+            static fn (): ?array => [
+                'id' => 12,
+                'percent_bonus' => 5.0,
+                'fixed_bonus' => 25_000,
+            ]
+        );
+
+        $result = $calculator->calculate(1_000_000.0, ['id' => 1]);
+
+        $this->assertSame(150_000.0, $result['cashback']);
+        $this->assertSame(10.0, $result['percent_applied']);
+        $this->assertSame(12, $result['promotion_id']);
+    }
 }

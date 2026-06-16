@@ -47,4 +47,15 @@ final class AppUpdaterServiceTest extends TestCase
         $this->assertFalse($status['update_available']);
         $this->assertNull($status['remote_error']);
     }
+
+    public function testStatusCapturesRemoteVersionCheckErrors(): void
+    {
+        $status = (new AppUpdaterService(null, static function (): string {
+            throw new \RuntimeException('network unavailable');
+        }))->status();
+
+        $this->assertNull($status['remote_version']);
+        $this->assertFalse($status['update_available']);
+        $this->assertSame('network unavailable', $status['remote_error']);
+    }
 }

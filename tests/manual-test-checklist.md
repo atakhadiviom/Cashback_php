@@ -13,7 +13,7 @@
 ## Customers
 
 - Create a customer with Persian digits in national code and phone.
-- Confirm national code must be exactly 10 digits and unique.
+- Confirm national code must be 10 digits, company national ID can be 11 digits, and the identifier is unique.
 - Confirm Iranian phone must match `09xxxxxxxxx`.
 - Confirm birthday is stored as Gregorian `DATE` and displayed as Jalali.
 - Search by name, national code, phone, birthday date, birthday month, and birthday day.

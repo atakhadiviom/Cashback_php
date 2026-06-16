@@ -126,7 +126,7 @@ final class CustomerImportController
     private function readXlsxRows(string $path): array
     {
         if (!class_exists(IOFactory::class)) {
-            throw new \RuntimeException('برای خواندن فایل Excel، وابستگی PhpSpreadsheet نصب نشده است.');
+            return $this->readXlsxRowsWithZip($path);
         }
 
         $spreadsheet = IOFactory::load($path);
@@ -146,6 +146,129 @@ final class CustomerImportController
         }
 
         return $rows;
+    }
+
+    /**
+     * Lightweight XLSX reader for shared hosting installs without Composer vendor files.
+     *
+     * @return array<int, array{row: int, values: array<int, string>}>
+     */
+    private function readXlsxRowsWithZip(string $path): array
+    {
+        if (!class_exists(\ZipArchive::class)) {
+            throw new \RuntimeException('برای خواندن فایل Excel، افزونه ZipArchive لازم است.');
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($path) !== true) {
+            throw new \RuntimeException('خواندن فایل Excel ممکن نیست.');
+        }
+
+        try {
+            $sharedStrings = $this->xlsxSharedStrings($zip);
+            $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+            if (!is_string($sheetXml) || $sheetXml === '') {
+                throw new \RuntimeException('فایل Excel شیت قابل خواندن ندارد.');
+            }
+
+            $sheet = simplexml_load_string($sheetXml);
+            if (!$sheet instanceof \SimpleXMLElement) {
+                throw new \RuntimeException('ساختار فایل Excel نامعتبر است.');
+            }
+
+            $rows = [];
+            foreach ($sheet->sheetData->row ?? [] as $row) {
+                $rowNum = (int) ($row['r'] ?? 0);
+                if ($rowNum <= 1) {
+                    continue;
+                }
+
+                $values = [];
+                foreach ($row->c ?? [] as $cell) {
+                    $reference = (string) ($cell['r'] ?? '');
+                    $column = $this->xlsxColumnIndex($reference);
+                    if ($column === null) {
+                        continue;
+                    }
+
+                    $type = (string) ($cell['t'] ?? '');
+                    if ($type === 's') {
+                        $value = $sharedStrings[(int) ($cell->v ?? 0)] ?? '';
+                    } elseif ($type === 'inlineStr') {
+                        $value = (string) ($cell->is->t ?? '');
+                    } else {
+                        $value = (string) ($cell->v ?? '');
+                    }
+                    $values[$column] = $value;
+                }
+
+                if ($values === []) {
+                    continue;
+                }
+                ksort($values);
+                $normalized = [];
+                $maxColumn = max(array_keys($values));
+                for ($i = 0; $i <= $maxColumn; $i++) {
+                    $normalized[$i] = $values[$i] ?? '';
+                }
+                $normalized = $this->normalizeRow($normalized);
+                if ($this->isBlankRow($normalized)) {
+                    continue;
+                }
+                $rows[] = ['row' => $rowNum, 'values' => $normalized];
+            }
+
+            return $rows;
+        } finally {
+            $zip->close();
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function xlsxSharedStrings(\ZipArchive $zip): array
+    {
+        $xml = $zip->getFromName('xl/sharedStrings.xml');
+        if (!is_string($xml) || $xml === '') {
+            return [];
+        }
+
+        $sharedStrings = simplexml_load_string($xml);
+        if (!$sharedStrings instanceof \SimpleXMLElement) {
+            return [];
+        }
+
+        $values = [];
+        foreach ($sharedStrings->si ?? [] as $item) {
+            if (isset($item->t)) {
+                $values[] = (string) $item->t;
+                continue;
+            }
+
+            $text = '';
+            foreach ($item->r ?? [] as $run) {
+                $text .= (string) ($run->t ?? '');
+            }
+            $values[] = $text;
+        }
+
+        return $values;
+    }
+
+    private function xlsxColumnIndex(string $reference): ?int
+    {
+        if (!preg_match('/^([A-Z]+)/i', $reference, $matches)) {
+            return null;
+        }
+
+        $letters = strtoupper($matches[1]);
+        $index = 0;
+        for ($i = 0, $length = strlen($letters); $i < $length; $i++) {
+            $index = ($index * 26) + (ord($letters[$i]) - 64);
+        }
+
+        return $index - 1;
     }
 
     private function normalizeRow(array $row): array
