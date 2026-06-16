@@ -29,7 +29,7 @@ return [
         'otp_rate_limit_per_hour' => 5,
     ],
     'updater' => [
-        'enabled' => false,
+        'enabled' => true,
         'github_owner' => 'atakhadiviom',
         'github_repo' => 'Cashback_php',
         'branch' => 'main',

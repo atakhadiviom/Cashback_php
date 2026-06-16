@@ -44,7 +44,7 @@ final class AppUpdaterService
         }
 
         return [
-            'enabled' => (bool) \config_value('updater.enabled', false),
+            'enabled' => (bool) \config_value('updater.enabled', true),
             'owner' => (string) \config_value('updater.github_owner', ''),
             'repo' => (string) \config_value('updater.github_repo', ''),
             'branch' => (string) \config_value('updater.branch', 'main'),
@@ -105,7 +105,7 @@ final class AppUpdaterService
 
     private function assertReady(): void
     {
-        if (!(bool) \config_value('updater.enabled', false)) {
+        if (!(bool) \config_value('updater.enabled', true)) {
             throw new RuntimeException('Updater is disabled in config.');
         }
         if (!class_exists(ZipArchive::class)) {
