@@ -35,6 +35,11 @@ if ($configSource === 'example' && PHP_SAPI !== 'cli') {
     }
 }
 
+$vendorAutoload = $rootPath . '/vendor/autoload.php';
+if (is_file($vendorAutoload)) {
+    require $vendorAutoload;
+}
+
 require dirname(__DIR__) . '/app/helpers.php';
 
 date_default_timezone_set((string) config_value('app.timezone', 'Asia/Tehran'));

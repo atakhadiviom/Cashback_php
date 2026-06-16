@@ -75,6 +75,31 @@ final class CustomerImportControllerTest extends TestCase
         $this->readRows(['name' => 'customers.xls', 'tmp_name' => '/tmp/customers.xls']);
     }
 
+    public function testFallbackXlsxReaderParsesStringTypedCells(): void
+    {
+        $controller = new CustomerImportController();
+        $cellValue = new \ReflectionMethod($controller, 'xlsxCellValue');
+        $cell = new \SimpleXMLElement('<c r="A1" t="str"><v>Reza</v></c>');
+
+        $value = $cellValue->invoke($controller, $cell, null, []);
+
+        $this->assertSame('Reza', $value);
+    }
+
+    public function testFallbackXlsxReaderAcceptsImportTemplateWithoutDataRows(): void
+    {
+        $path = dirname(__DIR__, 2) . '/outputs/cashback_import_template.xlsx';
+        if (!is_file($path)) {
+            $this->markTestSkipped('Import template file is not available.');
+        }
+
+        $controller = new CustomerImportController();
+        $method = new \ReflectionMethod($controller, 'readXlsxRowsWithZip');
+        $rows = $method->invoke($controller, $path);
+
+        $this->assertSame([], $rows);
+    }
+
     private function readRows(array $file): array
     {
         $controller = new CustomerImportController();

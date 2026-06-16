@@ -6,7 +6,13 @@
     <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
     <div class="mb-3"><input type="file" name="import_file" accept=".csv,.xlsx" class="form-control" required></div>
     <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="preview_only" value="1" id="preview"><label for="preview">فقط پیش‌نمایش</label></div>
-    <?php if (!empty($errors['file'])): ?><div class="text-danger"><?= e($errors['file']) ?></div><?php endif; ?>
+    <?php if (!empty($errors['file'])): ?><div class="alert alert-danger"><?= e($errors['file']) ?></div><?php endif; ?>
+    <?php if (!empty($row_errors)): ?>
+    <div class="alert alert-warning mt-3">
+        <div class="fw-semibold mb-2">خطاهای ردیف‌ها</div>
+        <ul class="mb-0 small"><?php foreach ($row_errors as $rowError): ?><li><?= e($rowError) ?></li><?php endforeach; ?></ul>
+    </div>
+    <?php endif; ?>
     <button class="btn btn-primary">ارسال</button>
 </form>
 <?php if ($preview): ?>

@@ -9,75 +9,132 @@ use App\Core\Flash;
 use App\Core\View;
 use App\Services\ActivityLogger;
 use App\Services\CustomerService;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 final class CustomerImportController
 {
     public function form(): void
     {
-        View::render('admin/customers_import', ['errors' => [], 'preview' => []]);
+        View::render('admin/customers_import', ['errors' => [], 'preview' => [], 'row_errors' => []]);
     }
 
     public function import(): void
     {
         Csrf::requireValid();
-        $file = $this->uploadedFile();
-        if (!$file || empty($file['tmp_name'])) {
-            View::render('admin/customers_import', ['errors' => ['file' => 'فایل CSV یا Excel انتخاب نشود.'], 'preview' => []]);
-            return;
-        }
 
         try {
+            $file = $this->uploadedFile();
+            if (!$file) {
+                View::render('admin/customers_import', [
+                    'errors' => ['file' => 'فایل CSV یا Excel انتخاب نشده است.'],
+                    'preview' => [],
+                    'row_errors' => [],
+                ]);
+
+                return;
+            }
+
             $rows = $this->readRows($file);
-        } catch (\Throwable $exception) {
-            View::render('admin/customers_import', ['errors' => ['file' => $exception->getMessage()], 'preview' => []]);
-            return;
-        }
+            if ($rows === []) {
+                View::render('admin/customers_import', [
+                    'errors' => ['file' => 'هیچ ردیف داده‌ای در فایل پیدا نشد. ردیف اول (عنوان ستون‌ها) نادیده گرفته می‌شود.'],
+                    'preview' => [],
+                    'row_errors' => [],
+                ]);
 
-        $preview = [];
-        $errors = [];
-        $service = new CustomerService();
-        $imported = 0;
+                return;
+            }
 
-        foreach ($rows as $entry) {
-            $rowNum = $entry['row'];
-            $row = $entry['values'];
-            $data = [
-                'first_name' => $row[0] ?? '',
-                'last_name' => $row[1] ?? '',
-                'national_code' => $row[2] ?? '',
-                'phone_number' => $row[3] ?? '',
-                'birthday' => $row[4] ?? '',
-            ];
+            $preview = [];
+            $rowErrors = [];
+            $service = new CustomerService();
+            $imported = 0;
+
+            foreach ($rows as $entry) {
+                $rowNum = $entry['row'];
+                $row = $entry['values'];
+                $data = [
+                    'first_name' => $row[0] ?? '',
+                    'last_name' => $row[1] ?? '',
+                    'national_code' => $row[2] ?? '',
+                    'phone_number' => $row[3] ?? '',
+                    'birthday' => $row[4] ?? '',
+                ];
+                if (!empty($_POST['preview_only'])) {
+                    $preview[] = ['row' => $rowNum, 'data' => $data];
+                    continue;
+                }
+                $result = $service->create($data);
+                if (!$result['ok']) {
+                    $rowErrors[] = "ردیف {$rowNum}: " . implode(', ', $result['errors']);
+                } else {
+                    $imported++;
+                }
+            }
+
             if (!empty($_POST['preview_only'])) {
-                $preview[] = ['row' => $rowNum, 'data' => $data];
-                continue;
+                View::render('admin/customers_import', ['errors' => [], 'preview' => $preview, 'row_errors' => []]);
+                return;
             }
-            $result = $service->create($data);
-            if (!$result['ok']) {
-                $errors[] = "ردیف {$rowNum}: " . implode(', ', $result['errors']);
-            } else {
-                $imported++;
+
+            (new ActivityLogger())->log('customer_import', "واردات مشتریان: {$imported} مشتری");
+            Flash::set('success', "{$imported} مشتری وارد شد." . ($rowErrors ? ' برخی ردیف‌ها خطا داشتند.' : ''));
+            if ($rowErrors) {
+                $_SESSION['_import_row_errors'] = $rowErrors;
             }
+            \redirect('/customers');
+        } catch (\Throwable $exception) {
+            View::render('admin/customers_import', [
+                'errors' => ['file' => $this->friendlyErrorMessage($exception)],
+                'preview' => [],
+                'row_errors' => [],
+            ]);
         }
-
-        if (!empty($_POST['preview_only'])) {
-            View::render('admin/customers_import', ['errors' => [], 'preview' => $preview]);
-            return;
-        }
-
-        (new ActivityLogger())->log('customer_import', "واردات مشتریان: {$imported} مشتری");
-        Flash::set('success', "{$imported} مشتری وارد شد." . ($errors ? ' برخی ردیف‌ها خطا داشتند.' : ''));
-        \redirect('/customers');
     }
 
     private function uploadedFile(): ?array
     {
-        if (!empty($_FILES['import_file']['tmp_name'])) {
-            return $_FILES['import_file'];
+        $file = null;
+        if (!empty($_FILES['import_file']['name'])) {
+            $file = $_FILES['import_file'];
+        } elseif (!empty($_FILES['csv']['name'])) {
+            $file = $_FILES['csv'];
         }
 
-        return !empty($_FILES['csv']['tmp_name']) ? $_FILES['csv'] : null;
+        if ($file === null) {
+            return null;
+        }
+
+        $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($error !== UPLOAD_ERR_OK) {
+            throw new \RuntimeException($this->uploadErrorMessage($error));
+        }
+
+        if (empty($file['tmp_name']) || !is_uploaded_file((string) $file['tmp_name'])) {
+            return null;
+        }
+
+        return $file;
+    }
+
+    private function uploadErrorMessage(int $error): string
+    {
+        return match ($error) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'حجم فایل از حد مجاز سرور بیشتر است. فایل را کوچک‌تر کنید یا با هاستینگ تماس بگیرید.',
+            UPLOAD_ERR_PARTIAL => 'فایل به‌طور ناقص آپلود شد. دوباره تلاش کنید.',
+            UPLOAD_ERR_NO_FILE => 'فایل CSV یا Excel انتخاب نشده است.',
+            UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_CANT_WRITE, UPLOAD_ERR_EXTENSION => 'خطای سرور هنگام دریافت فایل. با پشتیبانی هاست تماس بگیرید.',
+            default => 'آپلود فایل ناموفق بود.',
+        };
+    }
+
+    private function friendlyErrorMessage(\Throwable $exception): string
+    {
+        $message = $exception->getMessage();
+        if (str_contains($message, 'ZipArchive')) {
+            return 'خواندن فایل Excel روی این سرور ممکن نیست. از cPanel گزینه Select PHP Version را باز کنید و افزونه zip را فعال کنید، یا فایل را به CSV تبدیل کنید.';
+        }
+
+        return $message !== '' ? $message : 'خطای ناشناخته هنگام خواندن فایل.';
     }
 
     /**
@@ -104,10 +161,10 @@ final class CustomerImportController
             throw new \RuntimeException('خواندن فایل ممکن نیست.');
         }
 
-        fgetcsv($handle, null, ',', '"', '');
+        $this->readCsvLine($handle);
         $rows = [];
         $rowNum = 1;
-        while (($row = fgetcsv($handle, null, ',', '"', '')) !== false) {
+        while (($row = $this->readCsvLine($handle)) !== false) {
             $rowNum++;
             $values = $this->normalizeRow($row);
             if ($this->isBlankRow($values)) {
@@ -121,15 +178,40 @@ final class CustomerImportController
     }
 
     /**
+     * @return array<int, string>|false
+     */
+    private function readCsvLine($handle): array|false
+    {
+        if (PHP_VERSION_ID >= 80400) {
+            return fgetcsv($handle, null, ',', '"', '');
+        }
+
+        return fgetcsv($handle, 0, ',', '"');
+    }
+
+    /**
      * @return array<int, array{row: int, values: array<int, string>}>
      */
     private function readXlsxRows(string $path): array
     {
-        if (!class_exists(IOFactory::class)) {
-            return $this->readXlsxRowsWithZip($path);
+        $ioFactory = 'PhpOffice\\PhpSpreadsheet\\IOFactory';
+        if (class_exists($ioFactory)) {
+            try {
+                return $this->readXlsxRowsWithPhpSpreadsheet($path, $ioFactory);
+            } catch (\Throwable) {
+                // Fall back to the built-in reader when vendor is missing or corrupt on shared hosting.
+            }
         }
 
-        $spreadsheet = IOFactory::load($path);
+        return $this->readXlsxRowsWithZip($path);
+    }
+
+    /**
+     * @return array<int, array{row: int, values: array<int, string>}>
+     */
+    private function readXlsxRowsWithPhpSpreadsheet(string $path, string $ioFactory): array
+    {
+        $spreadsheet = $ioFactory::load($path);
         $sheetRows = $spreadsheet->getActiveSheet()->toArray('', false, false, false);
         $spreadsheet->disconnectWorksheets();
 
@@ -206,15 +288,7 @@ final class CustomerImportController
                         continue;
                     }
 
-                    $type = (string) ($cell['t'] ?? '');
-                    if ($type === 's') {
-                        $value = $sharedStrings[(int) $this->xlsxNodeText($cell, 'v', $mainNamespace)] ?? '';
-                    } elseif ($type === 'inlineStr') {
-                        $value = $this->xlsxNodeText($cell, 'is/t', $mainNamespace);
-                    } else {
-                        $value = $this->xlsxNodeText($cell, 'v', $mainNamespace);
-                    }
-                    $values[$column] = $value;
+                    $values[$column] = $this->xlsxCellValue($cell, $mainNamespace, $sharedStrings);
                 }
 
                 if ($values === []) {
@@ -237,6 +311,21 @@ final class CustomerImportController
         } finally {
             $zip->close();
         }
+    }
+
+    /**
+     * @param array<int, string> $sharedStrings
+     */
+    private function xlsxCellValue(\SimpleXMLElement $cell, ?string $mainNamespace, array $sharedStrings): string
+    {
+        $type = (string) ($cell['t'] ?? '');
+
+        return match ($type) {
+            's' => $sharedStrings[(int) $this->xlsxNodeText($cell, 'v', $mainNamespace)] ?? '',
+            'inlineStr' => $this->xlsxNodeText($cell, 'is/t', $mainNamespace),
+            'str', 'b' => $this->xlsxNodeText($cell, 'v', $mainNamespace),
+            default => $this->xlsxNodeText($cell, 'v', $mainNamespace),
+        };
     }
 
     /**
