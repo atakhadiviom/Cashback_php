@@ -12,13 +12,10 @@ final class Validator
         if (trim((string) ($data['first_name'] ?? '')) === '') {
             $errors['first_name'] = 'نام الزامی است.';
         }
-        if (trim((string) ($data['last_name'] ?? '')) === '') {
-            $errors['last_name'] = 'نام خانوادگی الزامی است.';
-        }
         $nationalCode = \normalize_digits((string) ($data['national_code'] ?? ''));
-        if (!preg_match('/^(?:\d{10}|\d{11})$/', $nationalCode)) {
+        if ($nationalCode !== '' && !preg_match('/^(?:\d{10}|\d{11})$/', $nationalCode)) {
             $errors['national_code'] = 'کد ملی باید ۱۰ رقم یا شناسه ملی شرکت باید ۱۱ رقم باشد.';
-        } elseif ($nationalCodeExists) {
+        } elseif ($nationalCode !== '' && $nationalCodeExists) {
             $errors['national_code'] = 'این کد ملی قبلاً ثبت شده است.';
         }
         $phone = \normalize_digits((string) ($data['phone_number'] ?? ''));

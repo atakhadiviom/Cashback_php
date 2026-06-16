@@ -1,0 +1,2 @@
+ALTER TABLE customers
+  MODIFY COLUMN national_code VARCHAR(11) NULL;

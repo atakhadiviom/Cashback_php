@@ -44,6 +44,19 @@ final class NationalCodeTest extends TestCase
         $this->assertArrayNotHasKey('national_code', $errors);
     }
 
+    public function testCustomerValidationAllowsEmptyIdentifier(): void
+    {
+        $errors = Validator::customer([
+            'first_name' => 'Test',
+            'last_name' => '',
+            'national_code' => '',
+            'phone_number' => '09123456789',
+        ], false, false);
+
+        $this->assertArrayNotHasKey('last_name', $errors);
+        $this->assertArrayNotHasKey('national_code', $errors);
+    }
+
     public function testCustomerValidationRejectsUnsupportedIdentifierLengths(): void
     {
         foreach (['123456789', '123456789012'] as $nationalCode) {

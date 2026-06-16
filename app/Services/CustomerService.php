@@ -30,7 +30,7 @@ final class CustomerService
         $id = $this->customers->create([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
-            'national_code' => $data['national_code'],
+            'national_code' => $data['national_code'] !== '' ? $data['national_code'] : null,
             'phone_number' => $data['phone_number'],
             'birthday' => $data['birthday'] ?: null,
             'created_by' => SystemUserService::actorId(),
@@ -54,7 +54,7 @@ final class CustomerService
         $this->customers->update($id, [
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
-            'national_code' => $data['national_code'],
+            'national_code' => $data['national_code'] !== '' ? $data['national_code'] : null,
             'phone_number' => $data['phone_number'],
             'birthday' => $data['birthday'] ?: null,
             'updated_at' => \current_datetime(),

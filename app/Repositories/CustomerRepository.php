@@ -18,6 +18,10 @@ final class CustomerRepository
 
     public function nationalCodeExists(string $nationalCode, ?int $exceptId = null): bool
     {
+        if ($nationalCode === '') {
+            return false;
+        }
+
         $sql = 'SELECT id FROM customers WHERE national_code = :national_code';
         $params = ['national_code' => $nationalCode];
         if ($exceptId) {

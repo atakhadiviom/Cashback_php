@@ -16,14 +16,14 @@ if ($birthdayRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_digits
         <?php if (!empty($errors['first_name'])): ?><div class="form-text-error"><?= e($errors['first_name']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-6">
-        <label class="form-label">نام خانوادگی</label>
-        <input class="form-control" name="last_name" value="<?= e($customer['last_name'] ?? '') ?>" required>
+        <label class="form-label">نام خانوادگی (اختیاری)</label>
+        <input class="form-control" name="last_name" value="<?= e($customer['last_name'] ?? '') ?>">
         <?php if (!empty($errors['last_name'])): ?><div class="form-text-error"><?= e($errors['last_name']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-4">
-        <label class="form-label">کد ملی / شناسه ملی شرکت</label>
-        <input class="form-control ltr" name="national_code" maxlength="11" value="<?= e($customer['national_code'] ?? '') ?>" required>
-        <div class="form-text">کد ملی ۱۰ رقم و شناسه ملی شرکت ۱۱ رقم است.</div>
+        <label class="form-label">کد ملی / شناسه ملی شرکت (اختیاری)</label>
+        <input class="form-control ltr" name="national_code" maxlength="11" value="<?= e($customer['national_code'] ?? '') ?>">
+        <div class="form-text">در صورت ورود، کد ملی ۱۰ رقم و شناسه ملی شرکت ۱۱ رقم است.</div>
         <?php if (!empty($errors['national_code'])): ?><div class="form-text-error"><?= e($errors['national_code']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-4">

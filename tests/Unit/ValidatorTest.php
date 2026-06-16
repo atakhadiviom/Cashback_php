@@ -9,19 +9,31 @@ use PHPUnit\Framework\TestCase;
 
 final class ValidatorTest extends TestCase
 {
-    public function testCustomerValidationRequiresNamesPhoneAndIdentifier(): void
+    public function testCustomerValidationRequiresOnlyNameAndPhone(): void
     {
         $errors = Validator::customer([
             'first_name' => '',
             'last_name' => '',
-            'national_code' => '123',
+            'national_code' => '',
             'phone_number' => '12345',
         ], false, false);
 
         $this->assertArrayHasKey('first_name', $errors);
-        $this->assertArrayHasKey('last_name', $errors);
-        $this->assertArrayHasKey('national_code', $errors);
+        $this->assertArrayNotHasKey('last_name', $errors);
+        $this->assertArrayNotHasKey('national_code', $errors);
         $this->assertArrayHasKey('phone_number', $errors);
+    }
+
+    public function testCustomerValidationRejectsInvalidIdentifierWhenProvided(): void
+    {
+        $errors = Validator::customer([
+            'first_name' => 'Test',
+            'last_name' => '',
+            'national_code' => '123',
+            'phone_number' => '09123456789',
+        ], false, false);
+
+        $this->assertArrayHasKey('national_code', $errors);
     }
 
     public function testCustomerValidationReportsDuplicateIdentifier(): void
