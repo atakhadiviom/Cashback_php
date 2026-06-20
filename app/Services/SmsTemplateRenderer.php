@@ -16,6 +16,11 @@ final class SmsTemplateRenderer
             'cashback_amount' => '',
             'wallet_balance' => isset($customer['wallet_balance']) ? \money($customer['wallet_balance']) : '',
             'birthday' => $customer['birthday'] ?? '',
+            'contract_number' => $customer['contract_number'] ?? '',
+            'contract_ends_at' => isset($customer['contract_ends_at']) ? \App\Core\Jalali::formatDate($customer['contract_ends_at']) : '',
+            'service_type' => '',
+            'service_date' => '',
+            'paid_amount' => '',
             'date' => date('Y-m-d'),
             'company_name' => \config_value('app.company_name', 'نوآوران زیبایی'),
         ], $vars);
@@ -24,7 +29,7 @@ final class SmsTemplateRenderer
             $values['otp_code'] = (string) $vars['otp_code'];
         }
 
-        foreach (['purchase_amount', 'cashback_amount', 'wallet_balance'] as $moneyKey) {
+        foreach (['purchase_amount', 'cashback_amount', 'wallet_balance', 'paid_amount'] as $moneyKey) {
             if ($values[$moneyKey] !== '' && is_numeric($values[$moneyKey])) {
                 $values[$moneyKey] = \money($values[$moneyKey]);
             }

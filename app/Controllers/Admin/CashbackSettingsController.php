@@ -20,17 +20,17 @@ final class CashbackSettingsController
     public function update(): void
     {
         Csrf::requireValid();
-        $nullableFloat = static fn ($v): ?float => trim((string) $v) === '' ? null : (float) str_replace(',', '', \normalize_digits((string) $v));
+        $nullableFloat = static fn ($v): ?float => trim((string) $v) === '' ? null : \parse_money_input($v);
 
         (new CashbackSettingsRepository())->update([
-            'cashback_percent' => (float) str_replace(',', '', \normalize_digits((string) ($_POST['cashback_percent'] ?? '5'))),
-            'min_purchase_amount' => $nullableFloat($_POST['min_purchase_amount'] ?? ''),
+            'cashback_percent' => \parse_money_input($_POST['cashback_percent'] ?? '5'),
+            'min_purchase_amount' => \parse_money_input($_POST['min_purchase_amount'] ?? '0'),
             'max_cashback_per_purchase' => $nullableFloat($_POST['max_cashback_per_purchase'] ?? ''),
             'min_redemption_amount' => $nullableFloat($_POST['min_redemption_amount'] ?? ''),
             'max_redemption_percent_of_purchase' => $nullableFloat($_POST['max_redemption_percent_of_purchase'] ?? ''),
             'large_redemption_threshold' => $nullableFloat($_POST['large_redemption_threshold'] ?? ''),
-            'birthday_bonus_amount' => (float) str_replace(',', '', \normalize_digits((string) ($_POST['birthday_bonus_amount'] ?? '0'))),
-            'referral_bonus_amount' => (float) str_replace(',', '', \normalize_digits((string) ($_POST['referral_bonus_amount'] ?? '0'))),
+            'birthday_bonus_amount' => \parse_money_input($_POST['birthday_bonus_amount'] ?? '0'),
+            'referral_bonus_amount' => \parse_money_input($_POST['referral_bonus_amount'] ?? '0'),
             'duplicate_purchase_window_minutes' => max(0, (int) ($_POST['duplicate_purchase_window_minutes'] ?? 5)),
             'updated_at' => \current_datetime(),
         ]);

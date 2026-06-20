@@ -11,6 +11,7 @@ use App\Core\Jalali;
 use App\Core\View;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PurchaseRepository;
+use App\Repositories\ServiceRecordRepository;
 use App\Repositories\WalletRepository;
 use App\Services\ActivityLogger;
 use App\Services\CustomerService;
@@ -77,6 +78,7 @@ final class CustomerController
         View::render('customers/show', [
             'customer' => $customer,
             'purchases' => $purchases->forCustomer($id),
+            'services' => (new ServiceRecordRepository())->forCustomer($id),
             'walletTransactions' => (new WalletRepository())->forCustomer($id),
             'lifetimeEarned' => $purchases->lifetimeCashbackEarned($id),
             'canVoid' => Auth::can('void_purchase'),
@@ -91,9 +93,20 @@ final class CustomerController
         header('Content-Disposition: attachment; filename="customers.csv"');
         echo "\xEF\xBB\xBF";
         $out = fopen('php://output', 'w');
-        fputcsv($out, ['نام', 'نام خانوادگی', 'کد ملی', 'موبایل', 'تولد', 'موجودی کیف پول', 'تاریخ ایجاد']);
+        fputcsv($out, ['نام', 'نام خانوادگی', 'کد ملی', 'شماره قرارداد', 'موبایل', 'تولد', 'شروع قرارداد', 'پایان قرارداد', 'موجودی کیف پول', 'تاریخ ایجاد']);
         foreach ($customers as $customer) {
-            fputcsv($out, [$customer['first_name'], $customer['last_name'], $customer['national_code'], $customer['phone_number'], Jalali::formatDate($customer['birthday']), $customer['wallet_balance'], $customer['created_at']]);
+            fputcsv($out, [
+                $customer['first_name'],
+                $customer['last_name'],
+                $customer['national_code'],
+                $customer['contract_number'] ?? '',
+                $customer['phone_number'],
+                Jalali::formatDate($customer['birthday']),
+                Jalali::formatDate($customer['contract_starts_at'] ?? null),
+                Jalali::formatDate($customer['contract_ends_at'] ?? null),
+                $customer['wallet_balance'],
+                $customer['created_at'],
+            ]);
         }
         exit;
     }

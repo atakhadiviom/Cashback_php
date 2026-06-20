@@ -8,6 +8,20 @@ if ($birthdayRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_digits
 } else {
     $birthdayDisplay = $birthdayRaw;
 }
+$contractStartsDisplay = '';
+$contractStartsRaw = (string) ($customer['contract_starts_at'] ?? '');
+if ($contractStartsRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_digits($contractStartsRaw))) {
+    $contractStartsDisplay = Jalali::toInputValue($contractStartsRaw);
+} else {
+    $contractStartsDisplay = $contractStartsRaw;
+}
+$contractEndsDisplay = '';
+$contractEndsRaw = (string) ($customer['contract_ends_at'] ?? '');
+if ($contractEndsRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_digits($contractEndsRaw))) {
+    $contractEndsDisplay = Jalali::toInputValue($contractEndsRaw);
+} else {
+    $contractEndsDisplay = $contractEndsRaw;
+}
 ?>
 <div class="row g-3">
     <div class="col-md-6">
@@ -32,10 +46,6 @@ if ($birthdayRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_digits
         <?php if (!empty($errors['phone_number'])): ?><div class="form-text-error"><?= e($errors['phone_number']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-4">
-        <label class="form-label">شناسه معرف (اختیاری)</label>
-        <input class="form-control ltr" name="referred_by_customer_id" value="<?= e($customer['referred_by_customer_id'] ?? '') ?>" placeholder="ID مشتری معرف">
-    </div>
-    <div class="col-md-4">
         <label class="form-label">تاریخ تولد شمسی</label>
         <input
             class="form-control ltr"
@@ -50,6 +60,23 @@ if ($birthdayRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_digits
         >
         <div class="form-text">از تقویم شمسی انتخاب کنید. در پایگاه داده به‌صورت میلادی ذخیره می‌شود.</div>
         <?php if (!empty($errors['birthday'])): ?><div class="form-text-error"><?= e($errors['birthday']) ?></div><?php endif; ?>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">شناسه معرف (اختیاری)</label>
+        <input class="form-control ltr" name="referred_by_customer_id" value="<?= e($customer['referred_by_customer_id'] ?? '') ?>" placeholder="ID مشتری معرف">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">شماره قرارداد (اختیاری)</label>
+        <input class="form-control ltr" name="contract_number" maxlength="64" value="<?= e($customer['contract_number'] ?? '') ?>">
+        <?php if (!empty($errors['contract_number'])): ?><div class="form-text-error"><?= e($errors['contract_number']) ?></div><?php endif; ?>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">شروع قرارداد (شمسی)</label>
+        <input class="form-control ltr" type="text" name="contract_starts_at" data-jdp data-jdp-only-date placeholder="1403/01/01" value="<?= e($contractStartsDisplay) ?>" autocomplete="off">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">پایان قرارداد (شمسی)</label>
+        <input class="form-control ltr" type="text" name="contract_ends_at" data-jdp data-jdp-only-date placeholder="1404/01/01" value="<?= e($contractEndsDisplay) ?>" autocomplete="off">
     </div>
 </div>
 <div class="mt-4">

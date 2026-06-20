@@ -125,9 +125,85 @@ function normalize_digits(string $value): string
     ]);
 }
 
+function normalize_persian_text(string $value): string
+{
+    $value = normalize_digits($value);
+    $value = str_replace("\u{200C}", '', $value);
+
+    return strtr($value, [
+        'ي' => 'ی',
+        'ى' => 'ی',
+        'ئ' => 'ی',
+        'ك' => 'ک',
+        'ة' => 'ه',
+        'أ' => 'ا',
+        'إ' => 'ا',
+        'ٱ' => 'ا',
+        'آ' => 'ا',
+        'ؤ' => 'و',
+    ]);
+}
+
+function normalize_search_text(string $value): string
+{
+    return normalize_persian_text($value);
+}
+
+function search_like_term(string $value): string
+{
+    return '%' . normalize_search_text($value) . '%';
+}
+
+function sql_normalize_persian(string $column): string
+{
+    static $pairs = [
+        ['ي', 'ی'],
+        ['ى', 'ی'],
+        ['ئ', 'ی'],
+        ['ك', 'ک'],
+        ['ة', 'ه'],
+        ['أ', 'ا'],
+        ['إ', 'ا'],
+        ['ٱ', 'ا'],
+        ['آ', 'ا'],
+        ['ؤ', 'و'],
+    ];
+
+    $expression = $column;
+    foreach ($pairs as [$from, $to]) {
+        $expression = "REPLACE({$expression}, '{$from}', '{$to}')";
+    }
+
+    return $expression;
+}
+
 function money($amount): string
 {
     return number_format((float) $amount, 0, '.', ',');
+}
+
+function parse_money_input(mixed $value, float $default = 0.0): float
+{
+    $normalized = str_replace(',', '', normalize_digits(trim((string) $value)));
+    if ($normalized === '') {
+        return $default;
+    }
+
+    return (float) $normalized;
+}
+
+function money_input_value(mixed $amount, string $default = '0'): string
+{
+    if ($amount === null || $amount === '') {
+        return $default;
+    }
+
+    $value = (float) $amount;
+    if ($value == 0.0) {
+        return '0';
+    }
+
+    return number_format($value, 0, '.', ',');
 }
 
 function current_datetime(): string

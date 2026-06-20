@@ -17,6 +17,7 @@ use App\Controllers\PortalController;
 use App\Controllers\PurchaseController;
 use App\Controllers\PurchaseVoidController;
 use App\Controllers\ReportController;
+use App\Controllers\ServiceRecordController;
 use App\Controllers\SmsController;
 use App\Controllers\WalletController;
 use App\Core\Router;
@@ -53,8 +54,13 @@ $router->post('/purchases/void', [PurchaseVoidController::class, 'store'], true,
 $router->get('/wallet/reduce', [WalletController::class, 'reduce'], true, null, 'reduce_wallet');
 $router->post('/wallet/reduce', [WalletController::class, 'store'], true, null, 'reduce_wallet');
 
+$router->get('/services', [ServiceRecordController::class, 'index']);
+$router->get('/services/create', [ServiceRecordController::class, 'create']);
+$router->post('/services/create', [ServiceRecordController::class, 'store']);
+
 $router->get('/reports', [ReportController::class, 'index']);
 $router->get('/reports/export', [ReportController::class, 'export'], true, null, 'export');
+$router->get('/reports/services-export', [ReportController::class, 'exportServices'], true, null, 'export');
 $router->get('/sms/logs', [SmsController::class, 'logs']);
 
 $router->get('/admin/users', [UserController::class, 'index'], true, 'admin');

@@ -43,4 +43,30 @@ final class SmsTemplateRendererTest extends TestCase
 
         $this->assertSame('کد ورود: 123456', $message);
     }
+
+    public function testRenderSupportsServiceConfirmationTemplate(): void
+    {
+        $message = (new SmsTemplateRenderer())->render(
+            'سلام {full_name}، سرویس {service_type} در {service_date} ثبت شد. مبلغ: {paid_amount}',
+            ['first_name' => 'Ali', 'last_name' => 'Ahmadi'],
+            ['service_type' => 'دوره‌ای', 'service_date' => '1404/03/31', 'paid_amount' => 250000]
+        );
+
+        $this->assertSame('سلام Ali Ahmadi، سرویس دوره‌ای در 1404/03/31 ثبت شد. مبلغ: 250,000', $message);
+    }
+
+    public function testRenderSupportsContractRenewalTemplate(): void
+    {
+        $message = (new SmsTemplateRenderer())->render(
+            'قرارداد {contract_number} تا {contract_ends_at}',
+            [
+                'first_name' => 'Ali',
+                'last_name' => 'Ahmadi',
+                'contract_number' => 'ELV-9',
+                'contract_ends_at' => '2026-12-31',
+            ]
+        );
+
+        $this->assertSame('قرارداد ELV-9 تا 1405/10/10', $message);
+    }
 }

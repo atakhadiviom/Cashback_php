@@ -50,8 +50,8 @@ final class ActivityLogRepository
             $params['activity_type'] = $filters['activity_type'];
         }
         if (!empty($filters['customer'])) {
-            $where[] = '(c.first_name LIKE :customer1 OR c.last_name LIKE :customer2 OR c.national_code LIKE :customer3)';
-            $term = '%' . $filters['customer'] . '%';
+            $where[] = '(' . \sql_normalize_persian('c.first_name') . ' LIKE :customer1 OR ' . \sql_normalize_persian('c.last_name') . ' LIKE :customer2 OR c.national_code LIKE :customer3)';
+            $term = \search_like_term((string) $filters['customer']);
             $params['customer1'] = $term;
             $params['customer2'] = $term;
             $params['customer3'] = $term;

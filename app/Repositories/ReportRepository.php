@@ -134,8 +134,12 @@ final class ReportRepository
         }
         foreach (['first_name', 'last_name', 'national_code', 'phone_number'] as $field) {
             if (!empty($filters[$field])) {
-                $where[] = "c.{$field} LIKE :{$field}";
-                $params[$field] = '%' . \normalize_digits((string) $filters[$field]) . '%';
+                if (in_array($field, ['first_name', 'last_name'], true)) {
+                    $where[] = \sql_normalize_persian("c.{$field}") . " LIKE :{$field}";
+                } else {
+                    $where[] = "c.{$field} LIKE :{$field}";
+                }
+                $params[$field] = \search_like_term((string) $filters[$field]);
             }
         }
         if (!empty($filters['birthday'])) {

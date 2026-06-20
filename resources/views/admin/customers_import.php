@@ -1,6 +1,6 @@
 <?php use App\Core\Csrf; ?>
 <h1 class="h3 mb-4">ورود مشتریان از CSV / Excel</h1>
-<p class="text-muted">ستون‌ها: نام، نام خانوادگی (اختیاری)، کد ملی یا شناسه ملی شرکت (اختیاری)، موبایل، تاریخ تولد (شمسی اختیاری)</p>
+<p class="text-muted">ستون‌ها: نام، نام خانوادگی (اختیاری)، کد ملی یا شناسه ملی شرکت (اختیاری)، موبایل، تاریخ تولد (شمسی اختیاری)، شماره قرارداد (اختیاری)، شروع قرارداد (شمسی اختیاری)، پایان قرارداد (شمسی اختیاری)</p>
 <div class="card"><div class="card-body">
 <form method="post" action="<?= e(url('/admin/customers/import')) ?>" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">

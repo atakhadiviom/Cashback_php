@@ -58,6 +58,9 @@ final class CustomerImportController
                     'national_code' => $row[2] ?? '',
                     'phone_number' => $row[3] ?? '',
                     'birthday' => $row[4] ?? '',
+                    'contract_number' => $row[5] ?? '',
+                    'contract_starts_at' => $row[6] ?? '',
+                    'contract_ends_at' => $row[7] ?? '',
                 ];
                 if (!empty($_POST['preview_only'])) {
                     $preview[] = ['row' => $rowNum, 'data' => $data];

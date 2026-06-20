@@ -8,6 +8,8 @@ $mainNavItems = [
     ['/customers', 'مشتریان', 'bi-people', null],
     ['/customers/create', 'افزودن مشتری', 'bi-person-plus', null],
     ['/purchases/create', 'ثبت خرید', 'bi-receipt', 'purchase'],
+    ['/services', 'سرویس‌ها', 'bi-tools', null],
+    ['/services/create', 'ثبت سرویس', 'bi-wrench', null],
     ['/reports', 'گزارش‌ها', 'bi-bar-chart-line', null],
     ['/sms/logs', 'لاگ پیامک', 'bi-chat-dots', null],
 ];

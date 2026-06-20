@@ -10,6 +10,7 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
     <div class="d-flex gap-2 flex-wrap">
         <a class="btn btn-outline-secondary" href="<?= e(url('/customers/edit?id=' . $customer['id'])) ?>">ویرایش</a>
         <?php if (Auth::can('purchase')): ?><a class="btn btn-primary" href="<?= e(url('/purchases/create?customer_id=' . $customer['id'])) ?>">ثبت خرید</a><?php endif; ?>
+        <a class="btn btn-outline-primary" href="<?= e(url('/services/create?customer_id=' . $customer['id'])) ?>">ثبت سرویس</a>
         <?php if (Auth::can('reduce_wallet')): ?><a class="btn btn-outline-danger" href="<?= e(url('/wallet/reduce?customer_id=' . $customer['id'])) ?>">کسر کیف پول</a><?php endif; ?>
     </div>
 </div>
@@ -19,7 +20,35 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">موجودی کیف پول</div><div class="fw-bold"><?= e(money($customer['wallet_balance'])) ?> ریال</div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">کل کش‌بک دریافتی</div><div class="fw-bold"><?= e(money($lifetimeEarned)) ?> ریال</div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">تولد</div><div><?= e(Jalali::formatDate($customer['birthday'])) ?></div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">شماره قرارداد</div><div class="fw-bold ltr"><?= e($customer['contract_number'] ?? '-') ?></div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">شروع قرارداد</div><div><?= e(Jalali::formatDate($customer['contract_starts_at'] ?? null)) ?></div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">پایان قرارداد</div><div><?= e(Jalali::formatDate($customer['contract_ends_at'] ?? null)) ?></div></div></div></div>
 </div>
+<?php if (!empty($services)): ?>
+<div class="card mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span>سرویس‌های اخیر</span>
+        <a class="btn btn-sm btn-outline-primary" href="<?= e(url('/services/create?customer_id=' . $customer['id'])) ?>">ثبت سرویس</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead><tr><th>تاریخ</th><th>نوع</th><th>تکنسین</th><th>مبلغ</th><th>وضعیت</th><th>پیامک</th></tr></thead>
+            <tbody>
+            <?php foreach ($services as $service): ?>
+                <tr>
+                    <td><?= e(Jalali::formatDate($service['service_date'])) ?></td>
+                    <td><?= e(\App\Services\ServiceRecordService::serviceTypeLabel($service['service_type'])) ?></td>
+                    <td><?= e($service['technician_name']) ?></td>
+                    <td><?= e(money($service['paid_amount'])) ?> ریال</td>
+                    <td><?= $service['payment_status'] === 'paid' ? 'پرداخت شده' : 'پرداخت نشده' ?></td>
+                    <td><?= e($service['sms_status'] ?? '-') ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="card">

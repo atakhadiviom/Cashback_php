@@ -9,6 +9,8 @@ DROP TABLE IF EXISTS login_attempts;
 DROP TABLE IF EXISTS promotions;
 DROP TABLE IF EXISTS customer_tiers;
 DROP TABLE IF EXISTS schema_migrations;
+DROP TABLE IF EXISTS contract_renewal_sms_history;
+DROP TABLE IF EXISTS service_records;
 DROP TABLE IF EXISTS birthday_sms_history;
 DROP TABLE IF EXISTS sms_logs;
 DROP TABLE IF EXISTS sms_settings;
@@ -56,10 +58,15 @@ CREATE TABLE customers (
   deleted_at DATETIME NULL,
   referred_by_customer_id BIGINT UNSIGNED NULL,
   tier_id BIGINT UNSIGNED NULL,
+  contract_number VARCHAR(64) NULL,
+  contract_starts_at DATE NULL,
+  contract_ends_at DATE NULL,
+  UNIQUE KEY uq_customers_contract_number (contract_number),
   INDEX idx_customers_name (last_name, first_name),
   INDEX idx_customers_phone (phone_number),
   INDEX idx_customers_birthday (birthday),
   INDEX idx_customers_deleted_at (deleted_at),
+  INDEX idx_customers_contract_ends_at (contract_ends_at),
   CONSTRAINT fk_customers_created_by FOREIGN KEY (created_by) REFERENCES users(id),
   CONSTRAINT fk_customers_referred_by FOREIGN KEY (referred_by_customer_id) REFERENCES customers(id) ON DELETE SET NULL,
   CONSTRAINT fk_customers_tier FOREIGN KEY (tier_id) REFERENCES customer_tiers(id) ON DELETE SET NULL
@@ -118,7 +125,7 @@ CREATE TABLE wallet_transactions (
 CREATE TABLE cashback_settings (
   id TINYINT UNSIGNED PRIMARY KEY,
   cashback_percent DECIMAL(5,2) NOT NULL DEFAULT 5.00,
-  min_purchase_amount DECIMAL(15,2) NULL,
+  min_purchase_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
   max_cashback_per_purchase DECIMAL(15,2) NULL,
   min_redemption_amount DECIMAL(15,2) NULL,
   max_redemption_percent_of_purchase DECIMAL(5,2) NULL,
@@ -138,6 +145,8 @@ CREATE TABLE sms_settings (
   birthday_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
   wallet_reduction_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
   welcome_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
+  service_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
+  contract_renewal_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
   purchase_template TEXT NOT NULL,
   birthday_template TEXT NOT NULL,
   wallet_reduction_template TEXT NOT NULL,
@@ -145,6 +154,8 @@ CREATE TABLE sms_settings (
   otp_template TEXT NULL,
   purchase_void_template TEXT NULL,
   referral_template TEXT NULL,
+  service_template TEXT NULL,
+  contract_renewal_template TEXT NULL,
   updated_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -152,7 +163,7 @@ CREATE TABLE sms_logs (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id BIGINT UNSIGNED NULL,
   phone_number VARCHAR(20) NOT NULL,
-  event_type ENUM('purchase','birthday','wallet_reduction','welcome','manual','otp','purchase_void','referral_bonus') NOT NULL,
+  event_type ENUM('purchase','birthday','wallet_reduction','welcome','manual','otp','purchase_void','referral_bonus','service_confirmation','contract_renewal') NOT NULL,
   message TEXT NOT NULL,
   provider VARCHAR(50) NOT NULL DEFAULT 'ippanel',
   provider_response TEXT NULL,
@@ -165,6 +176,41 @@ CREATE TABLE sms_logs (
   INDEX idx_sms_logs_status (status),
   INDEX idx_sms_logs_created_at (created_at),
   CONSTRAINT fk_sms_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE service_records (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  customer_id BIGINT UNSIGNED NOT NULL,
+  technician_id BIGINT UNSIGNED NOT NULL,
+  service_date DATE NOT NULL,
+  service_type ENUM('periodic','repair','inspection','other') NOT NULL,
+  description TEXT NULL,
+  paid_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+  payment_status ENUM('unpaid','paid') NOT NULL,
+  sms_log_id BIGINT UNSIGNED NULL,
+  created_by BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  INDEX idx_service_records_customer_date (customer_id, service_date),
+  INDEX idx_service_records_technician (technician_id),
+  INDEX idx_service_records_service_date (service_date),
+  INDEX idx_service_records_payment_status (payment_status),
+  CONSTRAINT fk_service_records_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_service_records_technician FOREIGN KEY (technician_id) REFERENCES users(id),
+  CONSTRAINT fk_service_records_sms_log FOREIGN KEY (sms_log_id) REFERENCES sms_logs(id) ON DELETE SET NULL,
+  CONSTRAINT fk_service_records_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE contract_renewal_sms_history (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  customer_id BIGINT UNSIGNED NOT NULL,
+  contract_ends_at DATE NOT NULL,
+  reminder_days SMALLINT UNSIGNED NOT NULL,
+  sms_log_id BIGINT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  UNIQUE KEY uq_contract_renewal_reminder (customer_id, contract_ends_at, reminder_days),
+  CONSTRAINT fk_contract_renewal_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_contract_renewal_sms_log FOREIGN KEY (sms_log_id) REFERENCES sms_logs(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE birthday_sms_history (
@@ -185,7 +231,7 @@ CREATE TABLE activity_logs (
   activity_type ENUM(
     'login','logout','customer_create','customer_edit','customer_delete','customer_anonymize','customer_import',
     'purchase_create','purchase_void','wallet_reduction','operator_create','operator_edit',
-    'sms_sent','sms_failed','report_export','settings_update'
+    'sms_sent','sms_failed','report_export','settings_update','service_create'
   ) NOT NULL,
   description VARCHAR(500) NOT NULL,
   customer_id BIGINT UNSIGNED NULL,
@@ -260,10 +306,12 @@ INSERT INTO cashback_settings (
 
 INSERT INTO sms_settings (
   id, api_token, sender_number, sms_enabled, purchase_sms_enabled, birthday_sms_enabled,
-  wallet_reduction_sms_enabled, welcome_sms_enabled, purchase_template, birthday_template,
-  wallet_reduction_template, welcome_template, otp_template, purchase_void_template, referral_template, updated_at
+  wallet_reduction_sms_enabled, welcome_sms_enabled, service_sms_enabled, contract_renewal_sms_enabled,
+  purchase_template, birthday_template,
+  wallet_reduction_template, welcome_template, otp_template, purchase_void_template, referral_template,
+  service_template, contract_renewal_template, updated_at
 ) VALUES (
-  1, NULL, NULL, 0, 0, 0, 0, 0,
+  1, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
   'سلام {full_name}، خرید شما به مبلغ {purchase_amount} ثبت شد و مبلغ {cashback_amount} ریال کش‌بک به کیف پول شما اضافه شد. موجودی کیف پول: {wallet_balance} ریال',
   '{full_name} عزیز، تولدتان مبارک! از طرف {company_name} برای شما آرزوی سلامتی و شادی داریم.',
   'سلام {full_name}، مبلغ {purchase_amount} ریال از کیف پول شما کسر شد. موجودی جدید: {wallet_balance} ریال',
@@ -271,5 +319,7 @@ INSERT INTO sms_settings (
   'کد ورود به پرتال کش‌بک {company_name}: {otp_code}',
   'سلام {full_name}، خرید شما به مبلغ {purchase_amount} ابطال شد و مبلغ {cashback_amount} ریال از کیف پول کسر شد.',
   'سلام {full_name}، مبلغ {cashback_amount} ریال بابت معرفی مشتری جدید به کیف پول شما اضافه شد.',
+  'سلام {full_name}، سرویس {service_type} شما در تاریخ {service_date} ثبت شد. مبلغ پرداختی: {paid_amount} ریال.',
+  'سلام {full_name}، قرارداد شماره {contract_number} شما تا {contract_ends_at} معتبر است. برای تمدید با ما تماس بگیرید.',
   NOW()
 );

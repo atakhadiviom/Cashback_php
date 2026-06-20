@@ -7,10 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  const customerPicker = document.getElementById('purchase-customer-picker');
-  const customerId = document.getElementById('purchase-customer-id');
-  const customerResults = document.getElementById('purchase-customer-results');
-  if (customerPicker && customerId && customerResults) {
+  const initCustomerCombobox = (pickerId, hiddenId, resultsId) => {
+    const customerPicker = document.getElementById(pickerId);
+    const customerId = document.getElementById(hiddenId);
+    const customerResults = document.getElementById(resultsId);
+    if (!customerPicker || !customerId || !customerResults) {
+      return;
+    }
+
     const resultItems = Array.from(customerResults.querySelectorAll('.customer-result-item'));
     const emptyState = customerResults.querySelector('[data-empty]');
 
@@ -23,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
           '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
         };
         return map[ch] || ch;
-      });
+      }).replace(/\u200c/g, '').replace(/[يىئ]/g, 'ی').replace(/ك/g, 'ک').replace(/ة/g, 'ه')
+        .replace(/[أإٱآ]/g, 'ا').replace(/ؤ/g, 'و');
 
     const selectCustomer = (item) => {
       customerPicker.value = item.dataset.label || item.textContent.trim();
@@ -91,7 +96,10 @@ document.addEventListener('DOMContentLoaded', () => {
       customerPicker.form.addEventListener('submit', syncCustomerId);
     }
     syncCustomerId();
-  }
+  };
+
+  initCustomerCombobox('purchase-customer-picker', 'purchase-customer-id', 'purchase-customer-results');
+  initCustomerCombobox('service-customer-picker', 'service-customer-id', 'service-customer-results');
 
   document.querySelectorAll('[data-money]').forEach((input) => {
     const normalizeDigits = (value) =>
@@ -106,7 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     const formatMoney = () => {
-      const raw = normalizeDigits(input.value).replace(/[^\d]/g, '');
+      let raw = normalizeDigits(input.value).replace(/[^\d.]/g, '');
+      if (raw.includes('.')) {
+        raw = raw.split('.')[0];
+      }
+      raw = raw.replace(/\D/g, '');
       input.value = raw === '' ? '' : raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     };
 

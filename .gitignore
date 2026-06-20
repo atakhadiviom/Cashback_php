@@ -1,8 +1,15 @@
 config/config.php
+cashback_config.php
 storage/installed.lock
 /vendor/
 composer.lock
 *.log
 .DS_Store
-outputs/cashback_import_ready_ooj.xlsx
-outputs/*.inspect.ndjson
+.phpunit.result.cache
+
+# Company / personal customer data and import tooling
+outputs/
+database/import_ooj_xlsx.php
+public/_*_once.php
+*.xlsx
+*.xls

@@ -31,6 +31,12 @@ final class SmsService
             case 'welcome':
                 $flag = 'welcome_sms_enabled';
                 break;
+            case 'service_confirmation':
+                $flag = 'service_sms_enabled';
+                break;
+            case 'contract_renewal':
+                $flag = 'contract_renewal_sms_enabled';
+                break;
             case 'purchase_void':
             case 'referral_bonus':
                 $flag = 'purchase_sms_enabled';
@@ -55,6 +61,12 @@ final class SmsService
                 break;
             case 'otp':
                 $templateKey = 'otp_template';
+                break;
+            case 'service_confirmation':
+                $templateKey = 'service_template';
+                break;
+            case 'contract_renewal':
+                $templateKey = 'contract_renewal_template';
                 break;
             default:
                 $templateKey = $eventType . '_template';
