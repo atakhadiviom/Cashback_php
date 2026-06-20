@@ -1,6 +1,7 @@
 config/config.php
 cashback_config.php
 storage/installed.lock
+storage/cron_state.json
 /vendor/
 composer.lock
 *.log

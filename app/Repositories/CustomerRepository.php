@@ -119,9 +119,14 @@ final class CustomerRepository
 
     public function birthdayTodayWithoutHistory(int $year): array
     {
-        $stmt = $this->pdo->prepare('SELECT c.* FROM customers c LEFT JOIN birthday_sms_history h ON h.customer_id = c.id AND h.sent_year = :sent_year WHERE c.birthday IS NOT NULL AND MONTH(c.birthday) = MONTH(CURDATE()) AND DAY(c.birthday) = DAY(CURDATE()) AND h.id IS NULL');
+        $stmt = $this->pdo->prepare(
+            'SELECT c.* FROM customers c
+             LEFT JOIN birthday_sms_history h ON h.customer_id = c.id AND h.sent_year = :sent_year
+             WHERE c.deleted_at IS NULL AND c.birthday IS NOT NULL AND h.id IS NULL'
+        );
         $stmt->execute(['sent_year' => $year]);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        return array_values(array_filter($rows, static fn (array $row): bool => \App\Core\Jalali::isJalaliBirthdayToday($row['birthday'] ?? null)));
     }
 
     public function incrementWallet(int $id, float $amount): void

@@ -6,11 +6,13 @@ use App\Controllers\Admin\ActivityLogController;
 use App\Controllers\Admin\AppUpdateController;
 use App\Controllers\Admin\ApiKeyController;
 use App\Controllers\Admin\CashbackSettingsController;
+use App\Controllers\Admin\CronController as AdminCronController;
 use App\Controllers\Admin\CustomerImportController;
 use App\Controllers\Admin\LoyaltyController;
 use App\Controllers\Admin\SettingsController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\AuthController;
+use App\Controllers\CronController;
 use App\Controllers\CustomerController;
 use App\Controllers\DashboardController;
 use App\Controllers\PortalController;
@@ -29,6 +31,8 @@ $router->get('/dashboard', [DashboardController::class, 'index']);
 $router->get('/login', [AuthController::class, 'login'], false);
 $router->post('/login', [AuthController::class, 'authenticate'], false);
 $router->post('/logout', [AuthController::class, 'logout']);
+
+$router->get('/internal/cron', [CronController::class, 'run'], false);
 
 $router->get('/portal', [PortalController::class, 'index'], false);
 $router->post('/portal', [PortalController::class, 'requestOtp'], false);
@@ -71,6 +75,7 @@ $router->post('/admin/users/edit', [UserController::class, 'update'], true, 'adm
 $router->get('/admin/activity-logs', [ActivityLogController::class, 'index'], true, 'admin');
 $router->get('/admin/sms-settings', [SettingsController::class, 'edit'], true, 'admin');
 $router->post('/admin/sms-settings', [SettingsController::class, 'update'], true, 'admin');
+$router->post('/admin/cron/run', [AdminCronController::class, 'run'], true, 'admin');
 $router->get('/admin/cashback-settings', [CashbackSettingsController::class, 'edit'], true, 'admin');
 $router->post('/admin/cashback-settings', [CashbackSettingsController::class, 'update'], true, 'admin');
 $router->get('/admin/customers/import', [CustomerImportController::class, 'form'], true, 'admin');

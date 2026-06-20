@@ -28,4 +28,13 @@ final class JalaliTest extends TestCase
         $this->assertNull(Jalali::parseInputToGregorian('2024-02-31'));
         $this->assertNull(Jalali::parseInputToGregorian('1100/01/01'));
     }
+
+    public function testJalaliBirthdayUsesJalaliMonthDayNotGregorian(): void
+    {
+        $birth = Jalali::jalaliMonthDay('2024-03-20');
+        $this->assertNotNull($birth);
+        $this->assertSame(1, $birth['month']);
+        $this->assertSame(1, $birth['day']);
+        $this->assertFalse(Jalali::isJalaliBirthdayToday('2024-03-20'));
+    }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap/app.php';
 
-use App\Services\SmsService;
-
-$count = (new SmsService())->retryPending();
-echo "Retried {$count} SMS messages.\n";
+foreach ((new App\Services\CronRunnerService())->runSmsRetry()['messages'] as $line) {
+    echo $line . PHP_EOL;
+}

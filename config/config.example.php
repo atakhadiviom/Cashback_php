@@ -35,4 +35,10 @@ return [
         'branch' => 'main',
         'github_token' => '',
     ],
+    'cron' => [
+        // Set a long random string to enable https://your-site/internal/cron?task=all&token=...
+        'web_token' => '',
+        'dashboard_auto_run' => true,
+        'sms_retry_interval_minutes' => 15,
+    ],
 ];

@@ -130,4 +130,32 @@ final class Jalali
 
         return sprintf('%04d-%02d-%02d', $gy, $gm, $gd);
     }
+
+    /** @return array{month: int, day: int}|null */
+    public static function jalaliMonthDay(?string $gregorianDate): ?array
+    {
+        if (!$gregorianDate) {
+            return null;
+        }
+        [$gy, $gm, $gd] = array_map('intval', explode('-', substr($gregorianDate, 0, 10)));
+        [$jy, $jm, $jd] = self::gregorianToJalali($gy, $gm, $gd);
+        return ['month' => $jm, 'day' => $jd];
+    }
+
+    /** @return array{month: int, day: int} */
+    public static function todayJalaliMonthDay(): array
+    {
+        [$jy, $jm, $jd] = self::gregorianToJalali((int) date('Y'), (int) date('n'), (int) date('j'));
+        return ['month' => $jm, 'day' => $jd];
+    }
+
+    public static function isJalaliBirthdayToday(?string $gregorianBirthDate): bool
+    {
+        $birth = self::jalaliMonthDay($gregorianBirthDate);
+        if ($birth === null) {
+            return false;
+        }
+        $today = self::todayJalaliMonthDay();
+        return $birth['month'] === $today['month'] && $birth['day'] === $today['day'];
+    }
 }

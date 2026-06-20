@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Core\Database;
+use App\Core\Jalali;
 use PDO;
 
 final class ReportRepository
@@ -24,7 +25,7 @@ final class ReportRepository
             'purchase_amount' => (float) $this->pdo->query("SELECT COALESCE(SUM(amount),0) FROM purchases WHERE status = 'active'")->fetchColumn(),
             'cashback' => (float) $this->pdo->query("SELECT COALESCE(SUM(cashback_amount),0) FROM purchases WHERE status = 'active'")->fetchColumn(),
             'wallets' => (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers WHERE deleted_at IS NULL')->fetchColumn(),
-            'birthdays_today' => (int) $this->pdo->query('SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL AND birthday IS NOT NULL AND MONTH(birthday) = MONTH(CURDATE()) AND DAY(birthday) = DAY(CURDATE())')->fetchColumn(),
+            'birthdays_today' => $this->countBirthdaysToday(),
             'cashback_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(cashback_amount),0) FROM purchases WHERE status = 'active' AND YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())")->fetchColumn(),
             'reductions_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(amount),0) FROM wallet_transactions WHERE type = 'reduction' AND YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())")->fetchColumn(),
             'outstanding_liability' => $this->outstandingLiability(),
@@ -93,18 +94,41 @@ final class ReportRepository
 
     public function birthdays(string $period): array
     {
-        switch ($period) {
-            case 'today':
-                $condition = 'MONTH(birthday) = MONTH(CURDATE()) AND DAY(birthday) = DAY(CURDATE())';
-                break;
-            case 'week':
-                $condition = 'birthday IS NOT NULL AND DAYOFYEAR(birthday) BETWEEN DAYOFYEAR(CURDATE()) AND DAYOFYEAR(DATE_ADD(CURDATE(), INTERVAL 7 DAY))';
-                break;
-            default:
-                $condition = 'MONTH(birthday) = MONTH(CURDATE())';
-                break;
+        $stmt = $this->pdo->query('SELECT * FROM customers WHERE deleted_at IS NULL AND birthday IS NOT NULL ORDER BY birthday');
+        $rows = $stmt->fetchAll();
+        $today = Jalali::todayJalaliMonthDay();
+
+        return array_values(array_filter($rows, static function (array $row) use ($period, $today): bool {
+            $birth = Jalali::jalaliMonthDay($row['birthday'] ?? null);
+            if ($birth === null) {
+                return false;
+            }
+            if ($period === 'today') {
+                return $birth['month'] === $today['month'] && $birth['day'] === $today['day'];
+            }
+            if ($period === 'week') {
+                return self::jalaliBirthdayWithinDays($birth, $today, 7);
+            }
+            return $birth['month'] === $today['month'];
+        }));
+    }
+
+    private function countBirthdaysToday(): int
+    {
+        return count($this->birthdays('today'));
+    }
+
+    /** @param array{month: int, day: int} $birth @param array{month: int, day: int} $from */
+    private static function jalaliBirthdayWithinDays(array $birth, array $from, int $days): bool
+    {
+        for ($i = 0; $i <= $days; $i++) {
+            $ts = strtotime("+{$i} days");
+            $check = Jalali::gregorianToJalali((int) date('Y', $ts), (int) date('n', $ts), (int) date('j', $ts));
+            if ($birth['month'] === $check[1] && $birth['day'] === $check[2]) {
+                return true;
+            }
         }
-        return $this->pdo->query("SELECT * FROM customers WHERE deleted_at IS NULL AND birthday IS NOT NULL AND {$condition} ORDER BY DAY(birthday)")->fetchAll();
+        return false;
     }
 
     public function purchases(array $filters, int $limit = 300): array
