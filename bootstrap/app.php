@@ -2,6 +2,19 @@
 
 declare(strict_types=1);
 
+if (PHP_VERSION_ID < 80100) {
+    $phpVersion = PHP_VERSION;
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, "Cashback requires PHP 8.1+. Current: {$phpVersion}\n");
+        exit(1);
+    }
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "Cashback requires PHP 8.1 or newer (current: {$phpVersion}).\n";
+    echo "In cPanel open MultiPHP Manager and set this domain to PHP 8.1 or 8.2.\n";
+    exit;
+}
+
 $rootPath = dirname(__DIR__);
 $rootConfig = $rootPath . '/cashback_config.php';
 $externalConfig = dirname($rootPath) . '/cashback_config.php';

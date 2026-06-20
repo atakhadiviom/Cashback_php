@@ -1,6 +1,11 @@
 Options -Indexes
 DirectoryIndex index.php
 
+# cPanel EasyApache: force PHP 8.1 for this app (requires PHP >= 8.1)
+<IfModule mime_module>
+    AddHandler application/x-httpd-ea-php81 .php
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
 

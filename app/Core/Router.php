@@ -6,7 +6,8 @@ namespace App\Core;
 
 final class Router
 {
-    private array $routes = [];
+    /** @var array<string, array<string, mixed>> */
+    private $routes = [];
 
     public function get(string $path, array $handler, bool $auth = true, ?string $role = null, ?string $permission = null): void
     {
