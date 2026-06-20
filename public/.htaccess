@@ -1,6 +1,11 @@
 Options -Indexes
 DirectoryIndex index.php
 
+# Required on this host: MultiPHP alone does not apply; force PHP 8.4 handler.
+<IfModule mime_module>
+    AddHandler application/x-httpd-ea-php84 .php
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
