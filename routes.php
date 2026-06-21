@@ -10,6 +10,7 @@ use App\Controllers\Admin\CronController as AdminCronController;
 use App\Controllers\Admin\CustomerImportController;
 use App\Controllers\Admin\LoyaltyController;
 use App\Controllers\Admin\SettingsController;
+use App\Controllers\Admin\SystemStatusController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\AuthController;
 use App\Controllers\CronController;
@@ -73,6 +74,7 @@ $router->post('/admin/users/create', [UserController::class, 'store'], true, 'ad
 $router->get('/admin/users/edit', [UserController::class, 'edit'], true, 'admin');
 $router->post('/admin/users/edit', [UserController::class, 'update'], true, 'admin');
 $router->get('/admin/activity-logs', [ActivityLogController::class, 'index'], true, 'admin');
+$router->get('/admin/system-status', [SystemStatusController::class, 'index'], true, 'admin');
 $router->get('/admin/sms-settings', [SettingsController::class, 'edit'], true, 'admin');
 $router->post('/admin/sms-settings', [SettingsController::class, 'update'], true, 'admin');
 $router->post('/admin/cron/run', [AdminCronController::class, 'run'], true, 'admin');

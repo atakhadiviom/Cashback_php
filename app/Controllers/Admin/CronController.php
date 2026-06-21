@@ -17,6 +17,6 @@ final class CronController
         $result = (new CronRunnerService())->runTask($task);
         $summary = $result['messages'] ? implode(' ', $result['messages']) : 'انجام شد.';
         Flash::set($result['ok'] ? 'success' : 'danger', $summary);
-        \redirect('/dashboard');
+        \redirect('/admin/system-status');
     }
 }

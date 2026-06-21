@@ -18,6 +18,7 @@ if (Auth::isAdmin()) {
     $adminNavItems = [
         ['/admin/users', 'اپراتورها', 'bi-person-gear', 'manage_users'],
         ['/admin/activity-logs', 'فعالیت‌ها', 'bi-activity', null],
+        ['/admin/system-status', 'وضعیت سیستم', 'bi-heart-pulse', null],
         ['/admin/cashback-settings', 'تنظیمات کش‌بک', 'bi-percent', 'manage_settings'],
         ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders', 'manage_settings'],
         ['/admin/loyalty', 'سطوح و پروموشن', 'bi-trophy', 'manage_loyalty'],
