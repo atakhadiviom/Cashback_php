@@ -21,13 +21,13 @@ final class ReportRepository
     {
         return [
             'customers' => (int) $this->pdo->query('SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL')->fetchColumn(),
-            'purchases' => (int) $this->pdo->query("SELECT COUNT(*) FROM purchases WHERE status = 'active'")->fetchColumn(),
-            'purchase_amount' => (float) $this->pdo->query("SELECT COALESCE(SUM(amount),0) FROM purchases WHERE status = 'active'")->fetchColumn(),
-            'cashback' => (float) $this->pdo->query("SELECT COALESCE(SUM(cashback_amount),0) FROM purchases WHERE status = 'active'")->fetchColumn(),
+            'purchases' => (int) $this->pdo->query("SELECT COUNT(*) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL")->fetchColumn(),
+            'purchase_amount' => (float) $this->pdo->query("SELECT COALESCE(SUM(p.amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL")->fetchColumn(),
+            'cashback' => (float) $this->pdo->query("SELECT COALESCE(SUM(p.cashback_amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL")->fetchColumn(),
             'wallets' => (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers WHERE deleted_at IS NULL')->fetchColumn(),
             'birthdays_today' => $this->countBirthdaysToday(),
-            'cashback_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(cashback_amount),0) FROM purchases WHERE status = 'active' AND YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())")->fetchColumn(),
-            'reductions_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(amount),0) FROM wallet_transactions WHERE type = 'reduction' AND YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())")->fetchColumn(),
+            'cashback_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(p.cashback_amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL AND YEAR(p.created_at) = YEAR(CURDATE()) AND MONTH(p.created_at) = MONTH(CURDATE())")->fetchColumn(),
+            'reductions_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(w.amount),0) FROM wallet_transactions w JOIN customers c ON c.id = w.customer_id WHERE w.type = 'reduction' AND c.deleted_at IS NULL AND YEAR(w.created_at) = YEAR(CURDATE()) AND MONTH(w.created_at) = MONTH(CURDATE())")->fetchColumn(),
             'outstanding_liability' => $this->outstandingLiability(),
         ];
     }
@@ -41,8 +41,8 @@ final class ReportRepository
     {
         $stmt = $this->pdo->prepare(
             "SELECT
-                (SELECT COALESCE(SUM(cashback_amount),0) FROM purchases WHERE status = 'active' AND created_at BETWEEN :from1 AND :to1) AS issued,
-                (SELECT COALESCE(SUM(amount),0) FROM wallet_transactions WHERE type = 'reduction' AND created_at BETWEEN :from2 AND :to2) AS redeemed"
+                (SELECT COALESCE(SUM(p.cashback_amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL AND p.created_at BETWEEN :from1 AND :to1) AS issued,
+                (SELECT COALESCE(SUM(w.amount),0) FROM wallet_transactions w JOIN customers c ON c.id = w.customer_id WHERE w.type = 'reduction' AND c.deleted_at IS NULL AND w.created_at BETWEEN :from2 AND :to2) AS redeemed"
         );
         $stmt->execute([
             'from1' => $from . ' 00:00:00',
@@ -78,18 +78,18 @@ final class ReportRepository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         $row = $stmt->fetch() ?: [];
-        $row['wallet_balances'] = (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers')->fetchColumn();
+        $row['wallet_balances'] = (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers WHERE deleted_at IS NULL')->fetchColumn();
         return $row;
     }
 
     public function topByAmount(): array
     {
-        return $this->pdo->query("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' GROUP BY c.id ORDER BY total DESC LIMIT 10")->fetchAll();
+        return $this->pdo->query("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' AND c.deleted_at IS NULL GROUP BY c.id ORDER BY total DESC LIMIT 10")->fetchAll();
     }
 
     public function topByCashback(): array
     {
-        return $this->pdo->query("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.cashback_amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' GROUP BY c.id ORDER BY total DESC LIMIT 10")->fetchAll();
+        return $this->pdo->query("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.cashback_amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' AND c.deleted_at IS NULL GROUP BY c.id ORDER BY total DESC LIMIT 10")->fetchAll();
     }
 
     public function birthdays(string $period): array
@@ -146,7 +146,7 @@ final class ReportRepository
 
     private function purchaseFilters(array $filters): array
     {
-        $where = [];
+        $where = ['c.deleted_at IS NULL'];
         $params = [];
         if (!empty($filters['date_from'])) {
             $where[] = 'p.created_at >= :date_from';
