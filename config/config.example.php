@@ -2,12 +2,12 @@
 
 return [
     'app' => [
-        'name' => 'سیستم مدیریت کش بک نوآوران زیبایی',
+        'name' => 'سیستم مدیریت کش‌بک و مشتریان',
         'base_url' => '',
         'timezone' => 'Asia/Tehran',
         'debug' => false,
         'birthday_required' => false,
-        'company_name' => 'نوآوران زیبایی',
+        'company_name' => 'پرشین نت',
     ],
     'database' => [
         'host' => 'localhost',

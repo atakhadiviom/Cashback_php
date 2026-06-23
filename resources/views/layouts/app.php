@@ -2,36 +2,50 @@
 use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\Flash;
+use App\Repositories\CashbackSettingsRepository;
+
+$settings = (new CashbackSettingsRepository())->settings();
+$enabledMenus = $settings['enabled_menus'] ?? null; // null or array of keys means "all enabled" when null/empty
+
+$menuEnabled = static function (string $key) use ($enabledMenus): bool {
+    if ($enabledMenus === null || $enabledMenus === []) {
+        return true;
+    }
+    return in_array($key, $enabledMenus, true);
+};
 
 $mainNavItems = [
-    ['/dashboard', 'داشبورد', 'bi-speedometer2', null],
-    ['/customers', 'مشتریان', 'bi-people', null],
-    ['/customers/create', 'افزودن مشتری', 'bi-person-plus', null],
-    ['/purchases/create', 'ثبت خرید', 'bi-receipt', 'purchase'],
-    ['/services', 'سرویس‌ها', 'bi-tools', null],
-    ['/services/create', 'ثبت سرویس', 'bi-wrench', null],
-    ['/followups', 'پیگیری فروش', 'bi-telephone-outbound', null],
-    ['/followups/create', 'ثبت پیگیری', 'bi-journal-plus', null],
-    ['/reminders', 'یادآوری‌ها', 'bi-bell', null],
-    ['/reports', 'گزارش‌ها', 'bi-bar-chart-line', null],
-    ['/sms/logs', 'لاگ پیامک', 'bi-chat-dots', null],
+    ['/dashboard', 'داشبورد', 'bi-speedometer2', null, 'dashboard'],
+    ['/customers', 'مشتریان', 'bi-people', null, 'customers'],
+    ['/customers/create', 'افزودن مشتری', 'bi-person-plus', null, 'add_customer'],
+    ['/purchases/create', 'ثبت خرید', 'bi-receipt', 'purchase', 'purchases'],
+    ['/services', 'سرویس‌ها', 'bi-tools', null, 'services'],
+    ['/services/create', 'ثبت سرویس', 'bi-wrench', null, 'services'],
+    ['/followups', 'پیگیری فروش', 'bi-telephone-outbound', null, 'followups'],
+    ['/followups/create', 'ثبت پیگیری', 'bi-journal-plus', null, 'followups'],
+    ['/reminders', 'یادآوری‌ها', 'bi-bell', null, 'reminders'],
+    ['/reports', 'گزارش‌ها', 'bi-bar-chart-line', null, 'reports'],
+    ['/sms/logs', 'لاگ پیامک', 'bi-chat-dots', null, 'sms_logs'],
 ];
 $adminNavItems = [];
 if (Auth::isAdmin()) {
     $adminNavItems = [
-        ['/admin/users', 'اپراتورها', 'bi-person-gear', 'manage_users'],
-        ['/admin/activity-logs', 'فعالیت‌ها', 'bi-activity', null],
-        ['/admin/system-status', 'وضعیت سیستم', 'bi-heart-pulse', null],
-        ['/admin/cashback-settings', 'تنظیمات کش‌بک', 'bi-percent', 'manage_settings'],
-        ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders', 'manage_settings'],
-        ['/admin/loyalty', 'سطوح و پروموشن', 'bi-trophy', 'manage_loyalty'],
-        ['/admin/api-keys', 'کلید API', 'bi-key', 'manage_api'],
-        ['/admin/customers/import', 'ورود فایل', 'bi-upload', 'import_customers'],
-        ['/admin/app-update', 'به‌روزرسانی', 'bi-cloud-download', 'manage_settings'],
+        ['/admin/users', 'اپراتورها', 'bi-person-gear', 'manage_users', null],
+        ['/admin/activity-logs', 'فعالیت‌ها', 'bi-activity', null, null],
+        ['/admin/system-status', 'وضعیت سیستم', 'bi-heart-pulse', null, null],
+        ['/admin/cashback-settings', 'تنظیمات کش‌بک', 'bi-percent', 'manage_settings', null],
+        ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders', 'manage_settings', null],
+        ['/admin/loyalty', 'سطوح و پروموشن', 'bi-trophy', 'manage_loyalty', null],
+        ['/admin/api-keys', 'کلید API', 'bi-key', 'manage_api', null],
+        ['/admin/customers/import', 'ورود فایل', 'bi-upload', 'import_customers', null],
+        ['/admin/app-update', 'به‌روزرسانی', 'bi-cloud-download', 'manage_settings', null],
     ];
 }
+
 $canSeeNavItem = static fn (array $item): bool => $item[3] === null || Auth::can($item[3]);
-$mainNavItems = array_values(array_filter($mainNavItems, $canSeeNavItem));
+$mainNavItems = array_values(array_filter($mainNavItems, function ($item) use ($canSeeNavItem, $menuEnabled) {
+    return $canSeeNavItem($item) && $menuEnabled($item[4] ?? '');
+}));
 $adminNavItems = array_values(array_filter($adminNavItems, $canSeeNavItem));
 ?>
 <!doctype html>
@@ -66,7 +80,7 @@ foreach ($adminNavItems as [$path]) {
         <a class="brand-mark" href="<?= e(url('/dashboard')) ?>">
             <span class="brand-icon"><i class="bi bi-wallet2"></i></span>
             <span>
-                <strong>کش‌بک</strong>
+                <strong><?= e(config_value('app.name', 'سیستم مدیریت مشتریان و کش‌بک')) ?></strong>
                 <small><?= e(config_value('app.company_name', '')) ?></small>
             </span>
         </a>
@@ -139,6 +153,15 @@ $renderSidebar('d-none d-xl-flex');
         <?php endforeach; ?>
         <?= $content ?>
     </main>
+
+    <?php if (Auth::check()): ?>
+    <footer class="app-footer">
+        <div>
+            <span>ساخته شده توسط پرشین نت</span>
+            <a href="https://persiannetco.ir" target="_blank" rel="noopener">ارتباط با ما</a>
+        </div>
+    </footer>
+    <?php endif; ?>
 </div>
 <script src="<?= e(asset_url('vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
 <script src="<?= e(asset_url('js/app.js')) ?>?v=<?= e(app_version()) ?>"></script>

@@ -15,3 +15,36 @@
     <div class="col-12"><button class="btn btn-primary">ذخیره تنظیمات</button></div>
 </form>
 </div></div>
+
+<div class="card mt-4"><div class="card-body">
+<h5 class="mb-3">منوهای فعال (قابلیت فعال/غیرفعال کردن منوها)</h5>
+<p class="text-muted small">اگر هیچ گزینه‌ای انتخاب نشود، همه منوها فعال خواهند بود.</p>
+<div class="row g-2">
+    <?php
+    $menuOptions = [
+        'dashboard' => 'داشبورد',
+        'customers' => 'مشتریان',
+        'add_customer' => 'افزودن مشتری',
+        'purchases' => 'ثبت خرید',
+        'services' => 'سرویس‌ها',
+        'followups' => 'پیگیری فروش',
+        'reminders' => 'یادآوری‌ها',
+        'reports' => 'گزارش‌ها',
+        'sms_logs' => 'لاگ پیامک',
+    ];
+    $enabledMenus = $settings['enabled_menus'] ?? null;
+    $isEnabled = function($key) use ($enabledMenus) {
+        if ($enabledMenus === null || $enabledMenus === []) return true;
+        return in_array($key, $enabledMenus, true);
+    };
+    foreach ($menuOptions as $key => $label):
+    ?>
+    <div class="col-md-4">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="menu_<?= e($key) ?>" id="menu_<?= e($key) ?>" <?= $isEnabled($key) ? 'checked' : '' ?>>
+            <label class="form-check-label" for="menu_<?= e($key) ?>"><?= e($label) ?></label>
+        </div>
+    </div>
+    <?php endforeach; ?>
+</div>
+</div></div>

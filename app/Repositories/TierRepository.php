@@ -42,8 +42,8 @@ final class TierRepository
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO customer_tiers (name, min_lifetime_spend, cashback_percent, sort_order, created_at)
-             VALUES (:name, :min_lifetime_spend, :cashback_percent, :sort_order, :created_at)'
+            'INSERT INTO customer_tiers (name, min_lifetime_spend, max_lifetime_spend, cashback_percent, is_active, sort_order, created_at)
+             VALUES (:name, :min_lifetime_spend, :max_lifetime_spend, :cashback_percent, :is_active, :sort_order, :created_at)'
         );
         $stmt->execute($data);
         return (int) $this->pdo->lastInsertId();
@@ -54,7 +54,8 @@ final class TierRepository
         $data['id'] = $id;
         $stmt = $this->pdo->prepare(
             'UPDATE customer_tiers SET name = :name, min_lifetime_spend = :min_lifetime_spend,
-             cashback_percent = :cashback_percent, sort_order = :sort_order WHERE id = :id'
+             max_lifetime_spend = :max_lifetime_spend, cashback_percent = :cashback_percent,
+             is_active = :is_active, sort_order = :sort_order WHERE id = :id'
         );
         $stmt->execute($data);
     }

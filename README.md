@@ -111,21 +111,19 @@ storage/installed.lock
 
 ## Cron
 
-در cPanel > Cron Jobs:
+در cPanel > Cron Jobs (مسیر پروژه: `/home/CPANEL_USER/cashback.persiannetco.ir`):
 
-**تولد (روزانه):**
+| کار | زمان‌بندی | دستور |
+|-----|-----------|--------|
+| پیامک تولد | روزانه ۰۸:۰۰ | `/usr/local/bin/ea-php84 /home/CPANEL_USER/cashback.persiannetco.ir/cron/run.php birthday` |
+| یادآوری تمدید قرارداد | روزانه ۰۹:۰۰ | `/usr/local/bin/ea-php84 /home/CPANEL_USER/cashback.persiannetco.ir/cron/run.php contract_renewal` |
+| تلاش مجدد پیامک | هر ۱۵ دقیقه | `/usr/local/bin/ea-php84 /home/CPANEL_USER/cashback.persiannetco.ir/cron/run.php sms_retry` |
 
-```bash
-/usr/local/bin/php /home/CPANEL_USER/public_html/cron/send_birthday_sms.php
-```
+همه کارها با یک دستور: `.../cron/run.php all`
 
-**تلاش مجدد پیامک (هر ۱۵ دقیقه):**
+اگر `ea-php84` روی هاست شما نیست، از MultiPHP Manager نسخه PHP را ببینید (مثلاً `ea-php81`) یا از پشتیبانی مسیر `php` CLI را بگیرید.
 
-```bash
-/usr/local/bin/php /home/CPANEL_USER/public_html/cron/retry_failed_sms.php
-```
-
-اگر مسیر PHP متفاوت است، از پشتیبانی هاست مسیر درست را بگیرید.
+**بدون cron سرور:** با باز کردن داشبورد توسط مدیر، کارهای روزانه خودکار اجرا می‌شوند. همچنین می‌توانید `cron.web_token` را در `cashback_config.php` تنظیم کنید و آدرس `/internal/cron?task=all&token=...` را در cron-job.org ثبت کنید.
 
 ## ارتقاء دیتابیس (نصب قبلی)
 

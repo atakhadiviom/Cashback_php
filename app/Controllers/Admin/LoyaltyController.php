@@ -28,6 +28,7 @@ final class LoyaltyController
             'min_lifetime_spend' => (float) str_replace(',', '', \normalize_digits((string) ($_POST['min_lifetime_spend'] ?? '0'))),
             'max_lifetime_spend' => trim((string) ($_POST['max_lifetime_spend'] ?? '')) === '' ? null : (float) str_replace(',', '', \normalize_digits((string) $_POST['max_lifetime_spend'])),
             'cashback_percent' => (float) str_replace(',', '', \normalize_digits((string) ($_POST['cashback_percent'] ?? '5'))),
+            'is_active' => isset($_POST['is_active']) ? 1 : 1,
             'sort_order' => (int) ($_POST['sort_order'] ?? 0),
             'created_at' => \current_datetime(),
         ]);

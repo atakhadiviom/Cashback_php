@@ -22,6 +22,16 @@ final class CashbackSettingsController
         Csrf::requireValid();
         $nullableFloat = static fn ($v): ?float => trim((string) $v) === '' ? null : \parse_money_input($v);
 
+        // Build enabled_menus JSON array from checkboxes (null = all enabled)
+        $allMenuKeys = ['dashboard','customers','add_customer','purchases','services','followups','reminders','reports','sms_logs'];
+        $enabled = [];
+        foreach ($allMenuKeys as $key) {
+            if (isset($_POST['menu_' . $key])) {
+                $enabled[] = $key;
+            }
+        }
+        $enabledMenusJson = empty($enabled) ? null : json_encode($enabled);
+
         (new CashbackSettingsRepository())->update([
             'cashback_percent' => \parse_money_input($_POST['cashback_percent'] ?? '5'),
             'min_purchase_amount' => \parse_money_input($_POST['min_purchase_amount'] ?? '0'),
@@ -32,6 +42,7 @@ final class CashbackSettingsController
             'birthday_bonus_amount' => \parse_money_input($_POST['birthday_bonus_amount'] ?? '0'),
             'referral_bonus_amount' => \parse_money_input($_POST['referral_bonus_amount'] ?? '0'),
             'duplicate_purchase_window_minutes' => max(0, (int) ($_POST['duplicate_purchase_window_minutes'] ?? 5)),
+            'enabled_menus' => $enabledMenusJson,
             'updated_at' => \current_datetime(),
         ]);
         (new ActivityLogger())->log('settings_update', 'تنظیمات کش‌بک به‌روزرسانی شد.');

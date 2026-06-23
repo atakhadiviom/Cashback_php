@@ -558,3 +558,23 @@ a {
         padding: 28px;
     }
 }
+
+/* Footer */
+.app-footer {
+    margin-top: 24px;
+    padding: 12px 16px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 12px;
+    color: #6b7280;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+}
+.app-footer a {
+    color: #2563eb;
+    text-decoration: none;
+}
+.app-footer a:hover {
+    text-decoration: underline;
+}

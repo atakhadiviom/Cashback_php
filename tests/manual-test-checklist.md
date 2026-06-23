@@ -64,3 +64,19 @@
 - Run `php database/migrate.php` on upgraded installs.
 - Configure daily cPanel cron for `cron/send_birthday_sms.php` and retry cron for `cron/retry_failed_sms.php`.
 - Run `composer install` and `vendor/bin/phpunit` for automated unit tests.
+
+## CRM (Phases 1-5)
+
+- Create a customer and register a follow-up with status "در حال مذاکره".
+- Add next contact date + reminder time; verify a reminder appears in /reminders.
+- Mark reminder as seen, then done; confirm status changes and activity log entries.
+- Finalize a follow-up as "فروش نهایی" and confirm:
+  - A purchase is auto-created with the invoice amount.
+  - Customer tier is recalculated based on lifetime spend.
+  - Activity log shows "followup_won" and "purchase_create".
+- Finalize a follow-up as "لغو فروش" and confirm lost_reason is required and recorded.
+- View /reports/crm with filters (operator, status, date range, tier); verify counts and list.
+- Export CRM report to Excel (CSV) and confirm Persian text and numbers.
+- Print CRM report and verify layout (no login required for the print view).
+- In /admin/loyalty, add a new tier with min/max lifetime spend and verify it appears in reports and tier recalculation.
+- Run `php database/migrate.php` and confirm migrations 013-016 are applied without error.

@@ -41,7 +41,9 @@ CREATE TABLE customer_tiers (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   min_lifetime_spend DECIMAL(15,2) NOT NULL DEFAULT 0,
+  max_lifetime_spend DECIMAL(15,2) NULL,
   cashback_percent DECIMAL(5,2) NOT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
   sort_order INT UNSIGNED NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -188,6 +190,7 @@ CREATE TABLE cashback_settings (
   birthday_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
   referral_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
   duplicate_purchase_window_minutes INT UNSIGNED NOT NULL DEFAULT 5,
+  enabled_menus TEXT NULL,
   updated_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -353,12 +356,14 @@ CREATE TABLE schema_migrations (
   applied_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO customer_tiers (id, name, min_lifetime_spend, cashback_percent, sort_order, created_at)
-VALUES (1, 'عادی', 0, 5.00, 0, NOW());
+INSERT INTO customer_tiers (id, name, min_lifetime_spend, max_lifetime_spend, cashback_percent, is_active, sort_order, created_at)
+VALUES (1, 'برنزی', 0, 50000000, 5.00, 1, 0, NOW()),
+       (2, 'نقره‌ای', 50000000, 150000000, 7.00, 1, 1, NOW()),
+       (3, 'طلایی', 150000000, NULL, 10.00, 1, 2, NOW());
 
 INSERT INTO cashback_settings (
-  id, cashback_percent, duplicate_purchase_window_minutes, birthday_bonus_amount, referral_bonus_amount, updated_at
-) VALUES (1, 5.00, 5, 0, 0, NOW());
+  id, cashback_percent, duplicate_purchase_window_minutes, birthday_bonus_amount, referral_bonus_amount, enabled_menus, updated_at
+) VALUES (1, 5.00, 5, 0, 0, NULL, NOW());
 
 INSERT INTO sms_settings (
   id, api_token, sender_number, sms_enabled, purchase_sms_enabled, birthday_sms_enabled,
