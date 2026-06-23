@@ -33,6 +33,7 @@ final class CronRunnerService
         $year = (int) date('Y');
         $customers = (new CustomerRepository())->birthdayTodayWithoutHistory($year);
         if (!$customers) {
+            $this->state->markRun('birthday');
             return ['ok' => true, 'messages' => ['No eligible birthday customers today.']];
         }
 
@@ -87,6 +88,7 @@ final class CronRunnerService
 
         $customers = (new CustomerRepository())->dueForContractRenewal($reminderDays);
         if (!$customers) {
+            $this->state->markRun('contract_renewal');
             return ['ok' => true, 'messages' => ['No eligible contract renewals today.']];
         }
 

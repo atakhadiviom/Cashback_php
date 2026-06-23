@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use RuntimeException;
-
 final class CpanelCronService
 {
     private string $host;
@@ -40,15 +38,20 @@ final class CpanelCronService
         }
 
         $response = $this->callUapi('Cron', 'list_cron', []);
-        
+        if (!$response['ok']) {
+            $response = $this->callApi2('Cron', 'listcron', []);
+        }
+
         if (!$response['ok']) {
             return $response;
         }
 
+        $data = $response['data']['data'] ?? $response['data']['cpanelresult']['data'] ?? [];
+
         return [
             'ok' => true,
             'message' => 'OK',
-            'crons' => $response['data']['data'] ?? [],
+            'crons' => is_array($data) ? $data : [],
         ];
     }
 
@@ -71,7 +74,7 @@ final class CpanelCronService
                 'day' => '*',
                 'month' => '*',
                 'weekday' => '*',
-                'command' => "{$php} {$root}/cron/send_birthday_sms.php",
+                'command' => "{$php} {$root}/cron/run.php birthday",
             ],
             [
                 'minute' => '0',
@@ -79,7 +82,7 @@ final class CpanelCronService
                 'day' => '*',
                 'month' => '*',
                 'weekday' => '*',
-                'command' => "{$php} {$root}/cron/send_contract_renewal_reminders.php",
+                'command' => "{$php} {$root}/cron/run.php contract_renewal",
             ],
             [
                 'minute' => '*/15',
@@ -87,7 +90,7 @@ final class CpanelCronService
                 'day' => '*',
                 'month' => '*',
                 'weekday' => '*',
-                'command' => "{$php} {$root}/cron/retry_failed_sms.php",
+                'command' => "{$php} {$root}/cron/run.php sms_retry",
             ],
         ];
 
@@ -112,6 +115,16 @@ final class CpanelCronService
                 'weekday' => $job['weekday'],
                 'command' => $job['command'],
             ]);
+            if (!$result['ok']) {
+                $result = $this->callApi2('Cron', 'add_line', [
+                    'minute' => $job['minute'],
+                    'hour' => $job['hour'],
+                    'day' => $job['day'],
+                    'month' => $job['month'],
+                    'weekday' => $job['weekday'],
+                    'command' => $job['command'],
+                ]);
+            }
 
             if ($result['ok']) {
                 $created++;
@@ -165,6 +178,56 @@ final class CpanelCronService
 
         if (!empty($json['errors'])) {
             return ['ok' => false, 'message' => implode(', ', $json['errors']), 'data' => $json];
+        }
+
+        return ['ok' => true, 'message' => 'OK', 'data' => $json];
+    }
+
+    private function callApi2(string $module, string $function, array $params): array
+    {
+        $query = array_merge([
+            'cpanel_jsonapi_user' => $this->username,
+            'cpanel_jsonapi_apiversion' => 2,
+            'cpanel_jsonapi_module' => $module,
+            'cpanel_jsonapi_func' => $function,
+        ], $params);
+        $url = 'https://' . $this->host . '/json-api/cpanel?' . http_build_query($query);
+
+        $ch = curl_init($url);
+        if ($ch === false) {
+            return ['ok' => false, 'message' => 'Failed to initialize cURL', 'data' => []];
+        }
+
+        $password = trim((string) \config_value('cpanel.password', ''));
+        $headers = $password === ''
+            ? ['Authorization: cpanel ' . $this->username . ':' . $this->apiToken, 'Accept: application/json']
+            : ['Authorization: Basic ' . base64_encode($this->username . ':' . $password), 'Accept: application/json'];
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_TIMEOUT => 30,
+        ]);
+
+        $body = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if (!is_string($body) || $status !== 200) {
+            return ['ok' => false, 'message' => $error ?: "HTTP {$status}", 'data' => []];
+        }
+
+        $json = json_decode($body, true);
+        if (!is_array($json)) {
+            return ['ok' => false, 'message' => 'Invalid JSON response', 'data' => []];
+        }
+
+        $result = $json['cpanelresult']['event']['result'] ?? $json['cpanelresult']['preevent']['result'] ?? 0;
+        if ((int) $result !== 1) {
+            $reason = $json['cpanelresult']['error'] ?? $json['cpanelresult']['reason'] ?? 'cPanel API2 call failed.';
+            return ['ok' => false, 'message' => (string) $reason, 'data' => $json];
         }
 
         return ['ok' => true, 'message' => 'OK', 'data' => $json];

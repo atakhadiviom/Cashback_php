@@ -46,6 +46,8 @@ return [
         'host' => 'yourdomain.com:2083',
         'username' => 'your_cpanel_username',
         'api_token' => 'your_cpanel_api_token_here',
+        // Optional fallback for old cPanel API2 hosts. Prefer api_token when possible.
+        'password' => '',
         'domain' => 'yourdomain.com',
         'php_path' => '/usr/local/bin/ea-php81',
     ],
