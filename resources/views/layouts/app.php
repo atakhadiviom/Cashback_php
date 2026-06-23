@@ -5,10 +5,34 @@ use App\Core\Flash;
 use App\Repositories\CashbackSettingsRepository;
 
 $settings = (new CashbackSettingsRepository())->settings();
-$enabledMenus = $settings['enabled_menus'] ?? null; // null or array of keys means "all enabled" when null/empty
+$enabledMenus = $settings['enabled_menus'] ?? null;
 
-$menuEnabled = static function (string $key) use ($enabledMenus): bool {
-    if ($enabledMenus === null || $enabledMenus === []) {
+// Normalize
+if (is_string($enabledMenus)) {
+    $decoded = json_decode($enabledMenus, true);
+    $enabledMenus = is_array($decoded) ? $decoded : null;
+}
+
+// Check if the column actually exists in the database.
+// If the migration (017) has not been run, we must NOT hide any menus.
+$menuColumnExists = false;
+try {
+    $pdo = \App\Core\Database::pdo();
+    $col = $pdo->query("SHOW COLUMNS FROM cashback_settings LIKE 'enabled_menus'")->fetch();
+    $menuColumnExists = (bool) $col;
+} catch (\Throwable $e) {
+    $menuColumnExists = false;
+}
+
+// Filtering rule:
+// - If column does not exist yet → show everything (safe default)
+// - If column exists but $enabledMenus is null or empty → show everything
+// - Only when column exists AND we have a non-empty list → hide the ones not in the list
+$menuEnabled = static function (string $key) use ($enabledMenus, $menuColumnExists): bool {
+    if (!$menuColumnExists) {
+        return true;
+    }
+    if (!is_array($enabledMenus) || count($enabledMenus) === 0) {
         return true;
     }
     return in_array($key, $enabledMenus, true);
