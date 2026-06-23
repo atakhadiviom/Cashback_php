@@ -15,7 +15,7 @@
         <div class="col-md-2"><input class="form-control ltr" name="phone_number" placeholder="موبایل" value="<?= e($filters['phone_number'] ?? '') ?>"></div>
         <div class="col-md-2"><input class="form-control ltr" name="birthday_month" placeholder="ماه تولد" value="<?= e($filters['birthday_month'] ?? '') ?>"></div>
         <div class="col-md-2"><input class="form-control ltr" name="birthday_day" placeholder="روز تولد" value="<?= e($filters['birthday_day'] ?? '') ?>"></div>
-        <div class="col-md-1"><button class="btn btn-secondary w-100">جستجو</button></div>
+        <div class="col-md-2 col-xl-1"><button class="btn btn-secondary w-100 text-nowrap">جستجو</button></div>
     </form>
 </div></div>
 <div class="card"><div class="table-responsive">
