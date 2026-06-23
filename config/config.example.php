@@ -41,4 +41,12 @@ return [
         'dashboard_auto_run' => true,
         'sms_retry_interval_minutes' => 15,
     ],
+    'cpanel' => [
+        'enabled' => false,
+        'host' => 'yourdomain.com:2083',
+        'username' => 'your_cpanel_username',
+        'api_token' => 'your_cpanel_api_token_here',
+        'domain' => 'yourdomain.com',
+        'php_path' => '/usr/local/bin/ea-php81',
+    ],
 ];

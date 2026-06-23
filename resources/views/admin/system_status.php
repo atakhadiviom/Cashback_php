@@ -1,4 +1,4 @@
-<?php use App\Core\Csrf; ?>
+<?php use App\Core\Csrf; use App\Core\Auth; ?>
 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
     <div>
         <div class="text-muted small mb-1">Health check and cron checks</div>
@@ -93,4 +93,28 @@
             <div>برای فراخوانی از اینترنت، در <code>cashback_config.php</code> مقدار <code>cron.web_token</code> را تنظیم کنید.</div>
         <?php endif; ?>
     </div>
+
+    <?php if (!$cpanelEnabled || empty($cpanelStatus['ok'])): ?>
+    <div class="card-body border-top bg-light">
+        <div class="alert alert-warning mb-0">
+            <strong>هشدار:</strong> کرون‌جاب‌های خودکار در cPanel تنظیم نشده‌اند.
+            <form method="post" action="<?= e(url('/admin/cron/setup-cpanel')) ?>" class="d-inline ms-2">
+                <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
+                <button class="btn btn-sm btn-warning">تنظیم خودکار در cPanel</button>
+            </form>
+            <details class="mt-2">
+                <summary class="text-decoration-underline">راهنمای دستی تنظیم کرون‌جاب</summary>
+                <pre class="small mt-2 bg-white p-2 border"><code># Birthday SMS (Daily 08:00)
+/usr/local/bin/ea-php81 /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/send_birthday_sms.php
+
+# Contract Renewal (Daily 09:00)
+/usr/local/bin/ea-php81 /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/send_contract_renewal_reminders.php
+
+# Retry Failed SMS (Every 15 min)
+/usr/local/bin/ea-php81 /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/retry_failed_sms.php</code></pre>
+            <p class="small mb-0">در cPanel → Cron Jobs این دستورات را اضافه کنید.</p>
+            </details>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>

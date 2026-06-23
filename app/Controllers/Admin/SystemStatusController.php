@@ -8,6 +8,7 @@ use App\Core\Database;
 use App\Core\View;
 use App\Repositories\CronStateRepository;
 use App\Repositories\SmsRepository;
+use App\Services\CpanelCronService;
 
 final class SystemStatusController
 {
@@ -19,6 +20,9 @@ final class SystemStatusController
         $smsSettings = (new SmsRepository())->settings();
         $webToken = trim((string) \config_value('cron.web_token', ''));
 
+        $cpanel = new CpanelCronService();
+        $cpanelStatus = $cpanel->isEnabled() ? $cpanel->listCrons() : ['ok' => false, 'message' => 'cPanel API disabled', 'crons' => []];
+
         View::render('admin/system_status', [
             'healthChecks' => $this->healthChecks($storagePath),
             'cronChecks' => $this->cronChecks($cronState, $smsSettings),
@@ -26,6 +30,8 @@ final class SystemStatusController
             'cronStatePath' => $storagePath . '/cron_state.json',
             'phpVersion' => PHP_VERSION,
             'databaseName' => (string) \config_value('database.name', ''),
+            'cpanelEnabled' => $cpanel->isEnabled(),
+            'cpanelStatus' => $cpanelStatus,
         ]);
     }
 
@@ -139,5 +145,21 @@ final class SystemStatusController
 
         $timestamp = strtotime($lastRun);
         return $timestamp === false || time() - $timestamp >= $minutes * 60;
+    }
+
+    public function setupCpanelCron(): void
+    {
+        \App\Core\Csrf::requireValid();
+
+        $service = new CpanelCronService();
+        $result = $service->ensureCronJobs();
+
+        if ($result['ok']) {
+            \App\Core\Flash::set('success', $result['message']);
+        } else {
+            \App\Core\Flash::set('danger', 'cPanel setup failed: ' . $result['message']);
+        }
+
+        \redirect('/admin/system-status');
     }
 }

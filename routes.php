@@ -94,6 +94,7 @@ $router->get('/admin/system-status', [SystemStatusController::class, 'index'], t
 $router->get('/admin/sms-settings', [SettingsController::class, 'edit'], true, 'admin');
 $router->post('/admin/sms-settings', [SettingsController::class, 'update'], true, 'admin');
 $router->post('/admin/cron/run', [AdminCronController::class, 'run'], true, 'admin');
+$router->post('/admin/cron/setup-cpanel', [SystemStatusController::class, 'setupCpanelCron'], true, 'admin');
 $router->get('/admin/cashback-settings', [CashbackSettingsController::class, 'edit'], true, 'admin');
 $router->post('/admin/cashback-settings', [CashbackSettingsController::class, 'update'], true, 'admin');
 $router->get('/admin/customers/import', [CustomerImportController::class, 'form'], true, 'admin');
