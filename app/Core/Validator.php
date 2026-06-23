@@ -22,6 +22,10 @@ final class Validator
         if (!preg_match('/^09\d{9}$/', $phone)) {
             $errors['phone_number'] = 'شماره موبایل باید با 09 شروع شود و ۱۱ رقم باشد.';
         }
+        $email = trim((string) ($data['email'] ?? ''));
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'ایمیل معتبر نیست.';
+        }
         $birthday = trim((string) ($data['birthday'] ?? ''));
         if ($birthdayRequired && $birthday === '') {
             $errors['birthday'] = 'تاریخ تولد الزامی است.';

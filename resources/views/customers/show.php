@@ -2,6 +2,7 @@
 use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\Jalali;
+use App\Services\FollowupService;
 
 $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' => 'برگشت'];
 ?>
@@ -10,6 +11,7 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
     <div class="d-flex gap-2 flex-wrap">
         <a class="btn btn-outline-secondary" href="<?= e(url('/customers/edit?id=' . $customer['id'])) ?>">ویرایش</a>
         <?php if (Auth::can('purchase')): ?><a class="btn btn-primary" href="<?= e(url('/purchases/create?customer_id=' . $customer['id'])) ?>">ثبت خرید</a><?php endif; ?>
+        <a class="btn btn-success" href="<?= e(url('/followups/create?customer_id=' . $customer['id'])) ?>">ثبت پیگیری</a>
         <a class="btn btn-outline-primary" href="<?= e(url('/services/create?customer_id=' . $customer['id'])) ?>">ثبت سرویس</a>
         <?php if (Auth::can('reduce_wallet')): ?><a class="btn btn-outline-danger" href="<?= e(url('/wallet/reduce?customer_id=' . $customer['id'])) ?>">کسر کیف پول</a><?php endif; ?>
     </div>
@@ -17,12 +19,47 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
 <div class="row g-3 mb-4">
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">کد ملی</div><div class="fw-bold ltr"><?= e($customer['national_code']) ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">موبایل</div><div class="fw-bold ltr"><?= e($customer['phone_number']) ?></div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">شرکت</div><div class="fw-bold"><?= e($customer['company'] ?? '-') ?></div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">ایمیل</div><div class="fw-bold ltr"><?= e($customer['email'] ?? '-') ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">موجودی کیف پول</div><div class="fw-bold"><?= e(money($customer['wallet_balance'])) ?> ریال</div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">کل کش‌بک دریافتی</div><div class="fw-bold"><?= e(money($lifetimeEarned)) ?> ریال</div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">تولد</div><div><?= e(Jalali::formatDate($customer['birthday'])) ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">شماره قرارداد</div><div class="fw-bold ltr"><?= e($customer['contract_number'] ?? '-') ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">شروع قرارداد</div><div><?= e(Jalali::formatDate($customer['contract_starts_at'] ?? null)) ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">پایان قرارداد</div><div><?= e(Jalali::formatDate($customer['contract_ends_at'] ?? null)) ?></div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">سطح مشتری</div><div class="fw-bold"><?= e($customer['tier_name'] ?? 'نامشخص') ?></div></div></div></div>
+</div>
+<?php if (!empty($customer['address']) || !empty($customer['description'])): ?>
+<div class="card mb-4"><div class="card-body row g-3">
+    <div class="col-md-6"><div class="text-muted mb-1">آدرس</div><div><?= nl2br(e($customer['address'] ?? '-')) ?></div></div>
+    <div class="col-md-6"><div class="text-muted mb-1">توضیحات مشتری</div><div><?= nl2br(e($customer['description'] ?? '-')) ?></div></div>
+</div></div>
+<?php endif; ?>
+<div class="card mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span>سوابق پیگیری فروش</span>
+        <a class="btn btn-sm btn-success" href="<?= e(url('/followups/create?customer_id=' . $customer['id'])) ?>">ثبت پیگیری</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead><tr><th>تاریخ</th><th>اپراتور</th><th>وضعیت</th><th>پیش‌فاکتور</th><th>فاکتور</th><th>تماس بعدی</th><th>خلاصه مکالمه</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($followups as $followup): ?>
+                <tr>
+                    <td><?= e($followup['followup_date']) ?></td>
+                    <td><?= e($followup['operator_name']) ?></td>
+                    <td><?= e(FollowupService::salesStatusLabel($followup['sales_status'])) ?></td>
+                    <td><?= $followup['pre_invoice_amount'] !== null ? e(money($followup['pre_invoice_amount'])) . ' ریال' : '-' ?></td>
+                    <td><?= $followup['invoice_amount'] !== null ? e(money($followup['invoice_amount'])) . ' ریال' : '-' ?></td>
+                    <td><?= e(Jalali::formatDate($followup['next_contact_date'] ?? null)) ?> <?= e($followup['reminder_time'] ? substr($followup['reminder_time'], 0, 5) : '') ?></td>
+                    <td><?= e(mb_substr($followup['conversation_notes'], 0, 80)) ?><?= mb_strlen($followup['conversation_notes']) > 80 ? '...' : '' ?></td>
+                    <td><a class="btn btn-sm btn-outline-primary" href="<?= e(url('/followups/show?id=' . $followup['id'])) ?>">مشاهده</a></td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (!$followups): ?><tr><td colspan="8" class="text-muted">هنوز پیگیری ثبت نشده است.</td></tr><?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 <?php if (!empty($services)): ?>
 <div class="card mb-4">

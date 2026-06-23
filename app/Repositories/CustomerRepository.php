@@ -53,8 +53,8 @@ final class CustomerRepository
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO customers (first_name, last_name, national_code, phone_number, birthday, wallet_balance, created_by, referred_by_customer_id, contract_number, contract_starts_at, contract_ends_at, created_at, updated_at)
-             VALUES (:first_name, :last_name, :national_code, :phone_number, :birthday, 0, :created_by, :referred_by_customer_id, :contract_number, :contract_starts_at, :contract_ends_at, :created_at, :updated_at)'
+            'INSERT INTO customers (first_name, last_name, company, national_code, phone_number, email, address, description, birthday, wallet_balance, created_by, referred_by_customer_id, contract_number, contract_starts_at, contract_ends_at, created_at, updated_at)
+             VALUES (:first_name, :last_name, :company, :national_code, :phone_number, :email, :address, :description, :birthday, 0, :created_by, :referred_by_customer_id, :contract_number, :contract_starts_at, :contract_ends_at, :created_at, :updated_at)'
         );
         $stmt->execute($data);
         return (int) $this->pdo->lastInsertId();
@@ -93,7 +93,7 @@ final class CustomerRepository
     public function update(int $id, array $data): void
     {
         $data['id'] = $id;
-        $stmt = $this->pdo->prepare('UPDATE customers SET first_name = :first_name, last_name = :last_name, national_code = :national_code, phone_number = :phone_number, birthday = :birthday, contract_number = :contract_number, contract_starts_at = :contract_starts_at, contract_ends_at = :contract_ends_at, updated_at = :updated_at WHERE id = :id');
+        $stmt = $this->pdo->prepare('UPDATE customers SET first_name = :first_name, last_name = :last_name, company = :company, national_code = :national_code, phone_number = :phone_number, email = :email, address = :address, description = :description, birthday = :birthday, contract_number = :contract_number, contract_starts_at = :contract_starts_at, contract_ends_at = :contract_ends_at, updated_at = :updated_at WHERE id = :id');
         $stmt->execute($data);
     }
 
@@ -135,6 +135,12 @@ final class CustomerRepository
         $stmt->execute(['amount' => $amount, 'updated_at' => \current_datetime(), 'id' => $id]);
     }
 
+    public function updateTier(int $id, ?int $tierId): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE customers SET tier_id = :tier_id, updated_at = :updated_at WHERE id = :id');
+        $stmt->execute(['tier_id' => $tierId, 'updated_at' => \current_datetime(), 'id' => $id]);
+    }
+
     public function reduceWallet(int $id, float $amount): void
     {
         $stmt = $this->pdo->prepare('UPDATE customers SET wallet_balance = wallet_balance - :amount, updated_at = :updated_at WHERE id = :id');
@@ -165,9 +171,9 @@ final class CustomerRepository
     {
         $where = ['c.deleted_at IS NULL'];
         $params = [];
-        foreach (['first_name', 'last_name', 'national_code', 'phone_number', 'contract_number'] as $field) {
+        foreach (['first_name', 'last_name', 'company', 'email', 'national_code', 'phone_number', 'contract_number'] as $field) {
             if (($filters[$field] ?? '') !== '') {
-                if (in_array($field, ['first_name', 'last_name'], true)) {
+                if (in_array($field, ['first_name', 'last_name', 'company'], true)) {
                     $where[] = \sql_normalize_persian("c.{$field}") . " LIKE :{$field}";
                 } else {
                     $where[] = "c.{$field} LIKE :{$field}";
@@ -176,13 +182,15 @@ final class CustomerRepository
             }
         }
         if (($filters['q'] ?? '') !== '') {
-            $where[] = '(' . \sql_normalize_persian('c.first_name') . ' LIKE :q1 OR ' . \sql_normalize_persian('c.last_name') . ' LIKE :q2 OR c.national_code LIKE :q3 OR c.phone_number LIKE :q4 OR c.contract_number LIKE :q5)';
+            $where[] = '(' . \sql_normalize_persian('c.first_name') . ' LIKE :q1 OR ' . \sql_normalize_persian('c.last_name') . ' LIKE :q2 OR c.national_code LIKE :q3 OR c.phone_number LIKE :q4 OR c.contract_number LIKE :q5 OR ' . \sql_normalize_persian('c.company') . ' LIKE :q6 OR c.email LIKE :q7)';
             $term = \search_like_term((string) $filters['q']);
             $params['q1'] = $term;
             $params['q2'] = $term;
             $params['q3'] = $term;
             $params['q4'] = $term;
             $params['q5'] = $term;
+            $params['q6'] = $term;
+            $params['q7'] = $term;
         }
         if (($filters['birthday'] ?? '') !== '') {
             $where[] = 'c.birthday = :birthday';

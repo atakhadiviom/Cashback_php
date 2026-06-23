@@ -10,8 +10,10 @@ use App\Core\Flash;
 use App\Core\Jalali;
 use App\Core\View;
 use App\Repositories\CustomerRepository;
+use App\Repositories\FollowupRepository;
 use App\Repositories\PurchaseRepository;
 use App\Repositories\ServiceRecordRepository;
+use App\Repositories\TierRepository;
 use App\Repositories\WalletRepository;
 use App\Services\ActivityLogger;
 use App\Services\CustomerService;
@@ -75,9 +77,13 @@ final class CustomerController
             Flash::set('danger', 'مشتری یافت نشد.');
             \redirect('/customers');
         }
+        $tier = $customer['tier_id'] ? (new TierRepository())->find((int) $customer['tier_id']) : null;
+        $customer['tier_name'] = $tier['name'] ?? null;
+
         View::render('customers/show', [
             'customer' => $customer,
             'purchases' => $purchases->forCustomer($id),
+            'followups' => (new FollowupRepository())->forCustomer($id),
             'services' => (new ServiceRecordRepository())->forCustomer($id),
             'walletTransactions' => (new WalletRepository())->forCustomer($id),
             'lifetimeEarned' => $purchases->lifetimeCashbackEarned($id),

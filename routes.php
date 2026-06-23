@@ -16,9 +16,11 @@ use App\Controllers\AuthController;
 use App\Controllers\CronController;
 use App\Controllers\CustomerController;
 use App\Controllers\DashboardController;
+use App\Controllers\FollowupController;
 use App\Controllers\PortalController;
 use App\Controllers\PurchaseController;
 use App\Controllers\PurchaseVoidController;
+use App\Controllers\ReminderController;
 use App\Controllers\ReportController;
 use App\Controllers\ServiceRecordController;
 use App\Controllers\SmsController;
@@ -63,9 +65,23 @@ $router->get('/services', [ServiceRecordController::class, 'index']);
 $router->get('/services/create', [ServiceRecordController::class, 'create']);
 $router->post('/services/create', [ServiceRecordController::class, 'store']);
 
+$router->get('/followups', [FollowupController::class, 'index']);
+$router->get('/followups/create', [FollowupController::class, 'create']);
+$router->post('/followups/create', [FollowupController::class, 'store']);
+$router->get('/followups/edit', [FollowupController::class, 'edit']);
+$router->post('/followups/edit', [FollowupController::class, 'update']);
+$router->get('/followups/show', [FollowupController::class, 'show']);
+
+$router->get('/reminders', [ReminderController::class, 'index']);
+$router->post('/reminders/mark-seen', [ReminderController::class, 'markSeen']);
+$router->post('/reminders/mark-done', [ReminderController::class, 'markDone']);
+
 $router->get('/reports', [ReportController::class, 'index']);
 $router->get('/reports/export', [ReportController::class, 'export'], true, null, 'export');
 $router->get('/reports/services-export', [ReportController::class, 'exportServices'], true, null, 'export');
+$router->get('/reports/crm', [ReportController::class, 'crm']);
+$router->get('/reports/crm/export', [ReportController::class, 'exportCrm'], true, null, 'export');
+$router->get('/reports/crm/print', [ReportController::class, 'crmPrint'], true, null, 'export');
 $router->get('/sms/logs', [SmsController::class, 'logs']);
 
 $router->get('/admin/users', [UserController::class, 'index'], true, 'admin');

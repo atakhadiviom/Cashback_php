@@ -35,6 +35,10 @@ if ($contractEndsRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_di
         <?php if (!empty($errors['last_name'])): ?><div class="form-text-error"><?= e($errors['last_name']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-4">
+        <label class="form-label">شرکت (اختیاری)</label>
+        <input class="form-control" name="company" maxlength="150" value="<?= e($customer['company'] ?? '') ?>">
+    </div>
+    <div class="col-md-4">
         <label class="form-label">کد ملی / شناسه ملی شرکت (اختیاری)</label>
         <input class="form-control ltr" name="national_code" maxlength="11" value="<?= e($customer['national_code'] ?? '') ?>">
         <div class="form-text">در صورت ورود، کد ملی ۱۰ رقم و شناسه ملی شرکت ۱۱ رقم است.</div>
@@ -44,6 +48,11 @@ if ($contractEndsRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_di
         <label class="form-label">موبایل</label>
         <input class="form-control ltr" name="phone_number" maxlength="11" value="<?= e($customer['phone_number'] ?? '') ?>" required>
         <?php if (!empty($errors['phone_number'])): ?><div class="form-text-error"><?= e($errors['phone_number']) ?></div><?php endif; ?>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">ایمیل (اختیاری)</label>
+        <input class="form-control ltr" type="email" name="email" maxlength="150" value="<?= e($customer['email'] ?? '') ?>">
+        <?php if (!empty($errors['email'])): ?><div class="form-text-error"><?= e($errors['email']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-4">
         <label class="form-label">تاریخ تولد شمسی</label>
@@ -77,6 +86,14 @@ if ($contractEndsRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_di
     <div class="col-md-4">
         <label class="form-label">پایان قرارداد (شمسی)</label>
         <input class="form-control ltr" type="text" name="contract_ends_at" data-jdp data-jdp-only-date placeholder="1404/01/01" value="<?= e($contractEndsDisplay) ?>" autocomplete="off">
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">آدرس (اختیاری)</label>
+        <textarea class="form-control" name="address" rows="3"><?= e($customer['address'] ?? '') ?></textarea>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">توضیحات مشتری (اختیاری)</label>
+        <textarea class="form-control" name="description" rows="3"><?= e($customer['description'] ?? '') ?></textarea>
     </div>
 </div>
 <div class="mt-4">

@@ -3,15 +3,16 @@
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="card"><div class="card-header">سطوح (بر اساس مجموع خرید)</div>
-        <table class="table mb-0"><thead><tr><th>نام</th><th>حداقل خرید</th><th>درصد</th></tr></thead><tbody>
-        <?php foreach ($tiers as $tier): ?><tr><td><?= e($tier['name']) ?></td><td><?= e(money($tier['min_lifetime_spend'])) ?></td><td><?= e($tier['cashback_percent']) ?>٪</td></tr><?php endforeach; ?>
+        <table class="table mb-0"><thead><tr><th>نام</th><th>حداقل خرید</th><th>حداکثر خرید</th><th>درصد</th></tr></thead><tbody>
+        <?php foreach ($tiers as $tier): ?><tr><td><?= e($tier['name']) ?></td><td><?= e(money($tier['min_lifetime_spend'])) ?></td><td><?= $tier['max_lifetime_spend'] ? e(money($tier['max_lifetime_spend'])) : '∞' ?></td><td><?= e($tier['cashback_percent']) ?>٪</td></tr><?php endforeach; ?>
         </tbody></table>
         <div class="card-body border-top">
         <form method="post" action="<?= e(url('/admin/loyalty/tiers')) ?>" class="row g-2">
             <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
-            <div class="col-4"><input class="form-control" name="name" placeholder="نام سطح" required></div>
-            <div class="col-4"><input class="form-control ltr" name="min_lifetime_spend" placeholder="حداقل خرید" required></div>
-            <div class="col-3"><input class="form-control ltr" name="cashback_percent" placeholder="درصد" required></div>
+            <div class="col-3"><input class="form-control" name="name" placeholder="نام سطح" required></div>
+            <div class="col-3"><input class="form-control ltr" name="min_lifetime_spend" placeholder="حداقل خرید" required></div>
+            <div class="col-3"><input class="form-control ltr" name="max_lifetime_spend" placeholder="حداکثر خرید (خالی = ∞)"></div>
+            <div class="col-2"><input class="form-control ltr" name="cashback_percent" placeholder="درصد" required></div>
             <div class="col-1"><button class="btn btn-primary w-100">+</button></div>
         </form>
         </div></div>

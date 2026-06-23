@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\View;
+use App\Core\Auth;
+use App\Repositories\ReminderRepository;
 use App\Repositories\ReportRepository;
 
 final class DashboardController
@@ -13,6 +15,7 @@ final class DashboardController
     {
         View::render('dashboard/index', [
             'stats' => (new ReportRepository())->dashboard(),
+            'reminderStats' => (new ReminderRepository())->dashboardCounts(Auth::isAdmin() ? null : Auth::id()),
         ]);
     }
 }

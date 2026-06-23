@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS api_keys;
 DROP TABLE IF EXISTS otp_codes;
 DROP TABLE IF EXISTS login_attempts;
 DROP TABLE IF EXISTS promotions;
+DROP TABLE IF EXISTS followup_reminders;
+DROP TABLE IF EXISTS customer_followups;
 DROP TABLE IF EXISTS customer_tiers;
 DROP TABLE IF EXISTS schema_migrations;
 DROP TABLE IF EXISTS contract_renewal_sms_history;
@@ -48,8 +50,12 @@ CREATE TABLE customers (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
+  company VARCHAR(150) NULL,
   national_code VARCHAR(11) NULL UNIQUE,
   phone_number CHAR(11) NOT NULL,
+  email VARCHAR(150) NULL,
+  address TEXT NULL,
+  description TEXT NULL,
   birthday DATE NULL,
   wallet_balance DECIMAL(15,2) NOT NULL DEFAULT 0,
   created_by BIGINT UNSIGNED NOT NULL,
@@ -63,13 +69,62 @@ CREATE TABLE customers (
   contract_ends_at DATE NULL,
   UNIQUE KEY uq_customers_contract_number (contract_number),
   INDEX idx_customers_name (last_name, first_name),
+  INDEX idx_customers_company (company),
   INDEX idx_customers_phone (phone_number),
+  INDEX idx_customers_email (email),
   INDEX idx_customers_birthday (birthday),
   INDEX idx_customers_deleted_at (deleted_at),
   INDEX idx_customers_contract_ends_at (contract_ends_at),
   CONSTRAINT fk_customers_created_by FOREIGN KEY (created_by) REFERENCES users(id),
   CONSTRAINT fk_customers_referred_by FOREIGN KEY (referred_by_customer_id) REFERENCES customers(id) ON DELETE SET NULL,
   CONSTRAINT fk_customers_tier FOREIGN KEY (tier_id) REFERENCES customer_tiers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE customer_followups (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  customer_id BIGINT UNSIGNED NOT NULL,
+  operator_id BIGINT UNSIGNED NOT NULL,
+  followup_date DATETIME NOT NULL,
+  pre_invoice_amount DECIMAL(15,2) NULL,
+  invoice_amount DECIMAL(15,2) NULL,
+  sales_status ENUM('negotiating','pre_invoice_sent','waiting_customer','callback','won','lost') NOT NULL DEFAULT 'negotiating',
+  conversation_notes TEXT NOT NULL,
+  next_contact_date DATE NULL,
+  reminder_time TIME NULL,
+  attachment_path VARCHAR(255) NULL,
+  final_result ENUM('won','lost') NULL,
+  finalized_sale_amount DECIMAL(15,2) NULL,
+  finalized_at DATETIME NULL,
+  purchase_id BIGINT UNSIGNED NULL,
+  lost_reason TEXT NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  INDEX idx_followups_customer_date (customer_id, followup_date),
+  INDEX idx_followups_operator_date (operator_id, followup_date),
+  INDEX idx_followups_sales_status (sales_status),
+  INDEX idx_followups_next_contact (next_contact_date, reminder_time),
+  CONSTRAINT fk_followups_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_followups_operator FOREIGN KEY (operator_id) REFERENCES users(id),
+  CONSTRAINT fk_followups_purchase FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE followup_reminders (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  followup_id BIGINT UNSIGNED NOT NULL,
+  customer_id BIGINT UNSIGNED NOT NULL,
+  operator_id BIGINT UNSIGNED NOT NULL,
+  remind_at DATETIME NOT NULL,
+  status ENUM('pending','seen','done','missed') NOT NULL DEFAULT 'pending',
+  seen_at DATETIME NULL,
+  done_at DATETIME NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  UNIQUE KEY uq_followup_reminders_followup (followup_id),
+  INDEX idx_reminders_operator_status_time (operator_id, status, remind_at),
+  INDEX idx_reminders_status_time (status, remind_at),
+  CONSTRAINT fk_reminders_followup FOREIGN KEY (followup_id) REFERENCES customer_followups(id) ON DELETE CASCADE,
+  CONSTRAINT fk_reminders_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_reminders_operator FOREIGN KEY (operator_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE promotions (
@@ -231,7 +286,8 @@ CREATE TABLE activity_logs (
   activity_type ENUM(
     'login','logout','customer_create','customer_edit','customer_delete','customer_anonymize','customer_import',
     'purchase_create','purchase_void','wallet_reduction','operator_create','operator_edit',
-    'sms_sent','sms_failed','report_export','settings_update','service_create'
+    'sms_sent','sms_failed','report_export','settings_update','service_create',
+    'followup_create','followup_update','followup_won','followup_lost','reminder_seen','reminder_done'
   ) NOT NULL,
   description VARCHAR(500) NOT NULL,
   customer_id BIGINT UNSIGNED NULL,

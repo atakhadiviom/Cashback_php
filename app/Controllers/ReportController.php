@@ -6,10 +6,13 @@ namespace App\Controllers;
 
 use App\Core\Jalali;
 use App\Core\View;
+use App\Repositories\CrmReportRepository;
 use App\Repositories\ReportRepository;
 use App\Repositories\ServiceRecordRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivityLogger;
+use App\Services\CrmReportService;
+use App\Services\FollowupService;
 use App\Services\ServiceRecordService;
 
 final class ReportController
@@ -107,5 +110,45 @@ final class ReportController
             ]);
         }
         exit;
+    }
+
+    public function crm(): void
+    {
+        $filters = $_GET;
+        $data = (new CrmReportService())->getData($filters);
+        View::render('reports/crm', array_merge($data, ['filters' => $filters]));
+    }
+
+    public function exportCrm(): void
+    {
+        $filters = $_GET;
+        $rows = (new CrmReportRepository())->followups($filters, 10000);
+        (new ActivityLogger())->log('report_export', 'خروجی CSV گزارش CRM پیگیری‌ها دریافت شد.');
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="crm-followups.csv"');
+        echo "\xEF\xBB\xBF";
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['مشتری', 'شرکت', 'اپراتور', 'تاریخ پیگیری', 'وضعیت', 'پیش‌فاکتور', 'فاکتور', 'تماس بعدی', 'خرید ثبت شده']);
+        foreach ($rows as $row) {
+            fputcsv($out, [
+                trim($row['first_name'] . ' ' . $row['last_name']),
+                $row['company'] ?? '',
+                $row['operator_name'],
+                $row['followup_date'],
+                FollowupService::salesStatusLabel($row['sales_status']),
+                $row['pre_invoice_amount'] ?? '',
+                $row['invoice_amount'] ?? '',
+                $row['next_contact_date'] ?? '',
+                $row['purchase_amount'] ?? '',
+            ]);
+        }
+        exit;
+    }
+
+    public function crmPrint(): void
+    {
+        $filters = $_GET;
+        $data = (new CrmReportService())->getData($filters);
+        View::render('reports/crm_print', $data, 'blank');
     }
 }

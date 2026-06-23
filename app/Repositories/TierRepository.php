@@ -24,10 +24,19 @@ final class TierRepository
     public function forLifetimeSpend(float $spend): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM customer_tiers WHERE min_lifetime_spend <= :spend ORDER BY min_lifetime_spend DESC LIMIT 1'
+            'SELECT * FROM customer_tiers 
+             WHERE is_active = 1 
+               AND min_lifetime_spend <= :spend 
+               AND (max_lifetime_spend IS NULL OR max_lifetime_spend > :spend2)
+             ORDER BY min_lifetime_spend DESC LIMIT 1'
         );
-        $stmt->execute(['spend' => $spend]);
+        $stmt->execute(['spend' => $spend, 'spend2' => $spend]);
         return $stmt->fetch() ?: null;
+    }
+
+    public function findTierBySpend(float $spend): ?array
+    {
+        return $this->forLifetimeSpend($spend);
     }
 
     public function create(array $data): int

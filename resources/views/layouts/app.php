@@ -10,6 +10,9 @@ $mainNavItems = [
     ['/purchases/create', 'ثبت خرید', 'bi-receipt', 'purchase'],
     ['/services', 'سرویس‌ها', 'bi-tools', null],
     ['/services/create', 'ثبت سرویس', 'bi-wrench', null],
+    ['/followups', 'پیگیری فروش', 'bi-telephone-outbound', null],
+    ['/followups/create', 'ثبت پیگیری', 'bi-journal-plus', null],
+    ['/reminders', 'یادآوری‌ها', 'bi-bell', null],
     ['/reports', 'گزارش‌ها', 'bi-bar-chart-line', null],
     ['/sms/logs', 'لاگ پیامک', 'bi-chat-dots', null],
 ];

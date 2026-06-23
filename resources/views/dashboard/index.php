@@ -20,6 +20,9 @@
         ['کسر این ماه', money($stats['reductions_month'] ?? 0) . ' ریال', 'bi-arrow-down-circle'],
         ['بدهی کیف پول (تعهد)', money($stats['outstanding_liability'] ?? 0) . ' ریال', 'bi-piggy-bank'],
         ['تولدهای امروز', $stats['birthdays_today'], 'bi-gift'],
+        ['پیگیری‌های امروز', $reminderStats['today'] ?? 0, 'bi-calendar-check'],
+        ['پیگیری‌های معوق', $reminderStats['overdue'] ?? 0, 'bi-exclamation-triangle'],
+        ['یادآوری‌های باز', $reminderStats['pending'] ?? 0, 'bi-bell'],
     ];
     foreach ($cards as [$label, $value, $icon]): ?>
         <div class="col-md-4 col-xl-3">
