@@ -9,6 +9,7 @@ use App\Repositories\CashbackSettingsRepository;
 use App\Repositories\ContractRenewalSmsRepository;
 use App\Repositories\CronStateRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\DueDateRepository;
 use App\Repositories\SmsRepository;
 use App\Repositories\WalletRepository;
 
@@ -113,6 +114,23 @@ final class CronRunnerService
     }
 
     /** @return array{ok: bool, messages: string[]} */
+    public function runDueDateStatusUpdate(): array
+    {
+        $count = (new DueDateRepository())->markOverduePending();
+        $this->state->markRun('due_date_status');
+        return ['ok' => true, 'messages' => ["Marked {$count} due dates as overdue."]];
+    }
+
+    /** @return array{ok: bool, messages: string[]} */
+    public function runDueDateReminders(): array
+    {
+        $this->runDueDateStatusUpdate();
+        $result = (new DueDateSmsService())->runReminders();
+        $this->state->markRun('due_date_reminders');
+        return $result;
+    }
+
+    /** @return array{ok: bool, messages: string[]} */
     public function runSmsRetry(): array
     {
         $count = (new SmsService())->retryPending();
@@ -124,7 +142,7 @@ final class CronRunnerService
     public function runDailyTasks(): array
     {
         $messages = [];
-        foreach ([$this->runBirthdaySms(), $this->runContractRenewalReminders()] as $result) {
+        foreach ([$this->runBirthdaySms(), $this->runContractRenewalReminders(), $this->runDueDateReminders()] as $result) {
             $messages = array_merge($messages, $result['messages']);
         }
         return ['ok' => true, 'messages' => $messages];
@@ -136,6 +154,8 @@ final class CronRunnerService
         return match ($task) {
             'birthday' => $this->runBirthdaySms(),
             'contract_renewal' => $this->runContractRenewalReminders(),
+            'due_date_status' => $this->runDueDateStatusUpdate(),
+            'due_date_reminders' => $this->runDueDateReminders(),
             'sms_retry' => $this->runSmsRetry(),
             'all' => $this->runAll(),
             default => ['ok' => false, 'messages' => ['Unknown cron task.']],
@@ -165,6 +185,9 @@ final class CronRunnerService
         }
         if ($this->state->shouldRunDaily('contract_renewal')) {
             $messages = array_merge($messages, $this->runContractRenewalReminders()['messages']);
+        }
+        if ($this->state->shouldRunDaily('due_date_reminders')) {
+            $messages = array_merge($messages, $this->runDueDateReminders()['messages']);
         }
 
         $retryMinutes = (int) \config_value('cron.sms_retry_interval_minutes', 15);

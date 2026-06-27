@@ -26,10 +26,18 @@ final class AppUpdateController
         Csrf::requireValid();
 
         $updater = new AppUpdaterService();
-        $result = $updater->updateFromMain(isset($_POST['run_migrations']));
+        $result = $updater->updateFromMain(
+            $this->shouldRunPostUpdateStep('run_migrations', 'auto_run_migrations'),
+            $this->shouldRunPostUpdateStep('setup_cpanel_cron', 'auto_setup_cpanel_cron')
+        );
         $_SESSION['app_update_result'] = $result;
 
         Flash::set($result['ok'] ? 'success' : 'danger', $result['ok'] ? 'برنامه با موفقیت از GitHub به‌روزرسانی شد.' : 'به‌روزرسانی ناموفق بود.');
         \redirect('/admin/app-update');
+    }
+
+    private function shouldRunPostUpdateStep(string $field, string $configKey): bool
+    {
+        return isset($_POST[$field]) && (bool) $_POST[$field];
     }
 }

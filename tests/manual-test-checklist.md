@@ -41,6 +41,17 @@
 - Export reports to CSV.
 - Liability issued vs redeemed and inactive customers sections render.
 
+## Due Dates (Payment Deadlines)
+
+- Run migration `018_payment_due_dates.sql` via `php database/migrate.php`.
+- Register a due date with customer, Jalali due date, amount, type (check/installment/invoice), and status.
+- Link an invoice from purchases (`invoice_ref`) and confirm reference number auto-fills.
+- Filter list by customer name, reference number, amount, date range, status, and quick scopes (today, next 7 days, overdue).
+- Edit and delete a due date; confirm activity log entries.
+- Export CSV and open print view (save as PDF from browser).
+- With SMS enabled, confirm registration SMS is sent once; run `php cron/run.php due_date_reminders` for reminder cron.
+- Dashboard cards show today/tomorrow/overdue counts and amounts with links to filtered lists.
+
 ## Portal and API
 
 - Customer portal OTP flow at `/portal` shows balance after verify.

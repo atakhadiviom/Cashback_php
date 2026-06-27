@@ -18,6 +18,8 @@ DROP TABLE IF EXISTS sms_logs;
 DROP TABLE IF EXISTS sms_settings;
 DROP TABLE IF EXISTS cashback_settings;
 DROP TABLE IF EXISTS activity_logs;
+DROP TABLE IF EXISTS due_date_sms_history;
+DROP TABLE IF EXISTS payment_due_dates;
 DROP TABLE IF EXISTS wallet_transactions;
 DROP TABLE IF EXISTS purchases;
 DROP TABLE IF EXISTS customers;
@@ -163,6 +165,40 @@ CREATE TABLE purchases (
   CONSTRAINT fk_purchases_promotion FOREIGN KEY (promotion_id) REFERENCES promotions(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE payment_due_dates (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  customer_id BIGINT UNSIGNED NOT NULL,
+  purchase_id BIGINT UNSIGNED NULL,
+  operator_id BIGINT UNSIGNED NOT NULL,
+  due_date DATE NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  due_type ENUM('check','installment','invoice','other') NOT NULL DEFAULT 'other',
+  reference_number VARCHAR(64) NULL,
+  description TEXT NULL,
+  status ENUM('pending','paid','overdue','cancelled') NOT NULL DEFAULT 'pending',
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  INDEX idx_due_dates_date_status (due_date, status),
+  INDEX idx_due_dates_customer (customer_id),
+  INDEX idx_due_dates_reference (reference_number),
+  INDEX idx_due_dates_purchase (purchase_id),
+  INDEX idx_due_dates_type_status (due_type, status),
+  CONSTRAINT fk_due_dates_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_due_dates_purchase FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE SET NULL,
+  CONSTRAINT fk_due_dates_operator FOREIGN KEY (operator_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE due_date_sms_history (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  due_date_id BIGINT UNSIGNED NOT NULL,
+  reminder_kind ENUM('created','before_3d','before_1d','on_day','after_overdue') NOT NULL,
+  sms_log_id BIGINT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  UNIQUE KEY uq_due_date_sms_kind (due_date_id, reminder_kind),
+  CONSTRAINT fk_due_date_sms_due FOREIGN KEY (due_date_id) REFERENCES payment_due_dates(id) ON DELETE CASCADE,
+  CONSTRAINT fk_due_date_sms_log FOREIGN KEY (sms_log_id) REFERENCES sms_logs(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE wallet_transactions (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id BIGINT UNSIGNED NOT NULL,
@@ -205,6 +241,8 @@ CREATE TABLE sms_settings (
   welcome_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
   service_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
   contract_renewal_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
+  due_date_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
+  due_date_reminder_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
   purchase_template TEXT NOT NULL,
   birthday_template TEXT NOT NULL,
   wallet_reduction_template TEXT NOT NULL,
@@ -214,6 +252,8 @@ CREATE TABLE sms_settings (
   referral_template TEXT NULL,
   service_template TEXT NULL,
   contract_renewal_template TEXT NULL,
+  due_date_template TEXT NULL,
+  due_date_reminder_template TEXT NULL,
   updated_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -221,7 +261,7 @@ CREATE TABLE sms_logs (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id BIGINT UNSIGNED NULL,
   phone_number VARCHAR(20) NOT NULL,
-  event_type ENUM('purchase','birthday','wallet_reduction','welcome','manual','otp','purchase_void','referral_bonus','service_confirmation','contract_renewal') NOT NULL,
+  event_type ENUM('purchase','birthday','wallet_reduction','welcome','manual','otp','purchase_void','referral_bonus','service_confirmation','contract_renewal','due_date','due_date_reminder') NOT NULL,
   message TEXT NOT NULL,
   provider VARCHAR(50) NOT NULL DEFAULT 'ippanel',
   provider_response TEXT NULL,
@@ -290,7 +330,8 @@ CREATE TABLE activity_logs (
     'login','logout','customer_create','customer_edit','customer_delete','customer_anonymize','customer_import',
     'purchase_create','purchase_void','wallet_reduction','operator_create','operator_edit',
     'sms_sent','sms_failed','report_export','settings_update','service_create',
-    'followup_create','followup_update','followup_won','followup_lost','reminder_seen','reminder_done'
+    'followup_create','followup_update','followup_won','followup_lost','reminder_seen','reminder_done',
+    'due_date_create','due_date_update','due_date_delete'
   ) NOT NULL,
   description VARCHAR(500) NOT NULL,
   customer_id BIGINT UNSIGNED NULL,
@@ -368,11 +409,12 @@ INSERT INTO cashback_settings (
 INSERT INTO sms_settings (
   id, api_token, sender_number, sms_enabled, purchase_sms_enabled, birthday_sms_enabled,
   wallet_reduction_sms_enabled, welcome_sms_enabled, service_sms_enabled, contract_renewal_sms_enabled,
+  due_date_sms_enabled, due_date_reminder_sms_enabled,
   purchase_template, birthday_template,
   wallet_reduction_template, welcome_template, otp_template, purchase_void_template, referral_template,
-  service_template, contract_renewal_template, updated_at
+  service_template, contract_renewal_template, due_date_template, due_date_reminder_template, updated_at
 ) VALUES (
-  1, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
+  1, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   'سلام {full_name}، خرید شما به مبلغ {purchase_amount} ثبت شد و مبلغ {cashback_amount} ریال کش‌بک به کیف پول شما اضافه شد. موجودی کیف پول: {wallet_balance} ریال',
   '{full_name} عزیز، تولدتان مبارک! از طرف {company_name} برای شما آرزوی سلامتی و شادی داریم.',
   'سلام {full_name}، مبلغ {purchase_amount} ریال از کیف پول شما کسر شد. موجودی جدید: {wallet_balance} ریال',
@@ -382,5 +424,13 @@ INSERT INTO sms_settings (
   'سلام {full_name}، مبلغ {cashback_amount} ریال بابت معرفی مشتری جدید به کیف پول شما اضافه شد.',
   'سلام {full_name}، سرویس {service_type} شما در تاریخ {service_date} ثبت شد. مبلغ پرداختی: {paid_amount} ریال.',
   'سلام {full_name}، قرارداد شماره {contract_number} شما تا {contract_ends_at} معتبر است. برای تمدید با ما تماس بگیرید.',
+  'آقای/خانم {full_name}
+با سلام، سررسید پرداخت شما به مبلغ {due_amount} در تاریخ {due_date} می‌باشد. لطفاً در موعد مقرر نسبت به پرداخت اقدام فرمایید.
+با تشکر
+{company_name}',
+  'آقای/خانم {full_name}
+یادآوری: سررسید پرداخت شما به مبلغ {due_amount} در تاریخ {due_date} می‌باشد. لطفاً در موعد مقرر نسبت به پرداخت اقدام فرمایید.
+با تشکر
+{company_name}',
   NOW()
 );

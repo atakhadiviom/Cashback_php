@@ -48,6 +48,8 @@ $mainNavItems = [
     ['/followups', 'پیگیری فروش', 'bi-telephone-outbound', null, 'followups'],
     ['/followups/create', 'ثبت پیگیری', 'bi-journal-plus', null, 'followups'],
     ['/reminders', 'یادآوری‌ها', 'bi-bell', null, 'reminders'],
+    ['/due-dates', 'مدیریت سررسیدها', 'bi-calendar-event', null, 'due_dates'],
+    ['/due-dates/create', 'ثبت سررسید', 'bi-calendar-plus', null, 'due_dates'],
     ['/reports', 'گزارش‌ها', 'bi-bar-chart-line', null, 'reports'],
     ['/sms/logs', 'لاگ پیامک', 'bi-chat-dots', null, 'sms_logs'],
 ];

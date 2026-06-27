@@ -34,6 +34,10 @@ return [
         'github_repo' => 'Cashback_php',
         'branch' => 'main',
         'github_token' => '',
+        // After a successful GitHub update, run pending SQL migrations automatically.
+        'auto_run_migrations' => true,
+        // When cPanel API is configured, register missing cron jobs (birthday, reminders, SMS retry).
+        'auto_setup_cpanel_cron' => true,
     ],
     'cron' => [
         // Set a long random string to enable https://your-site/internal/cron?task=all&token=...

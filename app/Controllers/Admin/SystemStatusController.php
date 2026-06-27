@@ -121,6 +121,15 @@ final class SystemStatusController
                 'detail' => !empty($smsSettings['contract_renewal_sms_enabled']) ? 'فعال در تنظیمات پیامک' : 'Contract renewal SMS is disabled.',
             ],
             [
+                'key' => 'due_date_reminders',
+                'label' => 'یادآوری سررسیدها',
+                'schedule' => 'روزانه 10:00',
+                'last_run' => $cronState['due_date_reminders'] ?? 'هرگز',
+                'due' => $this->dailyDue($cronState['due_date_reminders'] ?? null),
+                'enabled' => !empty($smsSettings['sms_enabled']) && !empty($smsSettings['due_date_reminder_sms_enabled']),
+                'detail' => !empty($smsSettings['due_date_reminder_sms_enabled']) ? 'فعال در تنظیمات پیامک' : 'Due date reminder SMS is disabled.',
+            ],
+            [
                 'key' => 'sms_retry',
                 'label' => 'تلاش مجدد پیامک',
                 'schedule' => 'هر ' . $retryMinutes . ' دقیقه',

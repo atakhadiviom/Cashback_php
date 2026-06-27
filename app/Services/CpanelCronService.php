@@ -85,6 +85,14 @@ final class CpanelCronService
                 'command' => "{$php} {$root}/cron/run.php contract_renewal",
             ],
             [
+                'minute' => '0',
+                'hour' => '10',
+                'day' => '*',
+                'month' => '*',
+                'weekday' => '*',
+                'command' => "{$php} {$root}/cron/run.php due_date_reminders",
+            ],
+            [
                 'minute' => '*/15',
                 'hour' => '*',
                 'day' => '*',

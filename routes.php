@@ -16,6 +16,7 @@ use App\Controllers\AuthController;
 use App\Controllers\CronController;
 use App\Controllers\CustomerController;
 use App\Controllers\DashboardController;
+use App\Controllers\DueDateController;
 use App\Controllers\FollowupController;
 use App\Controllers\PortalController;
 use App\Controllers\PurchaseController;
@@ -75,6 +76,15 @@ $router->get('/followups/show', [FollowupController::class, 'show']);
 $router->get('/reminders', [ReminderController::class, 'index']);
 $router->post('/reminders/mark-seen', [ReminderController::class, 'markSeen']);
 $router->post('/reminders/mark-done', [ReminderController::class, 'markDone']);
+
+$router->get('/due-dates', [DueDateController::class, 'index']);
+$router->get('/due-dates/create', [DueDateController::class, 'create']);
+$router->post('/due-dates/create', [DueDateController::class, 'store']);
+$router->get('/due-dates/edit', [DueDateController::class, 'edit']);
+$router->post('/due-dates/edit', [DueDateController::class, 'update']);
+$router->post('/due-dates/delete', [DueDateController::class, 'delete']);
+$router->get('/due-dates/export', [DueDateController::class, 'export'], true, null, 'export');
+$router->get('/due-dates/print', [DueDateController::class, 'print'], true, null, 'export');
 
 $router->get('/reports', [ReportController::class, 'index']);
 $router->get('/reports/export', [ReportController::class, 'export'], true, null, 'export');

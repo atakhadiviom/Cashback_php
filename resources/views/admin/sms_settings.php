@@ -10,7 +10,7 @@
             <div class="form-text"><?= !empty($settings['api_token']) ? 'توکن ippanel در دیتابیس ذخیره شده است.' : 'هنوز توکنی در دیتابیس ذخیره نشده است.' ?></div>
         </div>
         <div class="col-md-6"><label class="form-label">شماره فرستنده</label><input class="form-control ltr" name="sender_number" value="<?= e($settings['sender_number'] ?? '') ?>" placeholder="مثلاً 3000..." autocomplete="off"></div>
-        <?php foreach (['sms_enabled'=>'فعال‌سازی کلی', 'purchase_sms_enabled'=>'پیامک خرید', 'birthday_sms_enabled'=>'پیامک تولد', 'wallet_reduction_sms_enabled'=>'پیامک کسر کیف پول', 'welcome_sms_enabled'=>'پیامک خوشامد', 'service_sms_enabled'=>'پیامک ثبت سرویس', 'contract_renewal_sms_enabled'=>'پیامک تمدید قرارداد'] as $name=>$label): ?>
+        <?php foreach (['sms_enabled'=>'فعال‌سازی کلی', 'purchase_sms_enabled'=>'پیامک خرید', 'birthday_sms_enabled'=>'پیامک تولد', 'wallet_reduction_sms_enabled'=>'پیامک کسر کیف پول', 'welcome_sms_enabled'=>'پیامک خوشامد', 'service_sms_enabled'=>'پیامک ثبت سرویس', 'contract_renewal_sms_enabled'=>'پیامک تمدید قرارداد', 'due_date_sms_enabled'=>'پیامک ثبت سررسید', 'due_date_reminder_sms_enabled'=>'یادآوری سررسید'] as $name=>$label): ?>
             <div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="<?= e($name) ?>" name="<?= e($name) ?>" <?= !empty($settings[$name]) ? 'checked' : '' ?>><label class="form-check-label" for="<?= e($name) ?>"><?= e($label) ?></label></div></div>
         <?php endforeach; ?>
         <div class="col-12"><label class="form-label">قالب خرید</label><textarea class="form-control" name="purchase_template" rows="3"><?= e($settings['purchase_template'] ?? '') ?></textarea></div>
@@ -19,8 +19,10 @@
         <div class="col-12"><label class="form-label">قالب خوشامد</label><textarea class="form-control" name="welcome_template" rows="3"><?= e($settings['welcome_template'] ?? '') ?></textarea></div>
         <div class="col-12"><label class="form-label">قالب ثبت سرویس</label><textarea class="form-control" name="service_template" rows="3"><?= e($settings['service_template'] ?? '') ?></textarea></div>
         <div class="col-12"><label class="form-label">قالب تمدید قرارداد</label><textarea class="form-control" name="contract_renewal_template" rows="3"><?= e($settings['contract_renewal_template'] ?? '') ?></textarea></div>
+        <div class="col-12"><label class="form-label">قالب ثبت سررسید</label><textarea class="form-control" name="due_date_template" rows="4"><?= e($settings['due_date_template'] ?? '') ?></textarea></div>
+        <div class="col-12"><label class="form-label">قالب یادآوری سررسید</label><textarea class="form-control" name="due_date_reminder_template" rows="4"><?= e($settings['due_date_reminder_template'] ?? '') ?></textarea></div>
     </div>
     <div class="mt-4"><button class="btn btn-primary">ذخیره تنظیمات</button></div>
 </form>
-<div class="mt-3 text-muted small">متغیرها: {first_name} {last_name} {full_name} {purchase_amount} {cashback_amount} {wallet_balance} {birthday} {date} {company_name} {contract_number} {contract_ends_at} {service_type} {service_date} {paid_amount}</div>
+<div class="mt-3 text-muted small">متغیرها: {first_name} {last_name} {full_name} {purchase_amount} {cashback_amount} {wallet_balance} {birthday} {date} {company_name} {contract_number} {contract_ends_at} {service_type} {service_date} {paid_amount} {due_amount} {due_date} {reference_number} {due_type_label}</div>
 </div></div>

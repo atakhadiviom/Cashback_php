@@ -114,4 +114,23 @@ final class PurchaseRepository
         $id = $stmt->fetchColumn();
         return $id !== false ? (int) $id : null;
     }
+
+    /** @return array<int, array<string, mixed>> */
+    public function searchForInvoicePicker(?int $customerId = null, int $limit = 500): array
+    {
+        $sql = "SELECT p.id, p.invoice_ref, p.amount, p.created_at,
+                       c.first_name, c.last_name, c.phone_number
+                FROM purchases p
+                JOIN customers c ON c.id = p.customer_id
+                WHERE p.status = 'active' AND c.deleted_at IS NULL AND p.invoice_ref IS NOT NULL AND p.invoice_ref <> ''";
+        $params = [];
+        if ($customerId !== null && $customerId > 0) {
+            $sql .= ' AND p.customer_id = :customer_id';
+            $params['customer_id'] = $customerId;
+        }
+        $sql .= ' ORDER BY p.id DESC LIMIT ' . (int) $limit;
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
 }

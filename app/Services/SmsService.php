@@ -37,6 +37,12 @@ final class SmsService
             case 'contract_renewal':
                 $flag = 'contract_renewal_sms_enabled';
                 break;
+            case 'due_date':
+                $flag = 'due_date_sms_enabled';
+                break;
+            case 'due_date_reminder':
+                $flag = 'due_date_reminder_sms_enabled';
+                break;
             case 'purchase_void':
             case 'referral_bonus':
                 $flag = 'purchase_sms_enabled';
@@ -67,6 +73,12 @@ final class SmsService
                 break;
             case 'contract_renewal':
                 $templateKey = 'contract_renewal_template';
+                break;
+            case 'due_date':
+                $templateKey = 'due_date_template';
+                break;
+            case 'due_date_reminder':
+                $templateKey = 'due_date_reminder_template';
                 break;
             default:
                 $templateKey = $eventType . '_template';

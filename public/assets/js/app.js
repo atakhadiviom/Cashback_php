@@ -101,6 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initCustomerCombobox('purchase-customer-picker', 'purchase-customer-id', 'purchase-customer-results');
   initCustomerCombobox('service-customer-picker', 'service-customer-id', 'service-customer-results');
   initCustomerCombobox('followup-customer-picker', 'followup-customer-id', 'followup-customer-results');
+  initCustomerCombobox('due-date-customer-picker', 'due-date-customer-id', 'due-date-customer-results');
+  initCustomerCombobox('due-date-invoice-picker', 'due-date-purchase-id', 'due-date-invoice-results');
 
   document.querySelectorAll('[data-money]').forEach((input) => {
     const normalizeDigits = (value) =>

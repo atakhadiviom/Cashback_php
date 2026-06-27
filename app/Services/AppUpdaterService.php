@@ -59,8 +59,10 @@ final class AppUpdaterService
     }
 
     /** @return array{ok: bool, messages: string[], backup: string|null} */
-    public function updateFromMain(bool $runMigrations): array
+    public function updateFromMain(?bool $runMigrations = null, ?bool $setupCpanelCron = null): array
     {
+        $runMigrations = $runMigrations ?? (bool) \config_value('updater.auto_run_migrations', true);
+        $setupCpanelCron = $setupCpanelCron ?? (bool) \config_value('updater.auto_setup_cpanel_cron', true);
         $messages = [];
         $backupPath = null;
         $workspace = null;
@@ -88,6 +90,14 @@ final class AppUpdaterService
                 $messages[] = 'Running pending database migrations...';
                 $migrationCount = $this->runMigrations();
                 $messages[] = "Applied {$migrationCount} migrations.";
+            }
+
+            if ($setupCpanelCron) {
+                $messages[] = 'Ensuring cPanel cron jobs...';
+                $cronResult = (new CpanelCronService())->ensureCronJobs();
+                $messages[] = $cronResult['ok']
+                    ? 'cPanel cron: ' . $cronResult['message']
+                    : 'cPanel cron setup skipped or failed: ' . $cronResult['message'];
             }
 
             $messages[] = 'Update completed.';

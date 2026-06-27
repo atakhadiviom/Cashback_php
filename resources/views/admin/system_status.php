@@ -105,13 +105,16 @@
             <details class="mt-2">
                 <summary class="text-decoration-underline">راهنمای دستی تنظیم کرون‌جاب</summary>
                 <pre class="small mt-2 bg-white p-2 border"><code># Birthday SMS (Daily 08:00)
-/usr/local/bin/ea-php81 /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/send_birthday_sms.php
+<?= e(\config_value('cpanel.php_path', '/usr/local/bin/ea-php81')) ?> /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/run.php birthday
 
 # Contract Renewal (Daily 09:00)
-/usr/local/bin/ea-php81 /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/send_contract_renewal_reminders.php
+<?= e(\config_value('cpanel.php_path', '/usr/local/bin/ea-php81')) ?> /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/run.php contract_renewal
+
+# Due Date Reminders (Daily 10:00)
+<?= e(\config_value('cpanel.php_path', '/usr/local/bin/ea-php81')) ?> /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/run.php due_date_reminders
 
 # Retry Failed SMS (Every 15 min)
-/usr/local/bin/ea-php81 /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/retry_failed_sms.php</code></pre>
+<?= e(\config_value('cpanel.php_path', '/usr/local/bin/ea-php81')) ?> /home/<?= e(\config_value('cpanel.username', 'USER')) ?>/<?= e(\config_value('cpanel.domain', 'DOMAIN')) ?>/cron/run.php sms_retry</code></pre>
             <p class="small mb-0">در cPanel → Cron Jobs این دستورات را اضافه کنید.</p>
             </details>
         </div>
