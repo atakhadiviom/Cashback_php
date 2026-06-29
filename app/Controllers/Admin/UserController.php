@@ -19,7 +19,7 @@ final class UserController
 
     public function create(): void
     {
-        View::render('admin/users/create', ['user' => [], 'errors' => []]);
+        View::render('admin/users/create', ['user' => [], 'errors' => [], 'users' => (new UserRepository())->activeOperatorsAndAdmins()]);
     }
 
     public function store(): void
@@ -27,7 +27,7 @@ final class UserController
         Csrf::requireValid();
         $errors = $this->validate($_POST, true);
         if ($errors) {
-            View::render('admin/users/create', ['user' => $_POST, 'errors' => $errors]);
+            View::render('admin/users/create', ['user' => $_POST, 'errors' => $errors, 'users' => (new UserRepository())->activeOperatorsAndAdmins()]);
             return;
         }
         $role = $_POST['role'] === 'admin' ? 'admin' : 'operator';
@@ -57,7 +57,7 @@ final class UserController
         if (!empty($user['permissions']) && is_string($user['permissions'])) {
             $user['permissions'] = json_decode($user['permissions'], true);
         }
-        View::render('admin/users/edit', ['user' => $user, 'errors' => []]);
+        View::render('admin/users/edit', ['user' => $user, 'errors' => [], 'users' => (new UserRepository())->activeOperatorsAndAdmins()]);
     }
 
     public function update(): void
@@ -66,7 +66,7 @@ final class UserController
         $id = (int) ($_POST['id'] ?? 0);
         $errors = $this->validate($_POST, false, $id);
         if ($errors) {
-            View::render('admin/users/edit', ['user' => $_POST, 'errors' => $errors]);
+            View::render('admin/users/edit', ['user' => $_POST, 'errors' => $errors, 'users' => (new UserRepository())->activeOperatorsAndAdmins()]);
             return;
         }
         $role = $_POST['role'] === 'admin' ? 'admin' : 'operator';
@@ -95,6 +95,21 @@ final class UserController
         foreach ($keys as $key) {
             $perms[$key] = isset($post['perm_' . $key]);
         }
+        $scope = in_array((string) ($post['data_access_scope'] ?? 'self'), ['self', 'selected', 'all'], true)
+            ? (string) $post['data_access_scope']
+            : 'self';
+        $perms['data_access_scope'] = $scope;
+        $perms['data_access_user_ids'] = [];
+        if ($scope === 'selected') {
+            foreach ((array) ($post['data_access_user_ids'] ?? []) as $userId) {
+                $userId = (int) $userId;
+                if ($userId > 0) {
+                    $perms['data_access_user_ids'][] = $userId;
+                }
+            }
+            $perms['data_access_user_ids'] = array_values(array_unique($perms['data_access_user_ids']));
+        }
+        $perms['data_access_can_modify_others'] = isset($post['data_access_can_modify_others']);
         return json_encode($perms, JSON_UNESCAPED_UNICODE);
     }
 

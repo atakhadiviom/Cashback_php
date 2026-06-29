@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Core\Database;
 use App\Core\Jalali;
+use App\Services\DataAccessControl;
 use App\Services\DueDateService;
 use PDO;
 
@@ -61,6 +62,9 @@ final class DueDateRepository
 
     public function find(int $id): ?array
     {
+        $where = ['d.id = :id', 'c.deleted_at IS NULL'];
+        $params = ['id' => $id];
+        DataAccessControl::applyOwnerScope($where, $params, 'd.operator_id');
         $stmt = $this->pdo->prepare(
             'SELECT d.*, c.first_name, c.last_name, c.company, c.phone_number,
                     u.name AS operator_name, p.invoice_ref AS purchase_invoice_ref
@@ -68,9 +72,9 @@ final class DueDateRepository
              JOIN customers c ON c.id = d.customer_id
              JOIN users u ON u.id = d.operator_id
              LEFT JOIN purchases p ON p.id = d.purchase_id
-             WHERE d.id = :id AND c.deleted_at IS NULL'
+             WHERE ' . implode(' AND ', $where)
         );
-        $stmt->execute(['id' => $id]);
+        $stmt->execute($params);
         return $stmt->fetch() ?: null;
     }
 
@@ -135,7 +139,10 @@ final class DueDateRepository
     /** @return array<string, int|float> */
     public function dashboardStats(): array
     {
-        $row = $this->pdo->query(
+        $where = ['c.deleted_at IS NULL'];
+        $params = [];
+        DataAccessControl::applyOwnerScope($where, $params, 'd.operator_id');
+        $stmt = $this->pdo->prepare(
             "SELECT
                 SUM(CASE WHEN due_date = CURDATE() AND status IN ('pending','overdue') THEN 1 ELSE 0 END) AS today_count,
                 SUM(CASE WHEN due_date = DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND status = 'pending' THEN 1 ELSE 0 END) AS tomorrow_count,
@@ -145,8 +152,10 @@ final class DueDateRepository
                 SUM(CASE WHEN due_type = 'installment' AND status = 'overdue' THEN 1 ELSE 0 END) AS overdue_installments
              FROM payment_due_dates d
              JOIN customers c ON c.id = d.customer_id
-             WHERE c.deleted_at IS NULL"
-        )->fetch() ?: [];
+             WHERE " . implode(' AND ', $where)
+        );
+        $stmt->execute($params);
+        $row = $stmt->fetch() ?: [];
 
         return [
             'today_count' => (int) ($row['today_count'] ?? 0),
@@ -253,7 +262,7 @@ final class DueDateRepository
             $params['q5'] = $term;
             $params['q6'] = $term;
         }
-
+        DataAccessControl::applyOwnerScope($where, $params, 'd.operator_id');
         return [$where, $params];
     }
 

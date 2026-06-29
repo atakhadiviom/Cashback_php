@@ -16,7 +16,7 @@ final class DashboardController
     {
         View::render('dashboard/index', [
             'stats' => (new ReportRepository())->dashboard(),
-            'reminderStats' => (new ReminderRepository())->dashboardCounts(Auth::isAdmin() ? null : Auth::id()),
+            'reminderStats' => (new ReminderRepository())->dashboardCounts(),
             'dueDateStats' => (new DueDateRepository())->dashboardStats(),
         ]);
     }

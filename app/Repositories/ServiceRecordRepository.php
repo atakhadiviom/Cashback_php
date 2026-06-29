@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Core\Database;
+use App\Services\DataAccessControl;
 use PDO;
 
 final class ServiceRecordRepository
@@ -33,6 +34,9 @@ final class ServiceRecordRepository
 
     public function find(int $id): ?array
     {
+        $where = ['s.id = :id'];
+        $params = ['id' => $id];
+        DataAccessControl::applyOwnerScope($where, $params, 's.created_by');
         $stmt = $this->pdo->prepare(
             'SELECT s.*, c.first_name, c.last_name, c.contract_number, c.phone_number,
                     t.name AS technician_name, u.name AS created_by_name,
@@ -42,9 +46,9 @@ final class ServiceRecordRepository
              JOIN users t ON t.id = s.technician_id
              LEFT JOIN users u ON u.id = s.created_by
              LEFT JOIN sms_logs sl ON sl.id = s.sms_log_id
-             WHERE s.id = :id'
+             WHERE ' . implode(' AND ', $where)
         );
-        $stmt->execute(['id' => $id]);
+        $stmt->execute($params);
         return $stmt->fetch() ?: null;
     }
 
@@ -174,7 +178,7 @@ final class ServiceRecordRepository
                 $params[$field] = \search_like_term((string) $filters[$field]);
             }
         }
-
+        DataAccessControl::applyOwnerScope($where, $params, 's.created_by');
         return [$where, $params];
     }
 

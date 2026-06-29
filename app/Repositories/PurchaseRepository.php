@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Core\Database;
+use App\Services\DataAccessControl;
 use PDO;
 
 final class PurchaseRepository
@@ -28,20 +29,26 @@ final class PurchaseRepository
 
     public function find(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT p.*, u.name AS created_by_name FROM purchases p LEFT JOIN users u ON u.id = p.created_by WHERE p.id = :id');
-        $stmt->execute(['id' => $id]);
+        $where = ['p.id = :id'];
+        $params = ['id' => $id];
+        DataAccessControl::applyOwnerScope($where, $params, 'p.created_by');
+        $stmt = $this->pdo->prepare('SELECT p.*, u.name AS created_by_name FROM purchases p LEFT JOIN users u ON u.id = p.created_by WHERE ' . implode(' AND ', $where));
+        $stmt->execute($params);
         return $stmt->fetch() ?: null;
     }
 
     public function forCustomer(int $customerId, bool $includeVoided = true): array
     {
-        $sql = 'SELECT p.*, u.name AS created_by_name FROM purchases p LEFT JOIN users u ON u.id = p.created_by WHERE p.customer_id = :customer_id';
+        $where = ['p.customer_id = :customer_id'];
+        $params = ['customer_id' => $customerId];
+        DataAccessControl::applyOwnerScope($where, $params, 'p.created_by');
+        $sql = 'SELECT p.*, u.name AS created_by_name FROM purchases p LEFT JOIN users u ON u.id = p.created_by WHERE ' . implode(' AND ', $where);
         if (!$includeVoided) {
             $sql .= " AND p.status = 'active'";
         }
         $sql .= ' ORDER BY p.id DESC';
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['customer_id' => $customerId]);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
@@ -127,6 +134,11 @@ final class PurchaseRepository
         if ($customerId !== null && $customerId > 0) {
             $sql .= ' AND p.customer_id = :customer_id';
             $params['customer_id'] = $customerId;
+        }
+        $where = [];
+        DataAccessControl::applyOwnerScope($where, $params, 'p.created_by');
+        if ($where) {
+            $sql .= ' AND ' . implode(' AND ', $where);
         }
         $sql .= ' ORDER BY p.id DESC LIMIT ' . (int) $limit;
         $stmt = $this->pdo->prepare($sql);

@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Core\Database;
 use App\Core\Jalali;
+use App\Services\DataAccessControl;
 use PDO;
 
 final class ReportRepository
@@ -19,22 +20,44 @@ final class ReportRepository
 
     public function dashboard(): array
     {
+        [$customerWhere, $customerParams] = $this->ownerWhere('c.created_by');
+        [$purchaseWhere, $purchaseParams] = $this->ownerWhere('p.created_by');
+        [$walletWhere, $walletParams] = $this->ownerWhere('w.created_by');
+
         return [
-            'customers' => (int) $this->pdo->query('SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL')->fetchColumn(),
-            'purchases' => (int) $this->pdo->query("SELECT COUNT(*) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL")->fetchColumn(),
-            'purchase_amount' => (float) $this->pdo->query("SELECT COALESCE(SUM(p.amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL")->fetchColumn(),
-            'cashback' => (float) $this->pdo->query("SELECT COALESCE(SUM(p.cashback_amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL")->fetchColumn(),
-            'wallets' => (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers WHERE deleted_at IS NULL')->fetchColumn(),
+            'customers' => (int) $this->scalar('SELECT COUNT(*) FROM customers c WHERE c.deleted_at IS NULL' . $customerWhere, $customerParams),
+            'purchases' => (int) $this->scalar("SELECT COUNT(*) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL" . $purchaseWhere, $purchaseParams),
+            'purchase_amount' => (float) $this->scalar("SELECT COALESCE(SUM(p.amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL" . $purchaseWhere, $purchaseParams),
+            'cashback' => (float) $this->scalar("SELECT COALESCE(SUM(p.cashback_amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL" . $purchaseWhere, $purchaseParams),
+            'wallets' => (float) $this->scalar('SELECT COALESCE(SUM(c.wallet_balance),0) FROM customers c WHERE c.deleted_at IS NULL' . $customerWhere, $customerParams),
             'birthdays_today' => $this->countBirthdaysToday(),
-            'cashback_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(p.cashback_amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL AND YEAR(p.created_at) = YEAR(CURDATE()) AND MONTH(p.created_at) = MONTH(CURDATE())")->fetchColumn(),
-            'reductions_month' => (float) $this->pdo->query("SELECT COALESCE(SUM(w.amount),0) FROM wallet_transactions w JOIN customers c ON c.id = w.customer_id WHERE w.type = 'reduction' AND c.deleted_at IS NULL AND YEAR(w.created_at) = YEAR(CURDATE()) AND MONTH(w.created_at) = MONTH(CURDATE())")->fetchColumn(),
+            'cashback_month' => (float) $this->scalar("SELECT COALESCE(SUM(p.cashback_amount),0) FROM purchases p JOIN customers c ON c.id = p.customer_id WHERE p.status = 'active' AND c.deleted_at IS NULL AND YEAR(p.created_at) = YEAR(CURDATE()) AND MONTH(p.created_at) = MONTH(CURDATE())" . $purchaseWhere, $purchaseParams),
+            'reductions_month' => (float) $this->scalar("SELECT COALESCE(SUM(w.amount),0) FROM wallet_transactions w JOIN customers c ON c.id = w.customer_id WHERE w.type = 'reduction' AND c.deleted_at IS NULL AND YEAR(w.created_at) = YEAR(CURDATE()) AND MONTH(w.created_at) = MONTH(CURDATE())" . $walletWhere, $walletParams),
             'outstanding_liability' => $this->outstandingLiability(),
         ];
     }
 
     public function outstandingLiability(): float
     {
-        return (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers WHERE deleted_at IS NULL')->fetchColumn();
+        [$where, $params] = $this->ownerWhere('c.created_by');
+        return (float) $this->scalar('SELECT COALESCE(SUM(c.wallet_balance),0) FROM customers c WHERE c.deleted_at IS NULL' . $where, $params);
+    }
+
+    /** @return array{0: string, 1: array<string, mixed>} */
+    private function ownerWhere(string $ownerColumn): array
+    {
+        $where = [];
+        $params = [];
+        DataAccessControl::applyOwnerScope($where, $params, $ownerColumn);
+        return [$where ? ' AND ' . implode(' AND ', $where) : '', $params];
+    }
+
+    /** @param array<string, mixed> $params */
+    private function scalar(string $sql, array $params = []): mixed
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchColumn();
     }
 
     public function cashbackIssuedVsRedeemed(string $from, string $to): array
@@ -55,16 +78,18 @@ final class ReportRepository
 
     public function inactiveCustomers(int $days, int $limit = 50): array
     {
+        [$ownerWhere, $ownerParams] = $this->ownerWhere('c.created_by');
         $stmt = $this->pdo->prepare(
             "SELECT c.* FROM customers c
              WHERE c.deleted_at IS NULL
+             {$ownerWhere}
              AND NOT EXISTS (
                 SELECT 1 FROM purchases p WHERE p.customer_id = c.id AND p.status = 'active'
                 AND p.created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
              )
              ORDER BY c.id DESC LIMIT " . $limit
         );
-        $stmt->execute(['days' => $days]);
+        $stmt->execute(array_merge(['days' => $days], $ownerParams));
         return $stmt->fetchAll();
     }
 
@@ -78,23 +103,31 @@ final class ReportRepository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         $row = $stmt->fetch() ?: [];
-        $row['wallet_balances'] = (float) $this->pdo->query('SELECT COALESCE(SUM(wallet_balance),0) FROM customers WHERE deleted_at IS NULL')->fetchColumn();
+        $row['wallet_balances'] = $this->outstandingLiability();
         return $row;
     }
 
     public function topByAmount(): array
     {
-        return $this->pdo->query("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' AND c.deleted_at IS NULL GROUP BY c.id ORDER BY total DESC LIMIT 10")->fetchAll();
+        [$ownerWhere, $params] = $this->ownerWhere('p.created_by');
+        $stmt = $this->pdo->prepare("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' AND c.deleted_at IS NULL{$ownerWhere} GROUP BY c.id ORDER BY total DESC LIMIT 10");
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     public function topByCashback(): array
     {
-        return $this->pdo->query("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.cashback_amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' AND c.deleted_at IS NULL GROUP BY c.id ORDER BY total DESC LIMIT 10")->fetchAll();
+        [$ownerWhere, $params] = $this->ownerWhere('p.created_by');
+        $stmt = $this->pdo->prepare("SELECT c.id, c.first_name, c.last_name, c.national_code, SUM(p.cashback_amount) total FROM customers c JOIN purchases p ON p.customer_id = c.id WHERE p.status = 'active' AND c.deleted_at IS NULL{$ownerWhere} GROUP BY c.id ORDER BY total DESC LIMIT 10");
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     public function birthdays(string $period): array
     {
-        $stmt = $this->pdo->query('SELECT * FROM customers WHERE deleted_at IS NULL AND birthday IS NOT NULL ORDER BY birthday');
+        [$ownerWhere, $params] = $this->ownerWhere('c.created_by');
+        $stmt = $this->pdo->prepare('SELECT c.* FROM customers c WHERE c.deleted_at IS NULL AND c.birthday IS NOT NULL' . $ownerWhere . ' ORDER BY c.birthday');
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
         $today = Jalali::todayJalaliMonthDay();
 
@@ -197,6 +230,7 @@ final class ReportRepository
         if (empty($filters['include_voided'])) {
             $where[] = "p.status = 'active'";
         }
+        DataAccessControl::applyOwnerScope($where, $params, 'p.created_by');
         return [$where, $params];
     }
 }

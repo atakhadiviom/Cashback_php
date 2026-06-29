@@ -17,6 +17,7 @@ use App\Repositories\TierRepository;
 use App\Repositories\WalletRepository;
 use App\Services\ActivityLogger;
 use App\Services\CustomerService;
+use App\Services\DataAccessControl;
 
 final class CustomerController
 {
@@ -58,6 +59,11 @@ final class CustomerController
     {
         Csrf::requireValid();
         $id = (int) ($_POST['id'] ?? 0);
+        $existing = (new CustomerRepository())->find($id);
+        if (!$existing || !DataAccessControl::canModifyOwner((int) $existing['created_by'])) {
+            Flash::set('danger', 'شما مجوز ویرایش این رکورد را ندارید.');
+            \redirect('/customers');
+        }
         $result = (new CustomerService())->update($id, $_POST);
         if (!$result['ok']) {
             View::render('customers/edit', ['customer' => array_merge($_POST, ['id' => $id]), 'errors' => $result['errors']]);
@@ -121,6 +127,11 @@ final class CustomerController
     {
         Csrf::requireValid();
         $id = (int) ($_POST['id'] ?? 0);
+        $existing = (new CustomerRepository())->find($id);
+        if (!$existing || !DataAccessControl::canModifyOwner((int) $existing['created_by'])) {
+            Flash::set('danger', 'شما مجوز حذف این رکورد را ندارید.');
+            \redirect('/customers');
+        }
         (new CustomerRepository())->softDelete($id);
         (new ActivityLogger())->log('customer_delete', 'مشتری حذف نرم شد.', $id);
         Flash::set('success', 'مشتری حذف شد.');
@@ -131,6 +142,11 @@ final class CustomerController
     {
         Csrf::requireValid();
         $id = (int) ($_POST['id'] ?? 0);
+        $existing = (new CustomerRepository())->find($id);
+        if (!$existing || !DataAccessControl::canModifyOwner((int) $existing['created_by'])) {
+            Flash::set('danger', 'شما مجوز حذف این رکورد را ندارید.');
+            \redirect('/customers');
+        }
         (new CustomerRepository())->anonymize($id);
         (new ActivityLogger())->log('customer_anonymize', 'مشتری ناشناس‌سازی شد.', $id);
         Flash::set('success', 'اطلاعات شخصی مشتری حذف شد.');
