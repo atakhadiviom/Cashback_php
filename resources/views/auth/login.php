@@ -1,7 +1,7 @@
 <?php use App\Core\Csrf; ?>
 <section class="login-page">
     <div class="login-visual">
-        <span class="badge text-bg-light align-self-start mb-3">Cashback Admin</span>
+        <span class="badge text-bg-light align-self-start mb-3"><?= e(config_value('app.name', 'سیستم مدیریت ارتباط با مشتریان و کش بک')) ?></span>
         <h2><?= e(config_value('app.company_name', '')) ?></h2>
         <p>مدیریت مشتریان، خریدها، کیف پول و پیامک‌ها در یک داشبورد سریع، امن و آماده برای هاست اشتراکی.</p>
     </div>
