@@ -79,7 +79,7 @@
             <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
             <div class="form-check mb-2">
                 <input class="form-check-input" type="checkbox" name="run_migrations" id="run_migrations" value="1" checked>
-                <label class="form-check-label" for="run_migrations">بعد از کپی فایل‌ها، مایگریشن‌های دیتابیس اجرا شود</label>
+                <label class="form-check-label" for="run_migrations">قبل از کپی فایل‌ها، مایگریشن‌های دیتابیس اجرا شود</label>
             </div>
             <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" name="setup_cpanel_cron" id="setup_cpanel_cron" value="1" checked>
