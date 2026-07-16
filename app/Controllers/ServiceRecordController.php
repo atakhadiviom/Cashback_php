@@ -31,7 +31,7 @@ final class ServiceRecordController
     public function create(): void
     {
         View::render('services/create', [
-            'customers' => (new CustomerRepository())->search([], 1000),
+            'selectedCustomer' => $this->selectedCustomer(),
             'technicians' => (new UserRepository())->activeOperatorsAndAdmins(),
             'serviceTypes' => ServiceRecordService::serviceTypeOptions(),
             'errors' => [],
@@ -44,7 +44,7 @@ final class ServiceRecordController
         $result = (new ServiceRecordService())->create($_POST);
         if (!$result['ok']) {
             View::render('services/create', [
-                'customers' => (new CustomerRepository())->search([], 1000),
+                'selectedCustomer' => $this->selectedCustomer(),
                 'technicians' => (new UserRepository())->activeOperatorsAndAdmins(),
                 'serviceTypes' => ServiceRecordService::serviceTypeOptions(),
                 'errors' => $result['errors'],
@@ -57,5 +57,11 @@ final class ServiceRecordController
             \redirect('/customers/show?id=' . $customerId);
         }
         \redirect('/services');
+    }
+
+    private function selectedCustomer(): ?array
+    {
+        $customerId = (int) ($_POST['customer_id'] ?? $_GET['customer_id'] ?? 0);
+        return $customerId > 0 ? (new CustomerRepository())->find($customerId) : null;
     }
 }

@@ -4,19 +4,14 @@
 <form method="post" action="<?= e(url('/services/create')) ?>" class="row g-3">
     <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
     <?php
-    $selectedId = (string) ($_POST['customer_id'] ?? $_GET['customer_id'] ?? '');
+    $selectedId = $selectedCustomer ? (string) $selectedCustomer['id'] : '';
     $selectedLabel = '';
-    $customerOptions = [];
-    foreach ($customers as $customer) {
-        $contract = $customer['contract_number'] ?? '';
-        $label = $customer['first_name'] . ' ' . $customer['last_name']
+    if ($selectedCustomer) {
+        $contract = $selectedCustomer['contract_number'] ?? '';
+        $selectedLabel = $selectedCustomer['first_name'] . ' ' . $selectedCustomer['last_name']
             . ($contract !== '' ? ' - قرارداد ' . $contract : '')
-            . ' - ' . ($customer['national_code'] ?? '')
-            . ' - ' . $customer['phone_number'];
-        $customerOptions[] = ['id' => (string) $customer['id'], 'label' => $label];
-        if ((string) $customer['id'] === $selectedId) {
-            $selectedLabel = $label;
-        }
+            . ' - ' . ($selectedCustomer['national_code'] ?? '')
+            . ' - ' . $selectedCustomer['phone_number'];
     }
   $serviceDateDisplay = '';
   $serviceDateRaw = (string) ($_POST['service_date'] ?? date('Y-m-d'));
@@ -30,14 +25,10 @@
         <label class="form-label">مشتری</label>
         <input type="hidden" name="customer_id" id="service-customer-id" value="<?= e($selectedId) ?>">
         <div class="customer-combobox">
-            <input class="form-control" id="service-customer-picker" value="<?= e($selectedLabel) ?>" placeholder="نام، قرارداد، کد ملی یا موبایل" autocomplete="off" required>
+            <input class="form-control" id="service-customer-picker" data-search-url="<?= e(url('/customers/search')) ?>" value="<?= e($selectedLabel) ?>" placeholder="نام، قرارداد، کد ملی یا موبایل" autocomplete="off" required>
             <div class="customer-results shadow-sm" id="service-customer-results" hidden>
                 <div class="customer-results-empty" data-empty hidden>مشتری پیدا نشد.</div>
-                <div class="customer-results-list">
-                    <?php foreach ($customerOptions as $option): ?>
-                        <button type="button" class="customer-result-item" data-id="<?= e($option['id']) ?>" data-label="<?= e($option['label']) ?>" data-search="<?= e($option['label']) ?>" hidden><?= e($option['label']) ?></button>
-                    <?php endforeach; ?>
-                </div>
+                <div class="customer-results-list"></div>
             </div>
         </div>
         <?php if (!empty($errors['customer_id'])): ?><div class="form-text-error"><?= e($errors['customer_id']) ?></div><?php endif; ?>

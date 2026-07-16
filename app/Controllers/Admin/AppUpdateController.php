@@ -32,7 +32,12 @@ final class AppUpdateController
         );
         $_SESSION['app_update_result'] = $result;
 
-        Flash::set($result['ok'] ? 'success' : 'danger', $result['ok'] ? 'برنامه با موفقیت از GitHub به‌روزرسانی شد.' : 'به‌روزرسانی ناموفق بود.');
+        Flash::set(
+            $result['ok'] ? 'success' : 'danger',
+            $result['ok']
+                ? 'برنامه با موفقیت از GitHub به‌روزرسانی شد.'
+                : 'به‌روزرسانی ناموفق بود. جزئیات را در بخش نتیجه همین صفحه ببینید.'
+        );
         \redirect('/admin/app-update');
     }
 

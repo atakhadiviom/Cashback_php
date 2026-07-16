@@ -9,6 +9,7 @@ use App\Core\View;
 use App\Repositories\CronStateRepository;
 use App\Repositories\SmsRepository;
 use App\Services\CpanelCronService;
+use App\Services\SchemaHealthService;
 
 final class SystemStatusController
 {
@@ -22,9 +23,12 @@ final class SystemStatusController
 
         $cpanel = new CpanelCronService();
         $cpanelStatus = $cpanel->isEnabled() ? $cpanel->listCrons() : ['ok' => false, 'message' => 'cPanel API disabled', 'crons' => []];
+        $schemaHealth = new SchemaHealthService();
 
         View::render('admin/system_status', [
             'healthChecks' => $this->healthChecks($storagePath),
+            'schemaChecks' => $schemaHealth->checks(),
+            'schemaMissing' => $schemaHealth->hasMissingTables(),
             'cronChecks' => $this->cronChecks($cronState, $smsSettings),
             'cronWebUrl' => $webToken !== '' ? \url('/internal/cron?task=all&token=' . rawurlencode($webToken)) : '',
             'cronStatePath' => $storagePath . '/cron_state.json',
@@ -167,6 +171,30 @@ final class SystemStatusController
             \App\Core\Flash::set('success', $result['message']);
         } else {
             \App\Core\Flash::set('danger', 'cPanel setup failed: ' . $result['message']);
+        }
+
+        \redirect('/admin/system-status');
+    }
+
+    public function runMigrations(): void
+    {
+        \App\Core\Csrf::requireValid();
+
+        try {
+            $result = (new SchemaHealthService())->runPendingMigrations();
+            $messages = [];
+            if ($result['applied'] !== []) {
+                $messages[] = 'مایگریشن‌های اعمال‌شده: ' . implode(', ', $result['applied']);
+            }
+            if ($result['repaired'] !== []) {
+                $messages[] = 'مایگریشن‌های تعمیرشده: ' . implode(', ', $result['repaired']);
+            }
+            if ($messages === []) {
+                $messages[] = 'اسکیمای دیتابیس از قبل به‌روز بود.';
+            }
+            \App\Core\Flash::set('success', implode(' ', $messages));
+        } catch (\Throwable $exception) {
+            \App\Core\Flash::set('danger', 'اجرای مایگریشن ناموفق بود: ' . $exception->getMessage());
         }
 
         \redirect('/admin/system-status');

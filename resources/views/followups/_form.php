@@ -3,20 +3,15 @@ use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\Jalali;
 
-$selectedCustomerId = (string) ($followup['customer_id'] ?? $_GET['customer_id'] ?? '');
+$selectedCustomerId = $selectedCustomer ? (string) $selectedCustomer['id'] : '';
 $selectedCustomerLabel = '';
-$customerOptions = [];
-foreach ($customers as $customer) {
-    $contract = $customer['contract_number'] ?? '';
-    $company = $customer['company'] ?? '';
-    $label = $customer['first_name'] . ' ' . $customer['last_name']
+if ($selectedCustomer) {
+    $contract = $selectedCustomer['contract_number'] ?? '';
+    $company = $selectedCustomer['company'] ?? '';
+    $selectedCustomerLabel = $selectedCustomer['first_name'] . ' ' . $selectedCustomer['last_name']
         . ($company !== '' ? ' - ' . $company : '')
         . ($contract !== '' ? ' - قرارداد ' . $contract : '')
-        . ' - ' . $customer['phone_number'];
-    $customerOptions[] = ['id' => (string) $customer['id'], 'label' => $label];
-    if ((string) $customer['id'] === $selectedCustomerId) {
-        $selectedCustomerLabel = $label;
-    }
+        . ' - ' . $selectedCustomer['phone_number'];
 }
 
 $selectedOperatorId = (string) ($followup['operator_id'] ?? Auth::id() ?? '');
@@ -43,14 +38,10 @@ if ($reminderTimeValue !== '') {
         <label class="form-label">مشتری</label>
         <input type="hidden" name="customer_id" id="followup-customer-id" value="<?= e($selectedCustomerId) ?>">
         <div class="customer-combobox">
-            <input class="form-control" id="followup-customer-picker" value="<?= e($selectedCustomerLabel) ?>" placeholder="نام، شرکت، قرارداد یا موبایل" autocomplete="off" required>
+            <input class="form-control" id="followup-customer-picker" data-search-url="<?= e(url('/customers/search')) ?>" value="<?= e($selectedCustomerLabel) ?>" placeholder="نام، شرکت، قرارداد یا موبایل" autocomplete="off" required>
             <div class="customer-results shadow-sm" id="followup-customer-results" hidden>
                 <div class="customer-results-empty" data-empty hidden>مشتری پیدا نشد.</div>
-                <div class="customer-results-list">
-                    <?php foreach ($customerOptions as $option): ?>
-                        <button type="button" class="customer-result-item" data-id="<?= e($option['id']) ?>" data-label="<?= e($option['label']) ?>" data-search="<?= e($option['label']) ?>" hidden><?= e($option['label']) ?></button>
-                    <?php endforeach; ?>
-                </div>
+                <div class="customer-results-list"></div>
             </div>
         </div>
         <?php if (!empty($errors['customer_id'])): ?><div class="form-text-error"><?= e($errors['customer_id']) ?></div><?php endif; ?>

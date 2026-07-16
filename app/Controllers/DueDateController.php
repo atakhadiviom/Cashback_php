@@ -123,7 +123,7 @@ final class DueDateController
         return [
             'dueDate' => $dueDate,
             'errors' => $errors,
-            'customers' => (new CustomerRepository())->search([], 1000),
+            'selectedCustomer' => $customerId > 0 ? (new CustomerRepository())->find($customerId) : null,
             'operators' => (new UserRepository())->activeOperatorsAndAdmins(),
             'dueTypes' => DueDateService::dueTypeOptions(),
             'statuses' => DueDateService::statusOptions(),

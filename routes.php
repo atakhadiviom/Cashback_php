@@ -46,6 +46,7 @@ $router->get('/portal/dashboard', [PortalController::class, 'dashboard'], false)
 $router->post('/portal/logout', [PortalController::class, 'logout'], false);
 
 $router->get('/customers', [CustomerController::class, 'index']);
+$router->get('/customers/search', [CustomerController::class, 'searchJson']);
 $router->get('/customers/create', [CustomerController::class, 'create']);
 $router->post('/customers/create', [CustomerController::class, 'store']);
 $router->get('/customers/edit', [CustomerController::class, 'edit']);
@@ -105,6 +106,7 @@ $router->get('/admin/sms-settings', [SettingsController::class, 'edit'], true, '
 $router->post('/admin/sms-settings', [SettingsController::class, 'update'], true, 'admin');
 $router->post('/admin/cron/run', [AdminCronController::class, 'run'], true, 'admin');
 $router->post('/admin/cron/setup-cpanel', [SystemStatusController::class, 'setupCpanelCron'], true, 'admin');
+$router->post('/admin/migrations/run', [SystemStatusController::class, 'runMigrations'], true, 'admin');
 $router->get('/admin/cashback-settings', [CashbackSettingsController::class, 'edit'], true, 'admin');
 $router->post('/admin/cashback-settings', [CashbackSettingsController::class, 'update'], true, 'admin');
 $router->get('/admin/customers/import', [CustomerImportController::class, 'form'], true, 'admin');

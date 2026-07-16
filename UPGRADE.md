@@ -33,6 +33,8 @@ After extracting a new ZIP:
 php /home/CPANEL_USER/public_html/database/migrate.php
 ```
 
+The in-app updater (`/admin/app-update`) runs migrations **before** copying new files when the migration checkbox is enabled, so a schema failure should not leave the site on new code with an old database. If a web update times out, prefer running `database/migrate.php` from Terminal, then retry the update or copy files manually.
+
 2. Open `/login`.
 3. Do not rerun `/install.php` on an existing database.
 4. If the installer opens, restore the config and lock files above.

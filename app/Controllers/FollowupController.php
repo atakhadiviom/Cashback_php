@@ -80,10 +80,11 @@ final class FollowupController
 
     private function formData(array $followup, array $errors): array
     {
+        $customerId = (int) ($followup['customer_id'] ?? $_GET['customer_id'] ?? 0);
         return [
             'followup' => $followup,
             'errors' => $errors,
-            'customers' => (new CustomerRepository())->search([], 1000),
+            'selectedCustomer' => $customerId > 0 ? (new CustomerRepository())->find($customerId) : null,
             'operators' => (new UserRepository())->activeOperatorsAndAdmins(),
             'statuses' => FollowupService::salesStatusOptions(),
         ];

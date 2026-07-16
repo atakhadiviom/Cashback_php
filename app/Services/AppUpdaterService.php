@@ -66,6 +66,12 @@ final class AppUpdaterService
         $messages = [];
         $backupPath = null;
         $workspace = null;
+        $filesCopied = false;
+
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+        @ignore_user_abort(true);
 
         try {
             $this->assertReady();
@@ -82,14 +88,34 @@ final class AppUpdaterService
             $messages[] = 'Creating local backup before replacing files...';
             $backupPath = $this->createBackup();
 
-            $messages[] = 'Copying updated application files...';
-            $copied = $this->copyTree($sourceRoot, $this->rootPath);
-            $messages[] = "Updated {$copied} files.";
-
             if ($runMigrations) {
-                $messages[] = 'Running pending database migrations...';
-                $migrationCount = $this->runMigrations();
-                $messages[] = "Applied {$migrationCount} migrations.";
+                $messages[] = 'Running pending database migrations from the update package (before copying files)...';
+                $migrationResult = $this->runMigrations($sourceRoot . '/database/migrations');
+                if ($migrationResult['applied'] !== []) {
+                    $messages[] = 'Applied migrations: ' . implode(', ', $migrationResult['applied']) . '.';
+                }
+                if ($migrationResult['repaired'] !== []) {
+                    $messages[] = 'Repaired migrations: ' . implode(', ', $migrationResult['repaired']) . '.';
+                }
+                if ($migrationResult['applied'] === [] && $migrationResult['repaired'] === []) {
+                    $messages[] = 'Database schema is already up to date.';
+                }
+            } else {
+                $messages[] = 'Database migrations were skipped. Enable the migration checkbox to apply schema changes safely before new code is deployed.';
+            }
+
+            $messages[] = 'Copying updated application files...';
+            try {
+                $copied = $this->copyTree($sourceRoot, $this->rootPath);
+                $filesCopied = true;
+                $messages[] = "Updated {$copied} files.";
+            } catch (Throwable $copyException) {
+                if (is_string($backupPath)) {
+                    $messages[] = 'File copy failed. Restoring previous application files from backup...';
+                    $this->restoreFromBackup($backupPath);
+                    $messages[] = 'Previous application files were restored from backup.';
+                }
+                throw $copyException;
             }
 
             if ($setupCpanelCron) {
@@ -105,6 +131,15 @@ final class AppUpdaterService
             return ['ok' => true, 'messages' => $messages, 'backup' => $backupPath];
         } catch (Throwable $exception) {
             $messages[] = 'Update failed: ' . $exception->getMessage();
+            if ($filesCopied) {
+                $messages[] = 'Application files may have been partially updated. Backup: '
+                    . ($backupPath ?? 'not available') . '.';
+            } else {
+                $messages[] = 'Application files were not replaced, so the live site should still run the previous version.';
+            }
+            if ($runMigrations && !$filesCopied) {
+                $messages[] = 'If migrations ran successfully before the failure, the database may already include schema changes from the update package.';
+            }
             return ['ok' => false, 'messages' => $messages, 'backup' => $backupPath];
         } finally {
             if (is_string($workspace)) {
@@ -348,43 +383,38 @@ final class AppUpdaterService
         return $copied;
     }
 
-    private function runMigrations(): int
+    /** @return array{applied: list<string>, repaired: list<string>} */
+    private function runMigrations(string $migrationDir): array
     {
-        $migrationDir = $this->rootPath . '/database/migrations';
-        $files = glob($migrationDir . '/*.sql') ?: [];
-        sort($files);
+        return (new MigrationRunner(Database::pdo()))->runPending($migrationDir);
+    }
 
-        $schemaFile = $migrationDir . '/000_schema_migrations.sql';
-        if (!is_file($schemaFile)) {
-            return 0;
+    private function restoreFromBackup(string $backupPath): void
+    {
+        if (!is_file($backupPath)) {
+            throw new RuntimeException('Backup file is missing; could not restore previous application files.');
         }
 
-        $pdo = Database::pdo();
-        $pdo->exec((string) file_get_contents($schemaFile));
-
-        $applied = $pdo->query('SELECT version FROM schema_migrations')->fetchAll(\PDO::FETCH_COLUMN);
-        $applied = array_flip($applied);
-        $count = 0;
-
-        foreach ($files as $file) {
-            $version = basename($file);
-            if ($version === '000_schema_migrations.sql' || isset($applied[$version])) {
-                continue;
-            }
-
-            $sql = (string) file_get_contents($file);
-            foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {
-                if ($statement !== '') {
-                    $pdo->exec($statement);
-                }
-            }
-
-            $stmt = $pdo->prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (:version, :applied_at)');
-            $stmt->execute(['version' => $version, 'applied_at' => date('Y-m-d H:i:s')]);
-            $count++;
+        $zip = new ZipArchive();
+        if ($zip->open($backupPath) !== true) {
+            throw new RuntimeException('Could not open backup ZIP for restore.');
         }
 
-        return $count;
+        $workspace = $this->rootPath . '/storage/updater/restore-' . bin2hex(random_bytes(4));
+        if (!mkdir($workspace, 0755, true) && !is_dir($workspace)) {
+            $zip->close();
+            throw new RuntimeException('Could not create restore workspace.');
+        }
+
+        try {
+            if (!$zip->extractTo($workspace)) {
+                throw new RuntimeException('Could not extract backup ZIP for restore.');
+            }
+            $zip->close();
+            $this->copyTree($workspace, $this->rootPath);
+        } finally {
+            $this->removeDirectory($workspace);
+        }
     }
 
     private function makeWorkspace(): string

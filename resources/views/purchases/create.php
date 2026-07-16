@@ -4,38 +4,19 @@
 <form method="post" action="<?= e(url('/purchases/create')) ?>" class="row g-3">
     <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
     <?php
-    $selectedId = (string) ($_POST['customer_id'] ?? $_GET['customer_id'] ?? '');
-    $selectedLabel = '';
-    $customerOptions = [];
-    foreach ($customers as $customer) {
-        $label = $customer['first_name'] . ' ' . $customer['last_name'] . ' - ' . $customer['national_code'] . ' - ' . $customer['phone_number'];
-        $customerOptions[] = ['id' => (string) $customer['id'], 'label' => $label];
-        if ((string) $customer['id'] === $selectedId) {
-            $selectedLabel = $label;
-        }
-    }
+    $selectedId = $selectedCustomer ? (string) $selectedCustomer['id'] : '';
+    $selectedLabel = $selectedCustomer
+        ? $selectedCustomer['first_name'] . ' ' . $selectedCustomer['last_name'] . ' - ' . $selectedCustomer['national_code'] . ' - ' . $selectedCustomer['phone_number']
+        : '';
     ?>
     <div class="col-md-6">
         <label class="form-label">مشتری</label>
         <input type="hidden" name="customer_id" id="purchase-customer-id" value="<?= e($selectedId) ?>">
         <div class="customer-combobox">
-            <input class="form-control" id="purchase-customer-picker" value="<?= e($selectedLabel) ?>" placeholder="نام، کد ملی یا شماره موبایل را تایپ کنید" autocomplete="off" required>
+            <input class="form-control" id="purchase-customer-picker" data-search-url="<?= e(url('/customers/search')) ?>" value="<?= e($selectedLabel) ?>" placeholder="نام، کد ملی یا شماره موبایل را تایپ کنید" autocomplete="off" required>
             <div class="customer-results shadow-sm" id="purchase-customer-results" hidden>
                 <div class="customer-results-empty" data-empty hidden>مشتری پیدا نشد.</div>
-                <div class="customer-results-list">
-                    <?php foreach ($customerOptions as $option): ?>
-                        <button
-                            type="button"
-                            class="customer-result-item"
-                            data-id="<?= e($option['id']) ?>"
-                            data-label="<?= e($option['label']) ?>"
-                            data-search="<?= e($option['label']) ?>"
-                            hidden
-                        >
-                            <?= e($option['label']) ?>
-                        </button>
-                    <?php endforeach; ?>
-                </div>
+                <div class="customer-results-list"></div>
             </div>
         </div>
         <div class="form-text">برای انتخاب مشتری، نام یا شماره موبایل را تایپ کنید و از لیست انتخاب کنید.</div>

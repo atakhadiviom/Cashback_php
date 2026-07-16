@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const searchUrl = customerPicker.dataset.searchUrl || '';
+    if (searchUrl) {
+      initRemoteCustomerCombobox(customerPicker, customerId, customerResults, searchUrl);
+      return;
+    }
+
     const resultItems = Array.from(customerResults.querySelectorAll('.customer-result-item'));
     const emptyState = customerResults.querySelector('[data-empty]');
 
@@ -87,6 +93,90 @@ document.addEventListener('DOMContentLoaded', () => {
     resultItems.forEach((item) => {
       item.addEventListener('click', () => selectCustomer(item));
     });
+    document.addEventListener('click', (event) => {
+      if (!customerResults.contains(event.target) && event.target !== customerPicker) {
+        customerResults.hidden = true;
+      }
+    });
+    if (customerPicker.form) {
+      customerPicker.form.addEventListener('submit', syncCustomerId);
+    }
+    syncCustomerId();
+  };
+
+  const initRemoteCustomerCombobox = (customerPicker, customerId, customerResults, searchUrl) => {
+    const listEl = customerResults.querySelector('.customer-results-list');
+    const emptyState = customerResults.querySelector('[data-empty]');
+    let debounceTimer = null;
+    let requestSeq = 0;
+
+    const selectCustomer = (item) => {
+      customerPicker.value = item.dataset.label || '';
+      customerId.value = item.dataset.id || '';
+      customerPicker.setCustomValidity('');
+      customerResults.hidden = true;
+    };
+
+    const renderResults = (items, query) => {
+      listEl.innerHTML = '';
+      items.forEach((item) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'customer-result-item';
+        button.dataset.id = item.id;
+        button.dataset.label = item.label;
+        button.textContent = item.label;
+        button.addEventListener('click', () => selectCustomer(button));
+        listEl.appendChild(button);
+      });
+      if (emptyState) {
+        emptyState.hidden = items.length !== 0;
+      }
+      customerResults.hidden = false;
+
+      const exact = items.find((item) => item.label.trim().toLowerCase() === query.toLowerCase());
+      if (exact) {
+        customerId.value = exact.id;
+        customerPicker.setCustomValidity('');
+      } else {
+        customerId.value = '';
+        customerPicker.setCustomValidity('لطفاً یک مشتری را از لیست انتخاب کنید.');
+      }
+    };
+
+    const fetchResults = (query) => {
+      const seq = ++requestSeq;
+      fetch(searchUrl + '?q=' + encodeURIComponent(query), { headers: { Accept: 'application/json' } })
+        .then((response) => (response.ok ? response.json() : []))
+        .then((items) => {
+          if (seq === requestSeq) {
+            renderResults(Array.isArray(items) ? items : [], query);
+          }
+        })
+        .catch(() => {});
+    };
+
+    const handleInput = () => {
+      const query = customerPicker.value.trim();
+      clearTimeout(debounceTimer);
+      if (query === '') {
+        customerId.value = '';
+        customerPicker.setCustomValidity('');
+        customerResults.hidden = true;
+        return;
+      }
+      debounceTimer = setTimeout(() => fetchResults(query), 250);
+    };
+
+    const syncCustomerId = () => {
+      if (customerPicker.value.trim() !== '' && customerId.value === '') {
+        customerPicker.setCustomValidity('لطفاً یک مشتری را از لیست انتخاب کنید.');
+      } else {
+        customerPicker.setCustomValidity('');
+      }
+    };
+
+    customerPicker.addEventListener('input', handleInput);
     document.addEventListener('click', (event) => {
       if (!customerResults.contains(event.target) && event.target !== customerPicker) {
         customerResults.hidden = true;

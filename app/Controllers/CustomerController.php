@@ -32,6 +32,30 @@ final class CustomerController
         View::render('customers/create', ['customer' => [], 'errors' => []]);
     }
 
+    public function searchJson(): void
+    {
+        $q = trim((string) ($_GET['q'] ?? ''));
+        $customers = $q === '' ? [] : (new CustomerRepository())->search(['q' => $q], 20);
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode(array_map(static function (array $customer): array {
+            $parts = [trim($customer['first_name'] . ' ' . $customer['last_name'])];
+            if (!empty($customer['company'])) {
+                $parts[] = $customer['company'];
+            }
+            if (!empty($customer['contract_number'])) {
+                $parts[] = 'قرارداد ' . $customer['contract_number'];
+            }
+            if (!empty($customer['national_code'])) {
+                $parts[] = $customer['national_code'];
+            }
+            $parts[] = $customer['phone_number'];
+            return [
+                'id' => (string) $customer['id'],
+                'label' => implode(' - ', $parts),
+            ];
+        }, $customers), JSON_UNESCAPED_UNICODE);
+    }
+
     public function store(): void
     {
         Csrf::requireValid();

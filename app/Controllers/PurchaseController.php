@@ -16,7 +16,7 @@ final class PurchaseController
     public function create(): void
     {
         View::render('purchases/create', [
-            'customers' => (new CustomerRepository())->search([], 1000),
+            'selectedCustomer' => $this->selectedCustomer(),
             'errors' => [],
             'settings' => (new CashbackSettingsRepository())->settings(),
         ]);
@@ -31,7 +31,7 @@ final class PurchaseController
         ]);
         if (!$result['ok']) {
             View::render('purchases/create', [
-                'customers' => (new CustomerRepository())->search([], 1000),
+                'selectedCustomer' => $this->selectedCustomer(),
                 'errors' => $result['errors'],
                 'needs_confirm' => !empty($result['needs_confirm']),
                 'settings' => (new CashbackSettingsRepository())->settings(),
@@ -40,5 +40,11 @@ final class PurchaseController
         }
         Flash::set('success', 'خرید ثبت شد و مبلغ ' . \money($result['cashback']) . ' ریال کش‌بک (نرخ ' . $result['percent_applied'] . '٪) به کیف پول مشتری اضافه شد.');
         \redirect('/customers/show?id=' . (int) $_POST['customer_id']);
+    }
+
+    private function selectedCustomer(): ?array
+    {
+        $customerId = (int) ($_POST['customer_id'] ?? $_GET['customer_id'] ?? 0);
+        return $customerId > 0 ? (new CustomerRepository())->find($customerId) : null;
     }
 }

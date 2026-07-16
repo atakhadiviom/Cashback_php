@@ -11,6 +11,7 @@ final class CpanelCronService
     private string $apiToken;
     private string $domain;
     private string $phpPath;
+    private string $appRoot;
     private bool $enabled;
 
     public function __construct()
@@ -21,6 +22,26 @@ final class CpanelCronService
         $this->apiToken = (string) \config_value('cpanel.api_token', '');
         $this->domain = (string) \config_value('cpanel.domain', '');
         $this->phpPath = (string) \config_value('cpanel.php_path', '/usr/local/bin/ea-php81');
+        $this->appRoot = $this->resolveAppRoot();
+    }
+
+    private function resolveAppRoot(): string
+    {
+        $configured = trim((string) \config_value('cpanel.app_root', ''));
+        if ($configured !== '') {
+            return rtrim($configured, '/');
+        }
+
+        $homeDir = trim((string) \config_value('cpanel.home_dir', ''));
+        if ($homeDir === '' && $this->username !== '') {
+            $homeDir = '/home/' . $this->username;
+        }
+
+        if ($homeDir !== '' && $this->domain !== '') {
+            return rtrim($homeDir, '/') . '/' . trim($this->domain, '/');
+        }
+
+        return '';
     }
 
     public function isEnabled(): bool
@@ -63,8 +84,11 @@ final class CpanelCronService
         if (!$this->isEnabled()) {
             return ['ok' => false, 'message' => 'cPanel API not configured in config.php'];
         }
+        if ($this->appRoot === '') {
+            return ['ok' => false, 'message' => 'cPanel app path is not configured. Set cpanel.app_root or cpanel.home_dir plus cpanel.domain.'];
+        }
 
-        $root = '/home/' . $this->username . '/' . $this->domain;
+        $root = $this->appRoot;
         $php = $this->phpPath;
 
         $jobs = [

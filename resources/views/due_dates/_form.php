@@ -1,17 +1,12 @@
 <?php use App\Core\Csrf; use App\Core\Auth; use App\Core\Jalali; ?>
 <?php
-$selectedCustomerId = (string) ($dueDate['customer_id'] ?? $_GET['customer_id'] ?? '');
+$selectedCustomerId = $selectedCustomer ? (string) $selectedCustomer['id'] : '';
 $selectedCustomerLabel = '';
-$customerOptions = [];
-foreach ($customers as $customer) {
-    $company = $customer['company'] ?? '';
-    $label = $customer['first_name'] . ' ' . $customer['last_name']
+if ($selectedCustomer) {
+    $company = $selectedCustomer['company'] ?? '';
+    $selectedCustomerLabel = $selectedCustomer['first_name'] . ' ' . $selectedCustomer['last_name']
         . ($company !== '' ? ' - ' . $company : '')
-        . ' - ' . $customer['phone_number'];
-    $customerOptions[] = ['id' => (string) $customer['id'], 'label' => $label];
-    if ((string) $customer['id'] === $selectedCustomerId) {
-        $selectedCustomerLabel = $label;
-    }
+        . ' - ' . $selectedCustomer['phone_number'];
 }
 
 $selectedPurchaseId = (string) ($dueDate['purchase_id'] ?? '');
@@ -44,14 +39,10 @@ $isEdit = !empty($dueDate['id']);
         <label class="form-label">مشتری</label>
         <input type="hidden" name="customer_id" id="due-date-customer-id" value="<?= e($selectedCustomerId) ?>">
         <div class="customer-combobox">
-            <input class="form-control" id="due-date-customer-picker" value="<?= e($selectedCustomerLabel) ?>" placeholder="نام یا موبایل مشتری" autocomplete="off" required>
+            <input class="form-control" id="due-date-customer-picker" data-search-url="<?= e(url('/customers/search')) ?>" value="<?= e($selectedCustomerLabel) ?>" placeholder="نام یا موبایل مشتری" autocomplete="off" required>
             <div class="customer-results shadow-sm" id="due-date-customer-results" hidden>
                 <div class="customer-results-empty" data-empty hidden>مشتری پیدا نشد.</div>
-                <div class="customer-results-list">
-                    <?php foreach ($customerOptions as $option): ?>
-                        <button type="button" class="customer-result-item" data-id="<?= e($option['id']) ?>" data-label="<?= e($option['label']) ?>" data-search="<?= e($option['label']) ?>" hidden><?= e($option['label']) ?></button>
-                    <?php endforeach; ?>
-                </div>
+                <div class="customer-results-list"></div>
             </div>
         </div>
         <?php if (!empty($errors['customer_id'])): ?><div class="form-text-error"><?= e($errors['customer_id']) ?></div><?php endif; ?>

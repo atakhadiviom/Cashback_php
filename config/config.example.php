@@ -52,7 +52,12 @@ return [
         'api_token' => 'your_cpanel_api_token_here',
         // Optional fallback for old cPanel API2 hosts. Prefer api_token when possible.
         'password' => '',
+        // Folder name under the home directory, e.g. cashback.example.com
         'domain' => 'yourdomain.com',
+        // Full app path on the server. Use this on hosts that use /home3/ instead of /home/.
+        'app_root' => '',
+        // Optional home directory override, e.g. /home3/your_cpanel_username
+        'home_dir' => '',
         'php_path' => '/usr/local/bin/ea-php81',
     ],
 ];
