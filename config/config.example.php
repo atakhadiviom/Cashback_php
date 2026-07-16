@@ -2,7 +2,7 @@
 
 return [
     'app' => [
-        'name' => 'سیستم مدیریت کش‌بک و مشتریان',
+        'name' => 'سیستم مدیریت ارتباط با مشتریان و کش بک',
         'base_url' => '',
         'timezone' => 'Asia/Tehran',
         'debug' => false,

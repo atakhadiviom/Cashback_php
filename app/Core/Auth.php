@@ -16,6 +16,9 @@ final class Auth
         'import_customers' => false,
         'manage_api' => false,
         'manage_loyalty' => false,
+        'data_access_scope' => 'self',
+        'data_access_user_ids' => [],
+        'data_access_can_modify_others' => false,
     ];
 
     private const ADMIN_PERMISSIONS = [

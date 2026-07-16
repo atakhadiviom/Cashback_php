@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Core\Database;
+use App\Services\DataAccessControl;
 use PDO;
 
 final class ReminderRepository
@@ -41,15 +42,18 @@ final class ReminderRepository
 
     public function find(int $id): ?array
     {
+        $where = ['r.id = :id'];
+        $params = ['id' => $id];
+        DataAccessControl::applyOwnerScope($where, $params, 'r.operator_id');
         $stmt = $this->pdo->prepare(
             'SELECT r.*, f.sales_status, f.conversation_notes, c.first_name, c.last_name, c.company, c.phone_number, u.name AS operator_name
              FROM followup_reminders r
              JOIN customer_followups f ON f.id = r.followup_id
              JOIN customers c ON c.id = r.customer_id
              JOIN users u ON u.id = r.operator_id
-             WHERE r.id = :id'
+             WHERE ' . implode(' AND ', $where)
         );
-        $stmt->execute(['id' => $id]);
+        $stmt->execute($params);
         return $stmt->fetch() ?: null;
     }
 
@@ -84,19 +88,22 @@ final class ReminderRepository
 
     public function dashboardCounts(?int $operatorId = null): array
     {
-        $operatorWhere = $operatorId !== null ? ' AND operator_id = :operator_id' : '';
+        $where = ['1=1'];
+        $params = [];
+        if ($operatorId !== null) {
+            $where[] = 'operator_id = :operator_id';
+            $params['operator_id'] = $operatorId;
+        } else {
+            DataAccessControl::applyOwnerScope($where, $params, 'operator_id');
+        }
         $stmt = $this->pdo->prepare(
             "SELECT
                 SUM(CASE WHEN status IN ('pending','seen') AND DATE(remind_at) = CURDATE() THEN 1 ELSE 0 END) AS today,
                 SUM(CASE WHEN status IN ('pending','seen') AND remind_at < NOW() THEN 1 ELSE 0 END) AS overdue,
                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending
              FROM followup_reminders
-             WHERE 1=1{$operatorWhere}"
+             WHERE " . implode(' AND ', $where)
         );
-        $params = [];
-        if ($operatorId !== null) {
-            $params['operator_id'] = $operatorId;
-        }
         $stmt->execute($params);
         $row = $stmt->fetch() ?: [];
         return [
@@ -145,7 +152,7 @@ final class ReminderRepository
             $params['q4'] = $term;
             $params['q5'] = $term;
         }
-
+        DataAccessControl::applyOwnerScope($where, $params, 'r.operator_id');
         return [$where, $params];
     }
 }

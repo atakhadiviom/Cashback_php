@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Core\Database;
+use App\Services\DataAccessControl;
 use PDO;
 
 final class FollowupRepository
@@ -60,14 +61,17 @@ final class FollowupRepository
 
     public function find(int $id): ?array
     {
+        $where = ['f.id = :id'];
+        $params = ['id' => $id];
+        DataAccessControl::applyOwnerScope($where, $params, 'f.operator_id');
         $stmt = $this->pdo->prepare(
             'SELECT f.*, c.first_name, c.last_name, c.company, c.phone_number, c.contract_number, u.name AS operator_name
              FROM customer_followups f
              JOIN customers c ON c.id = f.customer_id
              JOIN users u ON u.id = f.operator_id
-             WHERE f.id = :id'
+             WHERE ' . implode(' AND ', $where)
         );
-        $stmt->execute(['id' => $id]);
+        $stmt->execute($params);
         return $stmt->fetch() ?: null;
     }
 
@@ -137,7 +141,7 @@ final class FollowupRepository
             $params['q5'] = $term;
             $params['q6'] = $term;
         }
-
+        DataAccessControl::applyOwnerScope($where, $params, 'f.operator_id');
         return [$where, $params];
     }
 }

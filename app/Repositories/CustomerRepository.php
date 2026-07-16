@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Core\Database;
+use App\Services\DataAccessControl;
 use PDO;
 
 final class CustomerRepository
@@ -99,8 +100,11 @@ final class CustomerRepository
 
     public function find(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT c.*, u.name AS created_by_name FROM customers c LEFT JOIN users u ON u.id = c.created_by WHERE c.id = :id');
-        $stmt->execute(['id' => $id]);
+        $where = ['c.id = :id'];
+        $params = ['id' => $id];
+        DataAccessControl::applyOwnerScope($where, $params, 'c.created_by');
+        $stmt = $this->pdo->prepare('SELECT c.*, u.name AS created_by_name FROM customers c LEFT JOIN users u ON u.id = c.created_by WHERE ' . implode(' AND ', $where));
+        $stmt->execute($params);
         return $stmt->fetch() ?: null;
     }
 
@@ -204,6 +208,7 @@ final class CustomerRepository
             $where[] = 'DAY(c.birthday) = :birthday_day';
             $params['birthday_day'] = (int) \normalize_digits((string) $filters['birthday_day']);
         }
+        DataAccessControl::applyOwnerScope($where, $params, 'c.created_by');
         return [$where, $params];
     }
 }
