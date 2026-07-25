@@ -20,8 +20,12 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   created_at DATETIME NOT NULL,
   INDEX idx_login_username_time (username, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-ALTER TABLE sms_settings
-  ADD COLUMN otp_template TEXT NULL AFTER welcome_template;
-
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sms_settings' AND COLUMN_NAME = 'otp_template'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE sms_settings ADD COLUMN otp_template TEXT NULL AFTER welcome_template', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
 UPDATE sms_settings SET otp_template = 'کد ورود به پرتال کش‌بک {company_name}: {otp_code}' WHERE id = 1 AND otp_template IS NULL;

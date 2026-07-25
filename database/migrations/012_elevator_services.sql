@@ -1,10 +1,43 @@
-ALTER TABLE customers
-  ADD COLUMN contract_number VARCHAR(64) NULL AFTER tier_id,
-  ADD COLUMN contract_starts_at DATE NULL AFTER contract_number,
-  ADD COLUMN contract_ends_at DATE NULL AFTER contract_starts_at,
-  ADD UNIQUE KEY uq_customers_contract_number (contract_number),
-  ADD INDEX idx_customers_contract_ends_at (contract_ends_at);
-
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME = 'contract_number'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD COLUMN contract_number VARCHAR(64) NULL AFTER tier_id', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME = 'contract_starts_at'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD COLUMN contract_starts_at DATE NULL AFTER contract_number', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME = 'contract_ends_at'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD COLUMN contract_ends_at DATE NULL AFTER contract_starts_at', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'uq_customers_contract_number'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD UNIQUE KEY uq_customers_contract_number (contract_number)', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'idx_customers_contract_ends_at'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD INDEX idx_customers_contract_ends_at (contract_ends_at)', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
 CREATE TABLE IF NOT EXISTS service_records (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id BIGINT UNSIGNED NOT NULL,
@@ -39,13 +72,38 @@ CREATE TABLE IF NOT EXISTS contract_renewal_sms_history (
   CONSTRAINT fk_contract_renewal_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
   CONSTRAINT fk_contract_renewal_sms_log FOREIGN KEY (sms_log_id) REFERENCES sms_logs(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-ALTER TABLE sms_settings
-  ADD COLUMN service_sms_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER welcome_sms_enabled,
-  ADD COLUMN contract_renewal_sms_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER service_sms_enabled,
-  ADD COLUMN service_template TEXT NULL AFTER referral_template,
-  ADD COLUMN contract_renewal_template TEXT NULL AFTER service_template;
-
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sms_settings' AND COLUMN_NAME = 'service_sms_enabled'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE sms_settings ADD COLUMN service_sms_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER welcome_sms_enabled', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sms_settings' AND COLUMN_NAME = 'contract_renewal_sms_enabled'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE sms_settings ADD COLUMN contract_renewal_sms_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER service_sms_enabled', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sms_settings' AND COLUMN_NAME = 'service_template'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE sms_settings ADD COLUMN service_template TEXT NULL AFTER referral_template', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sms_settings' AND COLUMN_NAME = 'contract_renewal_template'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE sms_settings ADD COLUMN contract_renewal_template TEXT NULL AFTER service_template', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
 UPDATE sms_settings SET service_template = 'سلام {full_name}، سرویس {service_type} شما در تاریخ {service_date} ثبت شد. مبلغ پرداختی: {paid_amount} ریال.' WHERE id = 1 AND service_template IS NULL;
 UPDATE sms_settings SET contract_renewal_template = 'سلام {full_name}، قرارداد شماره {contract_number} شما تا {contract_ends_at} معتبر است. برای تمدید با ما تماس بگیرید.' WHERE id = 1 AND contract_renewal_template IS NULL;
 

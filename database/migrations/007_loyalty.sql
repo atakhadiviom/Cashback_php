@@ -20,17 +20,38 @@ CREATE TABLE IF NOT EXISTS promotions (
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-ALTER TABLE purchases
-  ADD COLUMN promotion_id BIGINT UNSIGNED NULL AFTER void_reason;
-
-ALTER TABLE cashback_settings
-  ADD COLUMN birthday_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0 AFTER large_redemption_threshold,
-  ADD COLUMN referral_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0 AFTER birthday_bonus_amount;
-
-ALTER TABLE birthday_sms_history
-  ADD COLUMN bonus_credited TINYINT(1) NOT NULL DEFAULT 0 AFTER sms_log_id;
-
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'purchases' AND COLUMN_NAME = 'promotion_id'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE purchases ADD COLUMN promotion_id BIGINT UNSIGNED NULL AFTER void_reason', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cashback_settings' AND COLUMN_NAME = 'birthday_bonus_amount'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE cashback_settings ADD COLUMN birthday_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0 AFTER large_redemption_threshold', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cashback_settings' AND COLUMN_NAME = 'referral_bonus_amount'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE cashback_settings ADD COLUMN referral_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0 AFTER birthday_bonus_amount', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'birthday_sms_history' AND COLUMN_NAME = 'bonus_credited'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE birthday_sms_history ADD COLUMN bonus_credited TINYINT(1) NOT NULL DEFAULT 0 AFTER sms_log_id', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
 CREATE TABLE IF NOT EXISTS customer_tags (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(80) NOT NULL UNIQUE,

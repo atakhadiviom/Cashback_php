@@ -1,11 +1,51 @@
-ALTER TABLE customers
-  ADD COLUMN company VARCHAR(150) NULL AFTER last_name,
-  ADD COLUMN email VARCHAR(150) NULL AFTER phone_number,
-  ADD COLUMN address TEXT NULL AFTER email,
-  ADD COLUMN description TEXT NULL AFTER address,
-  ADD INDEX idx_customers_company (company),
-  ADD INDEX idx_customers_email (email);
-
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME = 'company'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD COLUMN company VARCHAR(150) NULL AFTER last_name', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME = 'email'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD COLUMN email VARCHAR(150) NULL AFTER phone_number', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME = 'address'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD COLUMN address TEXT NULL AFTER email', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME = 'description'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD COLUMN description TEXT NULL AFTER address', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'idx_customers_company'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD INDEX idx_customers_company (company)', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'idx_customers_email'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE customers ADD INDEX idx_customers_email (email)', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
 CREATE TABLE IF NOT EXISTS customer_followups (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id BIGINT UNSIGNED NOT NULL,

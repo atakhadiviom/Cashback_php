@@ -31,13 +31,38 @@ CREATE TABLE IF NOT EXISTS due_date_sms_history (
   CONSTRAINT fk_due_date_sms_due FOREIGN KEY (due_date_id) REFERENCES payment_due_dates(id) ON DELETE CASCADE,
   CONSTRAINT fk_due_date_sms_log FOREIGN KEY (sms_log_id) REFERENCES sms_logs(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-ALTER TABLE sms_settings
-  ADD COLUMN due_date_sms_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER contract_renewal_sms_enabled,
-  ADD COLUMN due_date_reminder_sms_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER due_date_sms_enabled,
-  ADD COLUMN due_date_template TEXT NULL AFTER contract_renewal_template,
-  ADD COLUMN due_date_reminder_template TEXT NULL AFTER due_date_template;
-
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sms_settings' AND COLUMN_NAME = 'due_date_sms_enabled'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE sms_settings ADD COLUMN due_date_sms_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER contract_renewal_sms_enabled', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sms_settings' AND COLUMN_NAME = 'due_date_reminder_sms_enabled'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE sms_settings ADD COLUMN due_date_reminder_sms_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER due_date_sms_enabled', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sms_settings' AND COLUMN_NAME = 'due_date_template'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE sms_settings ADD COLUMN due_date_template TEXT NULL AFTER contract_renewal_template', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
+SET @__cb_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sms_settings' AND COLUMN_NAME = 'due_date_reminder_template'
+);
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE sms_settings ADD COLUMN due_date_reminder_template TEXT NULL AFTER due_date_template', 'DO 0');
+PREPARE __cb_stmt FROM @__cb_sql;
+EXECUTE __cb_stmt;
+DEALLOCATE PREPARE __cb_stmt;
 UPDATE sms_settings SET due_date_template = 'آقای/خانم {full_name}
 با سلام، سررسید پرداخت شما به مبلغ {due_amount} در تاریخ {due_date} می‌باشد. لطفاً در موعد مقرر نسبت به پرداخت اقدام فرمایید.
 با تشکر

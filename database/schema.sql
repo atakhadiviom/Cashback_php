@@ -397,6 +397,27 @@ CREATE TABLE schema_migrations (
   applied_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+INSERT INTO schema_migrations (version, applied_at) VALUES
+  ('000a_sync_recorded_migrations.sql', NOW()),
+  ('001_cashback_settings.sql', NOW()),
+  ('002_void_reversal.sql', NOW()),
+  ('003_redemption_settings.sql', NOW()),
+  ('004_permissions_soft_delete.sql', NOW()),
+  ('005_otp_portal.sql', NOW()),
+  ('006_sms_retry.sql', NOW()),
+  ('007_loyalty.sql', NOW()),
+  ('008_api_keys.sql', NOW()),
+  ('009_company_national_code_length.sql', NOW()),
+  ('010_optional_customer_identifier.sql', NOW()),
+  ('011_cashback_settings_defaults.sql', NOW()),
+  ('012_elevator_services.sql', NOW()),
+  ('013_crm_phase1.sql', NOW()),
+  ('014_followup_reminders.sql', NOW()),
+  ('015_finalize_sales.sql', NOW()),
+  ('016_customer_tier_ranges.sql', NOW()),
+  ('017_enabled_menus.sql', NOW()),
+  ('018_payment_due_dates.sql', NOW());
+
 INSERT INTO customer_tiers (id, name, min_lifetime_spend, max_lifetime_spend, cashback_percent, is_active, sort_order, created_at)
 VALUES (1, 'برنزی', 0, 50000000, 5.00, 1, 0, NOW()),
        (2, 'نقره‌ای', 50000000, 150000000, 7.00, 1, 1, NOW()),
