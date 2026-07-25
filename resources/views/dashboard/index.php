@@ -10,19 +10,24 @@
 </div>
 <div class="row g-3">
     <?php
+    $reportsUrl = url('/reports');
+    $monthReportsUrl = url('/reports?' . http_build_query([
+        'date_from' => date('Y-m-01'),
+        'date_to' => date('Y-m-d'),
+    ]));
     $cards = [
-        ['مشتریان', $stats['customers'], 'bi-people'],
-        ['خریدهای فعال', $stats['purchases'], 'bi-bag-check'],
-        ['جمع خرید', money($stats['purchase_amount']) . ' ریال', 'bi-cash-stack'],
-        ['جمع کش‌بک', money($stats['cashback']) . ' ریال', 'bi-stars'],
-        ['موجودی کیف پول‌ها', money($stats['wallets']) . ' ریال', 'bi-wallet2'],
-        ['کش‌بک این ماه', money($stats['cashback_month'] ?? 0) . ' ریال', 'bi-calendar-month'],
-        ['کسر این ماه', money($stats['reductions_month'] ?? 0) . ' ریال', 'bi-arrow-down-circle'],
-        ['بدهی کیف پول (تعهد)', money($stats['outstanding_liability'] ?? 0) . ' ریال', 'bi-piggy-bank'],
-        ['تولدهای امروز', $stats['birthdays_today'], 'bi-gift'],
-        ['پیگیری‌های امروز', $reminderStats['today'] ?? 0, 'bi-calendar-check'],
-        ['پیگیری‌های معوق', $reminderStats['overdue'] ?? 0, 'bi-exclamation-triangle'],
-        ['یادآوری‌های باز', $reminderStats['pending'] ?? 0, 'bi-bell', url('/reminders')],
+        ['مشتریان', $stats['customers'], 'bi-people', url('/customers')],
+        ['خریدهای فعال', $stats['purchases'], 'bi-bag-check', $reportsUrl],
+        ['جمع خرید', money($stats['purchase_amount']) . ' ریال', 'bi-cash-stack', $reportsUrl],
+        ['جمع کش‌بک', money($stats['cashback']) . ' ریال', 'bi-stars', $reportsUrl],
+        ['موجودی کیف پول‌ها', money($stats['wallets']) . ' ریال', 'bi-wallet2', $reportsUrl],
+        ['کش‌بک این ماه', money($stats['cashback_month'] ?? 0) . ' ریال', 'bi-calendar-month', $monthReportsUrl],
+        ['کسر این ماه', money($stats['reductions_month'] ?? 0) . ' ریال', 'bi-arrow-down-circle', $monthReportsUrl],
+        ['بدهی کیف پول (تعهد)', money($stats['outstanding_liability'] ?? 0) . ' ریال', 'bi-piggy-bank', $reportsUrl],
+        ['تولدهای امروز', $stats['birthdays_today'], 'bi-gift', $reportsUrl],
+        ['پیگیری‌های امروز', $reminderStats['today'] ?? 0, 'bi-calendar-check', url('/reminders?scope=today')],
+        ['پیگیری‌های معوق', $reminderStats['overdue'] ?? 0, 'bi-exclamation-triangle', url('/reminders?scope=overdue')],
+        ['یادآوری‌های باز', $reminderStats['pending'] ?? 0, 'bi-bell', url('/reminders?status=pending')],
         ['سررسیدهای امروز', $dueDateStats['today_count'] ?? 0, 'bi-calendar-day', url('/due-dates?scope=today')],
         ['سررسیدهای فردا', $dueDateStats['tomorrow_count'] ?? 0, 'bi-calendar2', url('/due-dates?scope=tomorrow')],
         ['سررسیدهای معوق', $dueDateStats['overdue_count'] ?? 0, 'bi-calendar-x', url('/due-dates?scope=overdue')],
@@ -31,21 +36,17 @@
         ['اقساط معوق', $dueDateStats['overdue_installments'] ?? 0, 'bi-exclamation-circle', url('/due-dates?due_type=installment&status=overdue')],
     ];
     foreach ($cards as $card): ?>
-        <?php [$label, $value, $icon, $link] = array_pad($card, 4, null); ?>
+        <?php [$label, $value, $icon, $link] = $card; ?>
         <div class="col-md-4 col-xl-3">
-            <div class="card stat h-100">
+            <a class="card stat h-100 text-decoration-none text-reset d-block" href="<?= e($link) ?>">
                 <div class="card-body">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small"><?= e($label) ?></span>
                         <i class="bi <?= e($icon) ?>"></i>
                     </div>
-                    <?php if ($link): ?>
-                        <a class="fs-5 fw-bold text-decoration-none" href="<?= e($link) ?>"><?= e($value) ?></a>
-                    <?php else: ?>
-                        <div class="fs-5 fw-bold"><?= e($value) ?></div>
-                    <?php endif; ?>
+                    <div class="fs-5 fw-bold"><?= e($value) ?></div>
                 </div>
-            </div>
+            </a>
         </div>
     <?php endforeach; ?>
 </div>
