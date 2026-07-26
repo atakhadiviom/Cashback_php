@@ -39,6 +39,15 @@ function normalize_base_url(string $base): string
     if ($base === '' || $base === '/') {
         return '';
     }
+    // If a full URL was configured by mistake (e.g. "https://example.com/"),
+    // keep only its path so generated links don't get the domain doubled.
+    if (preg_match('#^[a-zA-Z][a-zA-Z0-9+.\-]*://#', $base)) {
+        $base = (string) (parse_url($base, PHP_URL_PATH) ?? '');
+    }
+    $base = trim($base);
+    if ($base === '' || $base === '/') {
+        return '';
+    }
     if ($base[0] !== '/') {
         $base = '/' . $base;
     }
