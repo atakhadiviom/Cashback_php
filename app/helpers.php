@@ -120,7 +120,10 @@ function app_version(): string
 
 function redirect(string $path): never
 {
-    header('Location: ' . url($path));
+    // A caller may pass an already-absolute URL (e.g. $_SERVER['HTTP_REFERER']);
+    // running that through url() would prepend the base/domain a second time.
+    $location = preg_match('#^[a-zA-Z][a-zA-Z0-9+.\-]*://#', $path) ? $path : url($path);
+    header('Location: ' . $location);
     exit;
 }
 
