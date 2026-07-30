@@ -70,6 +70,33 @@ final class CashbackSettingsRepository
     }
 
     /**
+     * Update the cashback expiry settings separately, so saving the rest of the form still
+     * works on databases where migration 019 has not been run yet.
+     */
+    public function updateExpirySettings(int $months, int $warningDays): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                'UPDATE cashback_settings SET
+                    cashback_expiry_months = :months,
+                    cashback_expiry_warning_days = :warning_days,
+                    updated_at = :updated_at
+                WHERE id = 1'
+            );
+            $stmt->execute([
+                'months' => $months,
+                'warning_days' => $warningDays,
+                'updated_at' => \current_datetime(),
+            ]);
+
+            return true;
+        } catch (\Throwable) {
+            // Columns do not exist yet (migration 019 not run).
+            return false;
+        }
+    }
+
+    /**
      * Safely update only the enabled_menus column.
      * Returns true if the update was applied, false if the column doesn't exist yet or on error.
      */

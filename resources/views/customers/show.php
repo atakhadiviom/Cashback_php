@@ -4,7 +4,7 @@ use App\Core\Csrf;
 use App\Core\Jalali;
 use App\Services\FollowupService;
 
-$txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' => 'برگشت'];
+$txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' => 'برگشت', 'expiry' => 'انقضا'];
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h1 class="h3 mb-0"><?= e($customer['first_name'] . ' ' . $customer['last_name']) ?></h1>
@@ -23,6 +23,9 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">ایمیل</div><div class="fw-bold ltr"><?= e($customer['email'] ?? '-') ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">موجودی کیف پول</div><div class="fw-bold"><?= e(money($customer['wallet_balance'])) ?> ریال</div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">کل کش‌بک دریافتی</div><div class="fw-bold"><?= e(money($lifetimeEarned)) ?> ریال</div></div></div></div>
+    <?php if (!empty($nextExpiry['expires_at'])): ?>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">نزدیک‌ترین انقضای کش‌بک</div><div class="fw-bold"><?= e(money($nextExpiry['expiring_amount'])) ?> ریال</div><div class="small text-muted"><?= e(Jalali::formatDate($nextExpiry['expires_at'])) ?></div></div></div></div>
+    <?php endif; ?>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">تولد</div><div><?= e(Jalali::formatDate($customer['birthday'])) ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">شماره قرارداد</div><div class="fw-bold ltr"><?= e($customer['contract_number'] ?? '-') ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">شروع قرارداد</div><div><?= e(Jalali::formatDate($customer['contract_starts_at'] ?? null)) ?></div></div></div></div>

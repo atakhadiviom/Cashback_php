@@ -23,6 +23,16 @@ final class SchemaHealthService
                 'table' => 'due_date_sms_history',
                 'migration' => '018_payment_due_dates.sql',
             ],
+            [
+                'label' => 'انقضای کش‌بک',
+                'table' => 'cashback_lots',
+                'migration' => '019_cashback_expiry.sql',
+            ],
+            [
+                'label' => 'تاریخچه پیامک انقضای کش‌بک',
+                'table' => 'cashback_expiry_sms_history',
+                'migration' => '019_cashback_expiry.sql',
+            ],
         ];
 
         try {

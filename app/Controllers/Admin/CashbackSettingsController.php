@@ -50,10 +50,22 @@ final class CashbackSettingsController
             'updated_at' => $now,
         ]);
 
+        // Cashback expiry period (0 = never expires) and how early the warning SMS goes out.
+        $expirySaved = $repo->updateExpirySettings(
+            max(0, (int) \normalize_digits((string) ($_POST['cashback_expiry_months'] ?? '12'))),
+            max(1, (int) \normalize_digits((string) ($_POST['cashback_expiry_warning_days'] ?? '30')))
+        );
+
         // Try to save menu visibility
         $menusSaved = $repo->updateEnabledMenus($enabledMenusJson);
 
         (new ActivityLogger())->log('settings_update', 'تنظیمات کش‌بک به‌روزرسانی شد.');
+
+        if (!$expirySaved) {
+            Flash::set('warning', 'تنظیمات ذخیره شد، اما ستون‌های انقضای کش‌بک در دیتابیس وجود ندارد. لطفاً روی سرور دستور php database/migrate.php را اجرا کنید، سپس دوباره ذخیره کنید.');
+            \redirect('/admin/cashback-settings');
+            return;
+        }
 
         if ($menusSaved) {
             Flash::set('success', 'تنظیمات ذخیره شد. برای دیدن تغییرات منوها، صفحه را کامل رفرش کنید (Ctrl + Shift + R).');

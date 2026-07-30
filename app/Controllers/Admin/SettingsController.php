@@ -34,6 +34,7 @@ final class SettingsController
             'contract_renewal_sms_enabled' => isset($_POST['contract_renewal_sms_enabled']) ? 1 : 0,
             'due_date_sms_enabled' => isset($_POST['due_date_sms_enabled']) ? 1 : 0,
             'due_date_reminder_sms_enabled' => isset($_POST['due_date_reminder_sms_enabled']) ? 1 : 0,
+            'cashback_expiry_sms_enabled' => isset($_POST['cashback_expiry_sms_enabled']) ? 1 : 0,
             'purchase_template' => (string) ($_POST['purchase_template'] ?? ''),
             'birthday_template' => (string) ($_POST['birthday_template'] ?? ''),
             'wallet_reduction_template' => (string) ($_POST['wallet_reduction_template'] ?? ''),
@@ -42,6 +43,7 @@ final class SettingsController
             'contract_renewal_template' => (string) ($_POST['contract_renewal_template'] ?? ''),
             'due_date_template' => (string) ($_POST['due_date_template'] ?? ''),
             'due_date_reminder_template' => (string) ($_POST['due_date_reminder_template'] ?? ''),
+            'cashback_expiry_template' => (string) ($_POST['cashback_expiry_template'] ?? ''),
             'updated_at' => \current_datetime(),
         ], $token !== '');
         Flash::set('success', 'تنظیمات پیامک ذخیره شد.');

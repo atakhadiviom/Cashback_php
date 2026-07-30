@@ -70,6 +70,8 @@ final class WalletService
                 $purchaseId,
                 SystemUserService::actorId()
             );
+            // Draw the redeemed amount from the soonest-to-expire cashback lots first.
+            (new CashbackExpiryService())->consume($customerId, $amount);
             $pdo->commit();
         } catch (\Throwable $exception) {
             $pdo->rollBack();

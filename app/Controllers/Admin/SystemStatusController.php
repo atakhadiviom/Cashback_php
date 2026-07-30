@@ -134,6 +134,17 @@ final class SystemStatusController
                 'detail' => !empty($smsSettings['due_date_reminder_sms_enabled']) ? 'فعال در تنظیمات پیامک' : 'Due date reminder SMS is disabled.',
             ],
             [
+                'key' => 'cashback_expiry',
+                'label' => 'انقضای کش‌بک و هشدار آن',
+                'schedule' => 'روزانه 11:00',
+                'last_run' => $cronState['cashback_expiry'] ?? 'هرگز',
+                'due' => $this->dailyDue($cronState['cashback_expiry'] ?? null),
+                'enabled' => true,
+                'detail' => !empty($smsSettings['cashback_expiry_sms_enabled'])
+                    ? 'کسر کش‌بک منقضی‌شده و ارسال هشدار پیش از انقضا.'
+                    : 'کسر کش‌بک منقضی‌شده انجام می‌شود، اما پیامک هشدار غیرفعال است.',
+            ],
+            [
                 'key' => 'sms_retry',
                 'label' => 'تلاش مجدد پیامک',
                 'schedule' => 'هر ' . $retryMinutes . ' دقیقه',

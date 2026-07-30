@@ -55,6 +55,8 @@ final class PurchaseVoidService
                     $purchaseId,
                     SystemUserService::actorId()
                 );
+                // Cancel this purchase's own cashback lot before touching anything else.
+                (new CashbackExpiryService())->reverse($customerId, $cashback, $purchaseId);
             }
             $pdo->commit();
         } catch (\Throwable $exception) {

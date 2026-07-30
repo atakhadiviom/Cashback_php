@@ -53,7 +53,7 @@ final class CronRunnerService
                 try {
                     $customersRepo->incrementWallet((int) $customer['id'], $bonus);
                     $updated = $customersRepo->find((int) $customer['id']);
-                    (new WalletRepository())->create(
+                    $walletTxId = (new WalletRepository())->create(
                         (int) $customer['id'],
                         'cashback',
                         $bonus,
@@ -62,6 +62,7 @@ final class CronRunnerService
                         null,
                         SystemUserService::actorId()
                     );
+                    (new CashbackExpiryService())->credit((int) $customer['id'], $bonus, 'birthday', $walletTxId);
                     $stmt = $pdo->prepare('UPDATE birthday_sms_history SET bonus_credited = 1 WHERE customer_id = :cid AND sent_year = :year');
                     $stmt->execute(['cid' => $customer['id'], 'year' => $year]);
                     $pdo->commit();
@@ -130,6 +131,24 @@ final class CronRunnerService
         return $result;
     }
 
+    /**
+     * Expire unspent cashback that is past its date, then warn everyone whose cashback
+     * expires within the warning window (one month by default).
+     *
+     * @return array{ok: bool, messages: string[]}
+     */
+    public function runCashbackExpiry(): array
+    {
+        $service = new CashbackExpiryService();
+        $messages = array_merge(
+            $service->runExpiry()['messages'],
+            $service->runExpiryWarnings()['messages']
+        );
+        $this->state->markRun('cashback_expiry');
+
+        return ['ok' => true, 'messages' => $messages];
+    }
+
     /** @return array{ok: bool, messages: string[]} */
     public function runSmsRetry(): array
     {
@@ -142,7 +161,7 @@ final class CronRunnerService
     public function runDailyTasks(): array
     {
         $messages = [];
-        foreach ([$this->runBirthdaySms(), $this->runContractRenewalReminders(), $this->runDueDateReminders()] as $result) {
+        foreach ([$this->runBirthdaySms(), $this->runContractRenewalReminders(), $this->runDueDateReminders(), $this->runCashbackExpiry()] as $result) {
             $messages = array_merge($messages, $result['messages']);
         }
         return ['ok' => true, 'messages' => $messages];
@@ -156,6 +175,7 @@ final class CronRunnerService
             'contract_renewal' => $this->runContractRenewalReminders(),
             'due_date_status' => $this->runDueDateStatusUpdate(),
             'due_date_reminders' => $this->runDueDateReminders(),
+            'cashback_expiry' => $this->runCashbackExpiry(),
             'sms_retry' => $this->runSmsRetry(),
             'all' => $this->runAll(),
             default => ['ok' => false, 'messages' => ['Unknown cron task.']],
@@ -188,6 +208,9 @@ final class CronRunnerService
         }
         if ($this->state->shouldRunDaily('due_date_reminders')) {
             $messages = array_merge($messages, $this->runDueDateReminders()['messages']);
+        }
+        if ($this->state->shouldRunDaily('cashback_expiry')) {
+            $messages = array_merge($messages, $this->runCashbackExpiry()['messages']);
         }
 
         $retryMinutes = (int) \config_value('cron.sms_retry_interval_minutes', 15);

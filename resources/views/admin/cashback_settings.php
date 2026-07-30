@@ -12,6 +12,26 @@
     <div class="col-md-4"><label class="form-label">پاداش تولد (ریال)</label><input class="form-control ltr" name="birthday_bonus_amount" value="<?= e(money_input_value($settings['birthday_bonus_amount'] ?? null)) ?>" inputmode="numeric" data-money></div>
     <div class="col-md-4"><label class="form-label">پاداش معرفی (ریال)</label><input class="form-control ltr" name="referral_bonus_amount" value="<?= e(money_input_value($settings['referral_bonus_amount'] ?? null)) ?>" inputmode="numeric" data-money></div>
     <div class="col-md-4"><label class="form-label">پنجره هشدار خرید تکراری (دقیقه)</label><input class="form-control ltr" name="duplicate_purchase_window_minutes" value="<?= e($settings['duplicate_purchase_window_minutes'] ?? '5') ?>"></div>
+
+    <div class="col-12 mt-3">
+        <h5 class="mb-2">انقضای کش‌بک</h5>
+        <p class="text-muted small mb-2">کش‌بک هر خرید پس از مدت تعیین‌شده منقضی می‌شود. هنگام استفاده از کیف پول، ابتدا کش‌بک‌هایی که زودتر منقضی می‌شوند کسر می‌گردند، بنابراین فقط کش‌بک استفاده‌نشده از بین می‌رود.</p>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">مدت اعتبار کش‌بک (ماه)</label>
+                <input class="form-control ltr" name="cashback_expiry_months" value="<?= e($settings['cashback_expiry_months'] ?? '12') ?>" inputmode="numeric">
+                <div class="form-text">عدد ۰ یعنی کش‌بک هیچ‌وقت منقضی نمی‌شود.</div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">ارسال هشدار چند روز قبل از انقضا</label>
+                <input class="form-control ltr" name="cashback_expiry_warning_days" value="<?= e($settings['cashback_expiry_warning_days'] ?? '30') ?>" inputmode="numeric">
+                <div class="form-text">پیش‌فرض ۳۰ روز (یک ماه). برای ارسال پیامک، «هشدار انقضای کش‌بک» را در تنظیمات پیامک فعال کنید.</div>
+            </div>
+        </div>
+        <div class="alert alert-info mt-3 py-2 small mb-0">
+            تغییر مدت اعتبار فقط روی کش‌بک‌های جدید اثر دارد؛ تاریخ انقضای کش‌بک‌های ثبت‌شده تغییر نمی‌کند.
+        </div>
+    </div>
     <div class="col-12 mt-3">
         <h5 class="mb-2">منوهای فعال (قابلیت فعال/غیرفعال کردن منوها)</h5>
         <p class="text-muted small mb-2"><strong>قانون:</strong> فقط منوهایی که اینجا تیک دارند، در سایدبار نمایش داده می‌شوند.</p>

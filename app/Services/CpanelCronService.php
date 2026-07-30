@@ -117,6 +117,14 @@ final class CpanelCronService
                 'command' => "{$php} {$root}/cron/run.php due_date_reminders",
             ],
             [
+                'minute' => '0',
+                'hour' => '11',
+                'day' => '*',
+                'month' => '*',
+                'weekday' => '*',
+                'command' => "{$php} {$root}/cron/run.php cashback_expiry",
+            ],
+            [
                 'minute' => '*/15',
                 'hour' => '*',
                 'day' => '*',

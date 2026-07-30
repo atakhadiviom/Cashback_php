@@ -202,7 +202,7 @@ CREATE TABLE due_date_sms_history (
 CREATE TABLE wallet_transactions (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id BIGINT UNSIGNED NOT NULL,
-  type ENUM('cashback','reduction','reversal') NOT NULL,
+  type ENUM('cashback','reduction','reversal','expiry') NOT NULL,
   amount DECIMAL(15,2) NOT NULL,
   balance_after DECIMAL(15,2) NOT NULL,
   reason VARCHAR(255) NULL,
@@ -213,6 +213,28 @@ CREATE TABLE wallet_transactions (
   CONSTRAINT fk_wallet_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
   CONSTRAINT fk_wallet_purchase FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE SET NULL,
   CONSTRAINT fk_wallet_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cashback_lots (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  customer_id BIGINT UNSIGNED NOT NULL,
+  wallet_transaction_id BIGINT UNSIGNED NULL,
+  purchase_id BIGINT UNSIGNED NULL,
+  source ENUM('purchase','birthday','referral','opening','manual') NOT NULL DEFAULT 'purchase',
+  amount DECIMAL(15,2) NOT NULL,
+  consumed_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+  expired_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+  credited_at DATETIME NOT NULL,
+  expires_at DATETIME NULL,
+  warned_at DATETIME NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  INDEX idx_cashback_lots_customer (customer_id, credited_at),
+  INDEX idx_cashback_lots_expires (expires_at),
+  INDEX idx_cashback_lots_warned (warned_at, expires_at),
+  CONSTRAINT fk_cashback_lots_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_lots_wallet FOREIGN KEY (wallet_transaction_id) REFERENCES wallet_transactions(id) ON DELETE SET NULL,
+  CONSTRAINT fk_cashback_lots_purchase FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE cashback_settings (
@@ -226,6 +248,8 @@ CREATE TABLE cashback_settings (
   birthday_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
   referral_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
   duplicate_purchase_window_minutes INT UNSIGNED NOT NULL DEFAULT 5,
+  cashback_expiry_months INT UNSIGNED NOT NULL DEFAULT 12,
+  cashback_expiry_warning_days INT UNSIGNED NOT NULL DEFAULT 30,
   enabled_menus TEXT NULL,
   updated_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -243,6 +267,7 @@ CREATE TABLE sms_settings (
   contract_renewal_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
   due_date_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
   due_date_reminder_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
+  cashback_expiry_sms_enabled TINYINT(1) NOT NULL DEFAULT 0,
   purchase_template TEXT NOT NULL,
   birthday_template TEXT NOT NULL,
   wallet_reduction_template TEXT NOT NULL,
@@ -254,6 +279,7 @@ CREATE TABLE sms_settings (
   contract_renewal_template TEXT NULL,
   due_date_template TEXT NULL,
   due_date_reminder_template TEXT NULL,
+  cashback_expiry_template TEXT NULL,
   updated_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -261,7 +287,7 @@ CREATE TABLE sms_logs (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id BIGINT UNSIGNED NULL,
   phone_number VARCHAR(20) NOT NULL,
-  event_type ENUM('purchase','birthday','wallet_reduction','welcome','manual','otp','purchase_void','referral_bonus','service_confirmation','contract_renewal','due_date','due_date_reminder') NOT NULL,
+  event_type ENUM('purchase','birthday','wallet_reduction','welcome','manual','otp','purchase_void','referral_bonus','service_confirmation','contract_renewal','due_date','due_date_reminder','cashback_expiry') NOT NULL,
   message TEXT NOT NULL,
   provider VARCHAR(50) NOT NULL DEFAULT 'ippanel',
   provider_response TEXT NULL,
@@ -274,6 +300,18 @@ CREATE TABLE sms_logs (
   INDEX idx_sms_logs_status (status),
   INDEX idx_sms_logs_created_at (created_at),
   CONSTRAINT fk_sms_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cashback_expiry_sms_history (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  customer_id BIGINT UNSIGNED NOT NULL,
+  expiry_month CHAR(7) NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  sms_log_id BIGINT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  UNIQUE KEY uq_cashback_expiry_sms (customer_id, expiry_month),
+  CONSTRAINT fk_cashback_expiry_sms_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cashback_expiry_sms_log FOREIGN KEY (sms_log_id) REFERENCES sms_logs(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE service_records (
@@ -331,7 +369,7 @@ CREATE TABLE activity_logs (
     'purchase_create','purchase_void','wallet_reduction','operator_create','operator_edit',
     'sms_sent','sms_failed','report_export','settings_update','service_create',
     'followup_create','followup_update','followup_won','followup_lost','reminder_seen','reminder_done',
-    'due_date_create','due_date_update','due_date_delete'
+    'due_date_create','due_date_update','due_date_delete','cashback_expiry'
   ) NOT NULL,
   description VARCHAR(500) NOT NULL,
   customer_id BIGINT UNSIGNED NULL,
@@ -416,7 +454,8 @@ INSERT INTO schema_migrations (version, applied_at) VALUES
   ('015_finalize_sales.sql', NOW()),
   ('016_customer_tier_ranges.sql', NOW()),
   ('017_enabled_menus.sql', NOW()),
-  ('018_payment_due_dates.sql', NOW());
+  ('018_payment_due_dates.sql', NOW()),
+  ('019_cashback_expiry.sql', NOW());
 
 INSERT INTO customer_tiers (id, name, min_lifetime_spend, max_lifetime_spend, cashback_percent, is_active, sort_order, created_at)
 VALUES (1, 'برنزی', 0, 50000000, 5.00, 1, 0, NOW()),
@@ -424,18 +463,20 @@ VALUES (1, 'برنزی', 0, 50000000, 5.00, 1, 0, NOW()),
        (3, 'طلایی', 150000000, NULL, 10.00, 1, 2, NOW());
 
 INSERT INTO cashback_settings (
-  id, cashback_percent, duplicate_purchase_window_minutes, birthday_bonus_amount, referral_bonus_amount, enabled_menus, updated_at
-) VALUES (1, 5.00, 5, 0, 0, NULL, NOW());
+  id, cashback_percent, duplicate_purchase_window_minutes, cashback_expiry_months, cashback_expiry_warning_days,
+  birthday_bonus_amount, referral_bonus_amount, enabled_menus, updated_at
+) VALUES (1, 5.00, 5, 12, 30, 0, 0, NULL, NOW());
 
 INSERT INTO sms_settings (
   id, api_token, sender_number, sms_enabled, purchase_sms_enabled, birthday_sms_enabled,
   wallet_reduction_sms_enabled, welcome_sms_enabled, service_sms_enabled, contract_renewal_sms_enabled,
-  due_date_sms_enabled, due_date_reminder_sms_enabled,
+  due_date_sms_enabled, due_date_reminder_sms_enabled, cashback_expiry_sms_enabled,
   purchase_template, birthday_template,
   wallet_reduction_template, welcome_template, otp_template, purchase_void_template, referral_template,
-  service_template, contract_renewal_template, due_date_template, due_date_reminder_template, updated_at
+  service_template, contract_renewal_template, due_date_template, due_date_reminder_template,
+  cashback_expiry_template, updated_at
 ) VALUES (
-  1, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  1, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   'سلام {full_name}، خرید شما به مبلغ {purchase_amount} ثبت شد و مبلغ {cashback_amount} ریال کش‌بک به کیف پول شما اضافه شد. موجودی کیف پول: {wallet_balance} ریال',
   '{full_name} عزیز، تولدتان مبارک! از طرف {company_name} برای شما آرزوی سلامتی و شادی داریم.',
   'سلام {full_name}، مبلغ {purchase_amount} ریال از کیف پول شما کسر شد. موجودی جدید: {wallet_balance} ریال',
@@ -451,6 +492,10 @@ INSERT INTO sms_settings (
 {company_name}',
   'آقای/خانم {full_name}
 یادآوری: سررسید پرداخت شما به مبلغ {due_amount} در تاریخ {due_date} می‌باشد. لطفاً در موعد مقرر نسبت به پرداخت اقدام فرمایید.
+با تشکر
+{company_name}',
+  'آقای/خانم {full_name}
+مبلغ {expiring_amount} ریال از کش‌بک شما در تاریخ {expiry_date} منقضی می‌شود. موجودی فعلی کیف پول: {wallet_balance} ریال. لطفاً پیش از این تاریخ از آن استفاده کنید.
 با تشکر
 {company_name}',
   NOW()

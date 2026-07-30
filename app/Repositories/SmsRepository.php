@@ -33,17 +33,17 @@ final class SmsRepository
             'INSERT INTO sms_settings (
                 id, api_token, sender_number, sms_enabled, purchase_sms_enabled, birthday_sms_enabled,
                 wallet_reduction_sms_enabled, welcome_sms_enabled, service_sms_enabled, contract_renewal_sms_enabled,
-                due_date_sms_enabled, due_date_reminder_sms_enabled,
+                due_date_sms_enabled, due_date_reminder_sms_enabled, cashback_expiry_sms_enabled,
                 purchase_template, birthday_template,
                 wallet_reduction_template, welcome_template, service_template, contract_renewal_template,
-                due_date_template, due_date_reminder_template, updated_at
+                due_date_template, due_date_reminder_template, cashback_expiry_template, updated_at
             ) VALUES (
                 1, :api_token, :sender_number, :sms_enabled, :purchase_sms_enabled, :birthday_sms_enabled,
                 :wallet_reduction_sms_enabled, :welcome_sms_enabled, :service_sms_enabled, :contract_renewal_sms_enabled,
-                :due_date_sms_enabled, :due_date_reminder_sms_enabled,
+                :due_date_sms_enabled, :due_date_reminder_sms_enabled, :cashback_expiry_sms_enabled,
                 :purchase_template, :birthday_template,
                 :wallet_reduction_template, :welcome_template, :service_template, :contract_renewal_template,
-                :due_date_template, :due_date_reminder_template, :updated_at
+                :due_date_template, :due_date_reminder_template, :cashback_expiry_template, :updated_at
             )
             ON DUPLICATE KEY UPDATE
                 api_token = VALUES(api_token),
@@ -57,6 +57,7 @@ final class SmsRepository
                 contract_renewal_sms_enabled = VALUES(contract_renewal_sms_enabled),
                 due_date_sms_enabled = VALUES(due_date_sms_enabled),
                 due_date_reminder_sms_enabled = VALUES(due_date_reminder_sms_enabled),
+                cashback_expiry_sms_enabled = VALUES(cashback_expiry_sms_enabled),
                 purchase_template = VALUES(purchase_template),
                 birthday_template = VALUES(birthday_template),
                 wallet_reduction_template = VALUES(wallet_reduction_template),
@@ -65,6 +66,7 @@ final class SmsRepository
                 contract_renewal_template = VALUES(contract_renewal_template),
                 due_date_template = VALUES(due_date_template),
                 due_date_reminder_template = VALUES(due_date_reminder_template),
+                cashback_expiry_template = VALUES(cashback_expiry_template),
                 updated_at = VALUES(updated_at)'
         );
         $stmt->execute($data);

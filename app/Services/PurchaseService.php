@@ -92,7 +92,7 @@ final class PurchaseService
             if ($cashback > 0) {
                 $customers->incrementWallet($customerId, $cashback);
                 $updated = $customers->find($customerId);
-                (new WalletRepository())->create(
+                $walletTxId = (new WalletRepository())->create(
                     $customerId,
                     'cashback',
                     $cashback,
@@ -101,6 +101,7 @@ final class PurchaseService
                     $purchaseId,
                     $createdBy
                 );
+                (new CashbackExpiryService())->credit($customerId, $cashback, 'purchase', $walletTxId, $purchaseId);
             }
             $pdo->commit();
         } catch (\Throwable $exception) {

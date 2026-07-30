@@ -117,6 +117,7 @@ final class CustomerController
             'services' => (new ServiceRecordRepository())->forCustomer($id),
             'walletTransactions' => (new WalletRepository())->forCustomer($id),
             'lifetimeEarned' => $purchases->lifetimeCashbackEarned($id),
+            'nextExpiry' => (new \App\Services\CashbackExpiryService())->nextExpiry($id),
             'canVoid' => Auth::can('void_purchase'),
         ]);
     }

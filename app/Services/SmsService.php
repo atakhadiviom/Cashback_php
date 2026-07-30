@@ -43,6 +43,9 @@ final class SmsService
             case 'due_date_reminder':
                 $flag = 'due_date_reminder_sms_enabled';
                 break;
+            case 'cashback_expiry':
+                $flag = 'cashback_expiry_sms_enabled';
+                break;
             case 'purchase_void':
             case 'referral_bonus':
                 $flag = 'purchase_sms_enabled';

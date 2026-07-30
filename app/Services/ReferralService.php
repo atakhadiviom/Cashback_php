@@ -44,7 +44,7 @@ final class ReferralService
             $customers->incrementWallet($referrerId, $bonus);
             $updated = $customers->find($referrerId);
             $createdBy = SystemUserService::actorId();
-            (new WalletRepository())->create(
+            $walletTxId = (new WalletRepository())->create(
                 $referrerId,
                 'cashback',
                 $bonus,
@@ -53,6 +53,7 @@ final class ReferralService
                 null,
                 $createdBy
             );
+            (new CashbackExpiryService())->credit($referrerId, $bonus, 'referral', $walletTxId);
             $pdo->commit();
         } catch (\Throwable $exception) {
             $pdo->rollBack();

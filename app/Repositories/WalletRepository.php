@@ -16,7 +16,7 @@ final class WalletRepository
         $this->pdo = Database::pdo();
     }
 
-    public function create(int $customerId, string $type, float $amount, float $balanceAfter, ?string $reason, ?int $purchaseId, int $createdBy): void
+    public function create(int $customerId, string $type, float $amount, float $balanceAfter, ?string $reason, ?int $purchaseId, int $createdBy): int
     {
         $stmt = $this->pdo->prepare('INSERT INTO wallet_transactions (customer_id, type, amount, balance_after, reason, purchase_id, created_by, created_at) VALUES (:customer_id, :type, :amount, :balance_after, :reason, :purchase_id, :created_by, :created_at)');
         $stmt->execute([
@@ -29,6 +29,8 @@ final class WalletRepository
             'created_by' => $createdBy,
             'created_at' => \current_datetime(),
         ]);
+
+        return (int) $this->pdo->lastInsertId();
     }
 
     public function forCustomer(int $customerId, int $limit = 0): array

@@ -91,3 +91,19 @@
 - Print CRM report and verify layout (no login required for the print view).
 - In /admin/loyalty, add a new tier with min/max lifetime spend and verify it appears in reports and tier recalculation.
 - Run `php database/migrate.php` and confirm migrations 013-016 are applied without error.
+
+## Cashback Expiry (Migration 019)
+
+- Run `php database/migrate.php` and confirm `019_cashback_expiry.sql` applies without error; run it a second time and confirm nothing changes.
+- After the migration, confirm every customer with a positive wallet balance has one `opening` lot in `cashback_lots`, dated the migration day + the configured period.
+- In /admin/cashback-settings set "مدت اعتبار کش‌بک" and "ارسال هشدار چند روز قبل از انقضا"; save and confirm both values persist.
+- Register a purchase and confirm a new lot appears with `expires_at` = now + configured months.
+- Use part of the wallet and confirm the soonest-to-expire lot is drained first (`consumed_amount`), not the newest one.
+- Confirm `wallet_balance` always equals `SUM(amount - consumed_amount - expired_amount)` for that customer.
+- Void a purchase whose cashback is unspent, and separately one whose cashback was already spent; confirm the invariant above still holds in both cases.
+- Set a lot's `expires_at` to yesterday, run `php cron/run.php cashback_expiry`, and confirm: only the unspent part is deducted, a wallet transaction of type «انقضا» is written, and the activity log records `cashback_expiry`.
+- Run the same cron again and confirm nothing is deducted twice.
+- Enable «هشدار انقضای کش‌بک» in /admin/sms-settings, set a lot to expire inside the warning window, run the cron, and confirm one SMS is logged with the correct amount and Jalali date.
+- Run the cron again and confirm no duplicate warning is sent for the same expiry month.
+- Set "مدت اعتبار کش‌بک" to 0, register a purchase, and confirm the new lot has no expiry date and is never touched by the expiry cron.
+- Confirm /admin/system-status lists the «انقضای کش‌بک و هشدار آن» cron row and that the schema health check for `cashback_lots` passes.
