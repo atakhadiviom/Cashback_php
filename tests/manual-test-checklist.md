@@ -95,7 +95,9 @@
 ## Cashback Expiry (Migration 019)
 
 - Run `php database/migrate.php` and confirm `019_cashback_expiry.sql` applies without error; run it a second time and confirm nothing changes.
-- After the migration, confirm every customer with a positive wallet balance has one `opening` lot in `cashback_lots`, dated the migration day + the configured period.
+- Confirm the shipped default is «مدت اعتبار کش‌بک» = 0, i.e. nothing expires until an admin sets a period.
+- After the migration, confirm every customer with a positive wallet balance has one `opening` lot in `cashback_lots`; with the default of 0 its `expires_at` is NULL.
+- On an install that already ran 019 with the old 12-month default, confirm `020_cashback_expiry_default_off.sql` resets the setting to 0 and clears `expires_at`/`warned_at` on existing lots — and that an install where an admin already chose a period keeps that choice.
 - In /admin/cashback-settings set "مدت اعتبار کش‌بک" and "ارسال هشدار چند روز قبل از انقضا"; save and confirm both values persist.
 - Register a purchase and confirm a new lot appears with `expires_at` = now + configured months.
 - Use part of the wallet and confirm the soonest-to-expire lot is drained first (`consumed_amount`), not the newest one.

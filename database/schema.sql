@@ -248,7 +248,7 @@ CREATE TABLE cashback_settings (
   birthday_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
   referral_bonus_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
   duplicate_purchase_window_minutes INT UNSIGNED NOT NULL DEFAULT 5,
-  cashback_expiry_months INT UNSIGNED NOT NULL DEFAULT 12,
+  cashback_expiry_months INT UNSIGNED NOT NULL DEFAULT 0,
   cashback_expiry_warning_days INT UNSIGNED NOT NULL DEFAULT 30,
   enabled_menus TEXT NULL,
   updated_at DATETIME NOT NULL
@@ -455,7 +455,8 @@ INSERT INTO schema_migrations (version, applied_at) VALUES
   ('016_customer_tier_ranges.sql', NOW()),
   ('017_enabled_menus.sql', NOW()),
   ('018_payment_due_dates.sql', NOW()),
-  ('019_cashback_expiry.sql', NOW());
+  ('019_cashback_expiry.sql', NOW()),
+  ('020_cashback_expiry_default_off.sql', NOW());
 
 INSERT INTO customer_tiers (id, name, min_lifetime_spend, max_lifetime_spend, cashback_percent, is_active, sort_order, created_at)
 VALUES (1, 'برنزی', 0, 50000000, 5.00, 1, 0, NOW()),
@@ -465,7 +466,7 @@ VALUES (1, 'برنزی', 0, 50000000, 5.00, 1, 0, NOW()),
 INSERT INTO cashback_settings (
   id, cashback_percent, duplicate_purchase_window_minutes, cashback_expiry_months, cashback_expiry_warning_days,
   birthday_bonus_amount, referral_bonus_amount, enabled_menus, updated_at
-) VALUES (1, 5.00, 5, 12, 30, 0, 0, NULL, NOW());
+) VALUES (1, 5.00, 5, 0, 30, 0, 0, NULL, NOW());
 
 INSERT INTO sms_settings (
   id, api_token, sender_number, sms_enabled, purchase_sms_enabled, birthday_sms_enabled,

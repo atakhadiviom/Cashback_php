@@ -6,7 +6,7 @@ SET @__cb_exists := (
   SELECT COUNT(*) FROM information_schema.COLUMNS
   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cashback_settings' AND COLUMN_NAME = 'cashback_expiry_months'
 );
-SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE cashback_settings ADD COLUMN cashback_expiry_months INT UNSIGNED NOT NULL DEFAULT 12 AFTER duplicate_purchase_window_minutes', 'DO 0');
+SET @__cb_sql := IF(@__cb_exists = 0, 'ALTER TABLE cashback_settings ADD COLUMN cashback_expiry_months INT UNSIGNED NOT NULL DEFAULT 0 AFTER duplicate_purchase_window_minutes', 'DO 0');
 PREPARE __cb_stmt FROM @__cb_sql;
 EXECUTE __cb_stmt;
 DEALLOCATE PREPARE __cb_stmt;
@@ -98,7 +98,7 @@ UPDATE sms_settings SET cashback_expiry_template = 'آقای/خانم {full_name
 -- Opening lot for balances credited before this feature: the clock starts now, so every
 -- existing customer gets the full expiry period (plus the warning SMS) before anything expires.
 SET @__cb_months := (SELECT cashback_expiry_months FROM cashback_settings WHERE id = 1);
-SET @__cb_months := IFNULL(@__cb_months, 12);
+SET @__cb_months := IFNULL(@__cb_months, 0);
 
 INSERT INTO cashback_lots
   (customer_id, source, amount, consumed_amount, expired_amount, credited_at, expires_at, created_at, updated_at)

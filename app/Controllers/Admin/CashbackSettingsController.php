@@ -52,7 +52,7 @@ final class CashbackSettingsController
 
         // Cashback expiry period (0 = never expires) and how early the warning SMS goes out.
         $expirySaved = $repo->updateExpirySettings(
-            max(0, (int) \normalize_digits((string) ($_POST['cashback_expiry_months'] ?? '12'))),
+            max(0, (int) \normalize_digits((string) ($_POST['cashback_expiry_months'] ?? '0'))),
             max(1, (int) \normalize_digits((string) ($_POST['cashback_expiry_warning_days'] ?? '30')))
         );
 

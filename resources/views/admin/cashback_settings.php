@@ -15,11 +15,11 @@
 
     <div class="col-12 mt-3">
         <h5 class="mb-2">انقضای کش‌بک</h5>
-        <p class="text-muted small mb-2">کش‌بک هر خرید پس از مدت تعیین‌شده منقضی می‌شود. هنگام استفاده از کیف پول، ابتدا کش‌بک‌هایی که زودتر منقضی می‌شوند کسر می‌گردند، بنابراین فقط کش‌بک استفاده‌نشده از بین می‌رود.</p>
+        <p class="text-muted small mb-2">به‌صورت پیش‌فرض کش‌بک منقضی نمی‌شود. اگر عددی بزرگ‌تر از ۰ وارد کنید، کش‌بک هر خرید پس از آن مدت منقضی می‌شود. هنگام استفاده از کیف پول، ابتدا کش‌بک‌هایی که زودتر منقضی می‌شوند کسر می‌گردند، بنابراین فقط کش‌بک استفاده‌نشده از بین می‌رود.</p>
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label">مدت اعتبار کش‌بک (ماه)</label>
-                <input class="form-control ltr" name="cashback_expiry_months" value="<?= e($settings['cashback_expiry_months'] ?? '12') ?>" inputmode="numeric">
+                <input class="form-control ltr" name="cashback_expiry_months" value="<?= e($settings['cashback_expiry_months'] ?? '0') ?>" inputmode="numeric">
                 <div class="form-text">عدد ۰ یعنی کش‌بک هیچ‌وقت منقضی نمی‌شود.</div>
             </div>
             <div class="col-md-4">

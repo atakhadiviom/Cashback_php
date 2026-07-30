@@ -22,7 +22,8 @@ use App\Repositories\WalletRepository;
  */
 final class CashbackExpiryService
 {
-    public const DEFAULT_EXPIRY_MONTHS = 12;
+    /** 0 = cashback never expires. Expiry is opt-in: an admin has to set a period. */
+    public const DEFAULT_EXPIRY_MONTHS = 0;
     public const DEFAULT_WARNING_DAYS = 30;
 
     private CashbackLotRepository $lots;
