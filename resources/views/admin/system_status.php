@@ -137,10 +137,15 @@
     <div class="card-body border-top bg-light">
         <div class="alert alert-warning mb-0">
             <strong>هشدار:</strong> کرون‌جاب‌های خودکار در cPanel تنظیم نشده‌اند.
+            <?php if (!$cpanelEnabled): ?>
+                <a class="btn btn-sm btn-warning ms-2" href="<?= e(url('/admin/cpanel-settings')) ?>">پیکربندی API سی‌پنل</a>
+            <?php else: ?>
             <form method="post" action="<?= e(url('/admin/cron/setup-cpanel')) ?>" class="d-inline ms-2">
                 <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
                 <button class="btn btn-sm btn-warning">تنظیم خودکار در cPanel</button>
             </form>
+            <a class="btn btn-sm btn-outline-secondary ms-1" href="<?= e(url('/admin/cpanel-settings')) ?>">تنظیمات cPanel</a>
+            <?php endif; ?>
             <details class="mt-2">
                 <summary class="text-decoration-underline">راهنمای دستی تنظیم کرون‌جاب</summary>
                 <pre class="small mt-2 bg-white p-2 border"><code># Birthday SMS (Daily 08:00)

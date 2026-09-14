@@ -40,8 +40,14 @@ final class FollowupService
 
     public function create(array $data): array
     {
+        $errors = [];
+        $attachmentPath = $this->handleUpload($data['_file'] ?? null, $errors);
+        if ($attachmentPath !== null) {
+            $data['attachment_path'] = $attachmentPath;
+        }
+
         $data = $this->clean($data);
-        $errors = $this->validate($data);
+        $errors = array_merge($errors, $this->validate($data));
         if ($errors) {
             return ['ok' => false, 'errors' => $errors];
         }
@@ -65,8 +71,14 @@ final class FollowupService
             return ['ok' => false, 'errors' => ['id' => 'پیگیری یافت نشد.']];
         }
 
+        $errors = [];
+        $attachmentPath = $this->handleUpload($data['_file'] ?? null, $errors);
+        if ($attachmentPath !== null) {
+            $data['attachment_path'] = $attachmentPath;
+        }
+
         $data = $this->clean($data);
-        $errors = $this->validate($data);
+        $errors = array_merge($errors, $this->validate($data));
         if ($errors) {
             return ['ok' => false, 'errors' => $errors];
         }
@@ -263,5 +275,48 @@ final class FollowupService
     {
         $value = trim(str_replace(',', '', \normalize_digits((string) $amount)));
         return $value === '' ? null : max(0, (float) $value);
+    }
+
+    private function handleUpload(?array $file, array &$errors): ?string
+    {
+        if (!$file || !isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $errors['attachment_file'] = 'خطا در بارگذاری فایل.';
+            return null;
+        }
+
+        $maxSize = 20 * 1024 * 1024; // 20MB
+        if (($file['size'] ?? 0) > $maxSize) {
+            $errors['attachment_file'] = 'حجم فایل نباید بیشتر از ۲۰ مگابایت باشد.';
+            return null;
+        }
+
+        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip', 'rar'];
+        $origName = (string) ($file['name'] ?? '');
+        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+        if (!in_array($ext, $allowedExtensions, true)) {
+            $errors['attachment_file'] = 'فرمت فایل مجاز نیست (فقط PDF، تصویر، آفیس، متن و آرشیو).';
+            return null;
+        }
+
+        $uploadDir = dirname(__DIR__, 2) . '/storage/followups';
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+            $errors['attachment_file'] = 'عدم دسترسی به پوشه ذخیرهسازی فایلها.';
+            return null;
+        }
+
+        $filename = 'crm_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+        $dest = $uploadDir . '/' . $filename;
+
+        if (!move_uploaded_file((string) $file['tmp_name'], $dest)) {
+            $errors['attachment_file'] = 'انتقال فایل با خطا مواجه شد.';
+            return null;
+        }
+
+        return 'storage/followups/' . $filename;
     }
 }

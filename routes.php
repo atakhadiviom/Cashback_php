@@ -6,6 +6,7 @@ use App\Controllers\Admin\ActivityLogController;
 use App\Controllers\Admin\AppUpdateController;
 use App\Controllers\Admin\ApiKeyController;
 use App\Controllers\Admin\CashbackSettingsController;
+use App\Controllers\Admin\CpanelSettingsController;
 use App\Controllers\Admin\CronController as AdminCronController;
 use App\Controllers\Admin\CustomerImportController;
 use App\Controllers\Admin\LoyaltyController;
@@ -73,6 +74,7 @@ $router->post('/followups/create', [FollowupController::class, 'store']);
 $router->get('/followups/edit', [FollowupController::class, 'edit']);
 $router->post('/followups/edit', [FollowupController::class, 'update']);
 $router->get('/followups/show', [FollowupController::class, 'show']);
+$router->get('/followups/attachment', [FollowupController::class, 'attachment']);
 
 $router->get('/reminders', [ReminderController::class, 'index']);
 $router->post('/reminders/mark-seen', [ReminderController::class, 'markSeen']);
@@ -104,6 +106,9 @@ $router->get('/admin/activity-logs', [ActivityLogController::class, 'index'], tr
 $router->get('/admin/system-status', [SystemStatusController::class, 'index'], true, 'admin');
 $router->get('/admin/sms-settings', [SettingsController::class, 'edit'], true, 'admin');
 $router->post('/admin/sms-settings', [SettingsController::class, 'update'], true, 'admin');
+$router->get('/admin/cpanel-settings', [CpanelSettingsController::class, 'edit'], true, 'admin', 'manage_settings');
+$router->post('/admin/cpanel-settings', [CpanelSettingsController::class, 'update'], true, 'admin', 'manage_settings');
+$router->post('/admin/cpanel-settings/setup-cron', [CpanelSettingsController::class, 'setupCron'], true, 'admin', 'manage_settings');
 $router->post('/admin/cron/run', [AdminCronController::class, 'run'], true, 'admin');
 $router->post('/admin/cron/setup-cpanel', [SystemStatusController::class, 'setupCpanelCron'], true, 'admin');
 $router->post('/admin/migrations/run', [SystemStatusController::class, 'runMigrations'], true, 'admin');

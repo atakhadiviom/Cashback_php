@@ -20,7 +20,7 @@
 <?php if (!empty($followup['lost_reason']) || !empty($followup['attachment_path']) || !empty($followup['purchase_id'])): ?>
 <div class="card"><div class="card-body row g-3">
     <div class="col-md-4"><div class="text-muted mb-1">دلیل لغو</div><div><?= e($followup['lost_reason'] ?? '-') ?></div></div>
-    <div class="col-md-4"><div class="text-muted mb-1">فایل ضمیمه</div><div class="ltr"><?= e($followup['attachment_path'] ?? '-') ?></div></div>
+    <div class="col-md-4"><div class="text-muted mb-1">فایل ضمیمه</div><div><?php if (!empty($followup['attachment_path'])): ?><a href="<?= e(url('/followups/attachment?id=' . $followup['id'])) ?>" target="_blank" class="ltr"><?= e(basename($followup['attachment_path'])) ?></a><?php else: ?>-<?php endif; ?></div></div>
     <div class="col-md-4"><div class="text-muted mb-1">خرید ثبت شده</div><div><?= !empty($followup['purchase_id']) ? 'خرید #' . e($followup['purchase_id']) : '-' ?></div></div>
 </div></div>
 <?php endif; ?>

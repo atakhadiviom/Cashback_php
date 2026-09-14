@@ -37,6 +37,19 @@ if (is_file($rootConfig)) {
     $GLOBALS['config'] = require $exampleConfig;
 }
 
+// UI-saved cPanel credentials (survives ZIP updates; storage is updater-protected).
+$cpanelOverlayFile = $rootPath . '/storage/cpanel_settings.php';
+if (is_file($cpanelOverlayFile)) {
+    $cpanelOverlay = require $cpanelOverlayFile;
+    if (is_array($cpanelOverlay)) {
+        $cpanelBase = $GLOBALS['config']['cpanel'] ?? [];
+        if (!is_array($cpanelBase)) {
+            $cpanelBase = [];
+        }
+        $GLOBALS['config']['cpanel'] = array_merge($cpanelBase, $cpanelOverlay);
+    }
+}
+
 if ($configSource === 'example' && PHP_SAPI !== 'cli') {
     $requestPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
     $isInstallerRequest = basename($requestPath) === 'install.php';

@@ -61,6 +61,7 @@ if (Auth::isAdmin()) {
         ['/admin/system-status', 'وضعیت سیستم', 'bi-heart-pulse', null, null],
         ['/admin/cashback-settings', 'تنظیمات کش‌بک', 'bi-percent', 'manage_settings', null],
         ['/admin/sms-settings', 'تنظیمات پیامک', 'bi-sliders', 'manage_settings', null],
+        ['/admin/cpanel-settings', 'تنظیمات cPanel', 'bi-hdd-network', 'manage_settings', null],
         ['/admin/loyalty', 'سطوح و پروموشن', 'bi-trophy', 'manage_loyalty', null],
         ['/admin/api-keys', 'کلید API', 'bi-key', 'manage_api', null],
         ['/admin/customers/import', 'ورود فایل', 'bi-upload', 'import_customers', null],

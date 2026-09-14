@@ -91,8 +91,15 @@ if ($reminderTimeValue !== '') {
         <?php if (!empty($errors['reminder_time'])): ?><div class="form-text-error"><?= e($errors['reminder_time']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-6">
-        <label class="form-label">مسیر فایل ضمیمه (اختیاری)</label>
-        <input class="form-control ltr" name="attachment_path" maxlength="255" value="<?= e($followup['attachment_path'] ?? '') ?>" placeholder="storage/followups/example.pdf">
+        <label class="form-label">فایل ضمیمه (آپلود یا مسیر)</label>
+        <input class="form-control" type="file" name="attachment_file">
+        <?php if (!empty($followup['attachment_path'])): ?>
+            <div class="form-text mt-1">
+                فایل فعلی: <a href="<?= e(url('/followups/attachment?id=' . ($followup['id'] ?? ''))) ?>" target="_blank" class="ltr"><?= e($followup['attachment_path']) ?></a>
+            </div>
+            <input type="hidden" name="attachment_path" value="<?= e($followup['attachment_path']) ?>">
+        <?php endif; ?>
+        <?php if (!empty($errors['attachment_file'])): ?><div class="form-text-error"><?= e($errors['attachment_file']) ?></div><?php endif; ?>
     </div>
     <div class="col-md-6">
         <label class="form-label">دلیل لغو فروش (در صورت لغو)</label>

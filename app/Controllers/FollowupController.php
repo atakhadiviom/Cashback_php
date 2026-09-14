@@ -33,9 +33,10 @@ final class FollowupController
     public function store(): void
     {
         Csrf::requireValid();
-        $result = (new FollowupService())->create($_POST);
+        $data = array_merge($_POST, ['_file' => $_FILES['attachment_file'] ?? null]);
+        $result = (new FollowupService())->create($data);
         if (!$result['ok']) {
-            View::render('followups/create', $this->formData($_POST, $result['errors']));
+            View::render('followups/create', $this->formData($data, $result['errors']));
             return;
         }
         Flash::set('success', 'پیگیری فروش با موفقیت ثبت شد.');
@@ -56,9 +57,10 @@ final class FollowupController
     {
         Csrf::requireValid();
         $id = (int) ($_POST['id'] ?? 0);
-        $result = (new FollowupService())->update($id, $_POST);
+        $data = array_merge($_POST, ['_file' => $_FILES['attachment_file'] ?? null]);
+        $result = (new FollowupService())->update($id, $data);
         if (!$result['ok']) {
-            View::render('followups/edit', $this->formData(array_merge($_POST, ['id' => $id]), $result['errors']));
+            View::render('followups/edit', $this->formData(array_merge($data, ['id' => $id]), $result['errors']));
             return;
         }
         Flash::set('success', 'پیگیری فروش ویرایش شد.');
@@ -76,6 +78,23 @@ final class FollowupController
             'followup' => $followup,
             'statuses' => FollowupService::salesStatusOptions(),
         ]);
+    }
+
+    public function attachment(): void
+    {
+        $followup = (new FollowupRepository())->find((int) ($_GET['id'] ?? 0));
+        $relative = (string) ($followup['attachment_path'] ?? '');
+        $base = realpath(dirname(__DIR__, 2) . '/storage/followups');
+        $path = $relative !== '' ? realpath(dirname(__DIR__, 2) . '/' . $relative) : false;
+        if (!$base || !$path || !str_starts_with($path, $base . DIRECTORY_SEPARATOR) || !is_file($path)) {
+            http_response_code(404);
+            return;
+        }
+        header('Content-Type: application/octet-stream');
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: private, no-store');
+        header("Content-Disposition: attachment; filename*=UTF-8''" . rawurlencode(basename($path)));
+        readfile($path);
     }
 
     private function formData(array $followup, array $errors): array

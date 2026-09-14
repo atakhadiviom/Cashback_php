@@ -2,6 +2,7 @@ config/config.php
 cashback_config.php
 storage/installed.lock
 storage/cron_state.json
+storage/cpanel_settings.php
 /vendor/
 composer.lock
 *.log
