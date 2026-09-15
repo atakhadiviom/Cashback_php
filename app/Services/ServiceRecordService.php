@@ -105,6 +105,43 @@ final class ServiceRecordService
         return ['ok' => true, 'id' => $recordId, 'errors' => []];
     }
 
+    public function update(int $id, array $data): array
+    {
+        $existing = $this->records->find($id);
+        if (!$existing) {
+            return ['ok' => false, 'errors' => ['id' => 'سرویس یافت نشد.']];
+        }
+
+        $data = $this->clean($data);
+        $customer = $this->customers->find($data['customer_id']);
+        $technician = $this->users->find($data['technician_id']);
+        $errors = self::validate($data, $customer, $technician);
+        if ($errors) {
+            return ['ok' => false, 'errors' => $errors];
+        }
+
+        $paymentStatus = $data['paid_amount'] > 0 ? 'paid' : 'unpaid';
+        $now = \current_datetime();
+        $this->records->update($id, [
+            'customer_id' => $data['customer_id'],
+            'technician_id' => $data['technician_id'],
+            'service_date' => $data['service_date'],
+            'service_type' => $data['service_type'],
+            'description' => $data['description'] !== '' ? $data['description'] : null,
+            'paid_amount' => $data['paid_amount'],
+            'payment_status' => $paymentStatus,
+            'updated_at' => $now,
+        ]);
+
+        (new ActivityLogger())->log(
+            'service_update',
+            'ویرایش سرویس #' . $id . ' برای مشتری #' . $data['customer_id'],
+            $data['customer_id']
+        );
+
+        return ['ok' => true, 'id' => $id, 'customer_id' => $data['customer_id'], 'errors' => []];
+    }
+
     public static function serviceTypeLabel(string $type): string
     {
         return self::SERVICE_TYPE_LABELS[$type] ?? $type;

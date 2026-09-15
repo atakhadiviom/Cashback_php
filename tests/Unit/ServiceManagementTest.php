@@ -109,6 +109,21 @@ final class ServiceManagementTest extends TestCase
         $this->assertSame('inspection', $params['service_type']);
     }
 
+    public function testServiceRecordUpdateValidationFailsOnNotFound(): void
+    {
+        $service = (new \ReflectionClass(ServiceRecordService::class))->newInstanceWithoutConstructor();
+        $repoMock = $this->createMock(ServiceRecordRepository::class);
+        $repoMock->method('find')->willReturn(null);
+
+        $ref = new \ReflectionProperty(ServiceRecordService::class, 'records');
+        $ref->setAccessible(true);
+        $ref->setValue($service, $repoMock);
+
+        $res = $service->update(999, []);
+        $this->assertFalse($res['ok']);
+        $this->assertArrayHasKey('id', $res['errors']);
+    }
+
     public function testContractRenewalHistoryUsesCompositeReminderKey(): void
     {
         $source = file_get_contents(dirname(__DIR__, 2) . '/database/migrations/012_elevator_services.sql');

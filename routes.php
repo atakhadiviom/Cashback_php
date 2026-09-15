@@ -67,6 +67,8 @@ $router->post('/wallet/reduce', [WalletController::class, 'store'], true, null, 
 $router->get('/services', [ServiceRecordController::class, 'index']);
 $router->get('/services/create', [ServiceRecordController::class, 'create']);
 $router->post('/services/create', [ServiceRecordController::class, 'store']);
+$router->get('/services/edit', [ServiceRecordController::class, 'edit']);
+$router->post('/services/edit', [ServiceRecordController::class, 'update']);
 
 $router->get('/followups', [FollowupController::class, 'index']);
 $router->get('/followups/create', [FollowupController::class, 'create']);

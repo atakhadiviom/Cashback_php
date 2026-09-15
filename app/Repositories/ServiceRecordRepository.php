@@ -8,7 +8,7 @@ use App\Core\Database;
 use App\Services\DataAccessControl;
 use PDO;
 
-final class ServiceRecordRepository
+class ServiceRecordRepository
 {
     private PDO $pdo;
 
@@ -30,6 +30,24 @@ final class ServiceRecordRepository
         );
         $stmt->execute($data);
         return (int) $this->pdo->lastInsertId();
+    }
+
+    public function update(int $id, array $data): void
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE service_records SET
+                customer_id = :customer_id,
+                technician_id = :technician_id,
+                service_date = :service_date,
+                service_type = :service_type,
+                description = :description,
+                paid_amount = :paid_amount,
+                payment_status = :payment_status,
+                updated_at = :updated_at
+             WHERE id = :id'
+        );
+        $data['id'] = $id;
+        $stmt->execute($data);
     }
 
     public function find(int $id): ?array

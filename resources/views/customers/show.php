@@ -72,7 +72,7 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
     </div>
     <div class="table-responsive">
         <table class="table mb-0">
-            <thead><tr><th>تاریخ</th><th>نوع</th><th>تکنسین</th><th>مبلغ</th><th>وضعیت</th><th>پیامک</th></tr></thead>
+            <thead><tr><th>تاریخ</th><th>نوع</th><th>تکنسین</th><th>مبلغ</th><th>وضعیت</th><th>توضیحات</th><th>پیامک</th><th>عملیات</th></tr></thead>
             <tbody>
             <?php foreach ($services as $service): ?>
                 <tr>
@@ -81,7 +81,17 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
                     <td><?= e($service['technician_name']) ?></td>
                     <td><?= e(money($service['paid_amount'])) ?> ریال</td>
                     <td><?= $service['payment_status'] === 'paid' ? 'پرداخت شده' : 'پرداخت نشده' ?></td>
+                    <td>
+                        <?php if (!empty($service['description'])): ?>
+                            <span title="<?= e($service['description']) ?>"><?= e(mb_substr($service['description'], 0, 40)) ?><?= mb_strlen($service['description']) > 40 ? '...' : '' ?></span>
+                        <?php else: ?>
+                            <span class="text-muted">-</span>
+                        <?php endif; ?>
+                    </td>
                     <td><?= e($service['sms_status'] ?? '-') ?></td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/services/edit?id=' . $service['id'])) ?>">ویرایش</a>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
