@@ -65,6 +65,7 @@ $router->get('/wallet/reduce', [WalletController::class, 'reduce'], true, null, 
 $router->post('/wallet/reduce', [WalletController::class, 'store'], true, null, 'reduce_wallet');
 
 $router->get('/services', [ServiceRecordController::class, 'index']);
+$router->get('/services/show', [ServiceRecordController::class, 'show']);
 $router->get('/services/create', [ServiceRecordController::class, 'create']);
 $router->post('/services/create', [ServiceRecordController::class, 'store']);
 $router->get('/services/edit', [ServiceRecordController::class, 'edit']);

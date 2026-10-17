@@ -69,7 +69,7 @@
     <tbody>
     <?php foreach ($services as $service): ?>
         <tr>
-            <td><?= e($service['first_name'] . ' ' . $service['last_name']) ?></td>
+            <td><a href="<?= e(url('/customers/show?id=' . $service['customer_id'])) ?>"><?= e($service['first_name'] . ' ' . $service['last_name']) ?></a></td>
             <td class="ltr"><?= e($service['contract_number'] ?? '') ?></td>
             <td><?= e($service['technician_name']) ?></td>
             <td><?= e(Jalali::formatDate($service['service_date'])) ?></td>
@@ -84,7 +84,8 @@
                 <?php endif; ?>
             </td>
             <td><?= e($service['sms_status'] ?? '-') ?></td>
-            <td>
+            <td class="text-nowrap">
+                <a class="btn btn-sm btn-outline-primary" href="<?= e(url('/services/show?id=' . $service['id'])) ?>">مشاهده</a>
                 <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/services/edit?id=' . $service['id'])) ?>">ویرایش</a>
             </td>
         </tr>

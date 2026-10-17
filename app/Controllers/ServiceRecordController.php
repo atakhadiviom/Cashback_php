@@ -28,6 +28,18 @@ final class ServiceRecordController
         ]);
     }
 
+    public function show(): void
+    {
+        $service = (new ServiceRecordRepository())->find((int) ($_GET['id'] ?? 0));
+        if (!$service) {
+            Flash::set('danger', 'سرویس یافت نشد.');
+            \redirect('/services');
+        }
+        View::render('services/show', [
+            'service' => $service,
+        ]);
+    }
+
     public function create(): void
     {
         View::render('services/create', [

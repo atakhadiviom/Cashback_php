@@ -121,7 +121,7 @@
                         <tbody>
                         <?php foreach ($services as $row): ?>
                             <tr>
-                                <td><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td>
+                                <td><a href="<?= e(url('/customers/show?id=' . $row['customer_id'])) ?>"><?= e($row['first_name'] . ' ' . $row['last_name']) ?></a></td>
                                 <td class="ltr"><?= e($row['contract_number'] ?? '') ?></td>
                                 <td><?= e($row['technician_name']) ?></td>
                                 <td><?= e(Jalali::formatDate($row['service_date'])) ?></td>

@@ -99,6 +99,8 @@
 - Apply the filter form inside each tab and confirm the same tab stays active after the page reloads.
 - Confirm the «پیگیری فروش» tab shows summary cards, operator performance, and the follow-up list.
 - Open a customer profile and confirm every section renders: follow-ups, services, payment due dates, purchase history, and wallet transactions.
+- In `/services`, confirm the customer name links to that customer's profile and the «مشاهده» button opens the service detail page with all recorded fields.
+- In the «سرویس‌ها» tab of `/reports`, confirm the customer name links to the customer profile.
 - As admin, delete a follow-up from `/followups`, from the follow-up detail page, and from the customer profile; confirm the record and its reminder disappear and an activity log entry `followup_delete` is written.
 - As a non-admin operator, confirm no delete button is shown for follow-ups and that a direct `POST /followups/delete` is rejected.
 - Confirm deleting a follow-up created from a «فروش نهایی» does not delete the auto-created purchase.
