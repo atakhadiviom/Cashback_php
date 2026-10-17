@@ -33,13 +33,13 @@ final class ActivityLogRepository
     {
         $where = [];
         $params = [];
-        if (!empty($filters['date_from'])) {
+        if (\App\Core\Jalali::filterDate($filters['date_from'] ?? '') !== '') {
             $where[] = 'a.created_at >= :date_from';
-            $params['date_from'] = $filters['date_from'] . ' 00:00:00';
+            $params['date_from'] = \App\Core\Jalali::filterDate($filters['date_from']) . ' 00:00:00';
         }
-        if (!empty($filters['date_to'])) {
+        if (\App\Core\Jalali::filterDate($filters['date_to'] ?? '') !== '') {
             $where[] = 'a.created_at <= :date_to';
-            $params['date_to'] = $filters['date_to'] . ' 23:59:59';
+            $params['date_to'] = \App\Core\Jalali::filterDate($filters['date_to']) . ' 23:59:59';
         }
         if (!empty($filters['user_id'])) {
             $where[] = 'a.user_id = :user_id';

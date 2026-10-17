@@ -83,6 +83,7 @@ $adminNavItems = array_values(array_filter($adminNavItems, $canSeeNavItem));
     <title><?= e(config_value('app.name')) ?></title>
     <link href="<?= e(asset_url('vendor/bootstrap/bootstrap.rtl.min.css')) ?>" rel="stylesheet">
     <link href="<?= e(asset_url('vendor/bootstrap-icons/bootstrap-icons.min.css')) ?>" rel="stylesheet">
+    <link href="<?= e(asset_url('vendor/jalalidatepicker/jalalidatepicker.min.css')) ?>" rel="stylesheet">
     <link rel="stylesheet" href="<?= e(asset_url('css/app.css')) ?>?v=<?= e(app_version()) ?>">
 </head>
 <body>
@@ -191,6 +192,14 @@ $renderSidebar('d-none d-xl-flex');
     <?php endif; ?>
 </div>
 <script src="<?= e(asset_url('vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
+<script src="<?= e(asset_url('vendor/jalalidatepicker/jalalidatepicker.min.js')) ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof jalaliDatepicker !== 'undefined') {
+        jalaliDatepicker.startWatch({ separatorChars: { date: '/' }, persianDigits: true, autoShow: true, autoHide: true, time: true });
+    }
+});
+</script>
 <script src="<?= e(asset_url('js/app.js')) ?>?v=<?= e(app_version()) ?>"></script>
 </body>
 </html>

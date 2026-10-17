@@ -17,7 +17,7 @@ if ($selectedCustomer) {
 $selectedOperatorId = (string) ($followup['operator_id'] ?? Auth::id() ?? '');
 $followupDateValue = (string) ($followup['followup_date'] ?? '');
 if ($followupDateValue !== '' && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $followupDateValue)) {
-    $followupDateValue = str_replace(' ', 'T', substr($followupDateValue, 0, 16));
+    $followupDateValue = Jalali::formatDateTime($followupDateValue);
 }
 $nextContactDisplay = '';
 $nextContactRaw = (string) ($followup['next_contact_date'] ?? '');
@@ -59,7 +59,7 @@ if ($reminderTimeValue !== '') {
     </div>
     <div class="col-md-4">
         <label class="form-label">تاریخ پیگیری</label>
-        <input class="form-control ltr" type="datetime-local" name="followup_date" value="<?= e($followupDateValue) ?>">
+        <input class="form-control ltr" type="text" data-jdp autocomplete="off" placeholder="1403/01/01 14:30" name="followup_date" value="<?= e($followupDateValue) ?>">
         <div class="form-text">اگر خالی بماند، زمان فعلی ثبت می‌شود.</div>
         <?php if (!empty($errors['followup_date'])): ?><div class="form-text-error"><?= e($errors['followup_date']) ?></div><?php endif; ?>
     </div>
@@ -123,12 +123,3 @@ if ($reminderTimeValue !== '') {
         </div>
     </div>
 </div>
-<link href="<?= e(asset_url('vendor/jalalidatepicker/jalalidatepicker.min.css')) ?>" rel="stylesheet">
-<script src="<?= e(asset_url('vendor/jalalidatepicker/jalalidatepicker.min.js')) ?>"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    if (typeof jalaliDatepicker !== 'undefined') {
-        jalaliDatepicker.startWatch({ separatorChars: { date: '/' }, persianDigits: true, autoShow: true, autoHide: true });
-    }
-});
-</script>

@@ -100,17 +100,3 @@ if ($contractEndsRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_di
     <button class="btn btn-primary">ذخیره</button>
     <a class="btn btn-outline-secondary" href="<?= e(url('/customers')) ?>">بازگشت</a>
 </div>
-<link href="<?= e(asset_url('vendor/jalalidatepicker/jalalidatepicker.min.css')) ?>" rel="stylesheet">
-<script src="<?= e(asset_url('vendor/jalalidatepicker/jalalidatepicker.min.js')) ?>"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    if (typeof jalaliDatepicker !== 'undefined') {
-        jalaliDatepicker.startWatch({
-            separatorChars: { date: '/' },
-            persianDigits: true,
-            autoShow: true,
-            autoHide: true,
-        });
-    }
-});
-</script>

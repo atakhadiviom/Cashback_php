@@ -267,8 +267,8 @@ final class FollowupService
         if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $raw)) {
             return $raw;
         }
-        $gregorian = Jalali::parseInputToGregorian($raw);
-        return $gregorian ? $gregorian . ' 00:00:00' : $raw;
+        $dateTime = Jalali::parseDateTimeInput($raw);
+        return $dateTime ?: $raw;
     }
 
     private function nullableAmount($amount): ?float

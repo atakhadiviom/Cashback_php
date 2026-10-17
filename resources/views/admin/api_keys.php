@@ -15,7 +15,7 @@
         <tr>
             <td><?= e($key['name']) ?></td>
             <td class="ltr"><?= e($key['key_prefix']) ?>…</td>
-            <td><?= e($key['last_used_at'] ?? '-') ?></td>
+            <td><?= e(\App\Core\Jalali::formatDateTime($key['last_used_at'] ?? null) ?: '-') ?></td>
             <td><?= (int)$key['is_active'] ? 'فعال' : 'غیرفعال' ?></td>
             <td>
                 <?php if ((int)$key['is_active']): ?>

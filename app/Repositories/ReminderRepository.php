@@ -135,13 +135,13 @@ final class ReminderRepository
             $where[] = 'r.remind_at < NOW()';
             $where[] = "r.status IN ('pending','seen')";
         }
-        if (!empty($filters['date_from'])) {
+        if (\App\Core\Jalali::filterDate($filters['date_from'] ?? '') !== '') {
             $where[] = 'r.remind_at >= :date_from';
-            $params['date_from'] = $filters['date_from'] . ' 00:00:00';
+            $params['date_from'] = \App\Core\Jalali::filterDate($filters['date_from']) . ' 00:00:00';
         }
-        if (!empty($filters['date_to'])) {
+        if (\App\Core\Jalali::filterDate($filters['date_to'] ?? '') !== '') {
             $where[] = 'r.remind_at <= :date_to';
-            $params['date_to'] = $filters['date_to'] . ' 23:59:59';
+            $params['date_to'] = \App\Core\Jalali::filterDate($filters['date_to']) . ' 23:59:59';
         }
         if (($filters['q'] ?? '') !== '') {
             $where[] = '(' . \sql_normalize_persian('c.first_name') . ' LIKE :q1 OR ' . \sql_normalize_persian('c.last_name') . ' LIKE :q2 OR ' . \sql_normalize_persian('c.company') . ' LIKE :q3 OR c.phone_number LIKE :q4 OR f.conversation_notes LIKE :q5)';

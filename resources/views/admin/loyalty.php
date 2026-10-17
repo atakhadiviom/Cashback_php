@@ -29,8 +29,8 @@
             <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
             <div class="col-12"><input class="form-control" name="name" placeholder="نام" required></div>
             <div class="col-4"><input class="form-control ltr" name="percent_bonus" placeholder="بونوس ٪"></div>
-            <div class="col-4"><input class="form-control ltr" type="datetime-local" name="starts_at" required></div>
-            <div class="col-4"><input class="form-control ltr" type="datetime-local" name="ends_at" required></div>
+            <div class="col-4"><input class="form-control ltr" type="text" data-jdp autocomplete="off" placeholder="1403/01/01 00:00" name="starts_at" required></div>
+            <div class="col-4"><input class="form-control ltr" type="text" data-jdp autocomplete="off" placeholder="1403/01/01 00:00" name="ends_at" required></div>
             <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" name="is_active" id="promo_active" checked><label for="promo_active">فعال</label></div></div>
             <div class="col-12"><button class="btn btn-primary">افزودن پروموشن</button></div>
         </form>

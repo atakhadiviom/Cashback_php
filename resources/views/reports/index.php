@@ -5,8 +5,8 @@
 </div>
 <div class="card mb-3"><div class="card-body">
 <form class="row g-2" method="get">
-    <div class="col-md-2"><input class="form-control ltr" type="date" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>"></div>
-    <div class="col-md-2"><input class="form-control ltr" type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>"></div>
+    <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>"></div>
+    <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>"></div>
     <div class="col-md-2"><input class="form-control" name="last_name" placeholder="نام خانوادگی" value="<?= e($filters['last_name'] ?? '') ?>"></div>
     <div class="col-md-2"><input class="form-control ltr" name="national_code" placeholder="کد ملی" value="<?= e($filters['national_code'] ?? '') ?>"></div>
     <div class="col-md-2"><input class="form-control ltr" name="phone_number" placeholder="موبایل" value="<?= e($filters['phone_number'] ?? '') ?>"></div>
@@ -43,7 +43,7 @@
     <div class="col-lg-6"><div class="card"><div class="card-header bg-white">۱۰ مشتری برتر بر اساس کش‌بک</div><div class="table-responsive"><table class="table mb-0"><tbody><?php foreach ($topCashback as $row): ?><tr><td><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td><td><?= e(money($row['total'])) ?></td></tr><?php endforeach; ?></tbody></table></div></div></div>
 </div>
 <div class="card mb-4"><div class="card-header bg-white">خریدهای فیلتر شده</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>مشتری</th><th>کد ملی</th><th>مبلغ</th><th>کش‌بک</th><th>وضعیت</th><th>اپراتور</th><th>تاریخ</th></tr></thead><tbody>
-<?php foreach ($purchases as $row): ?><tr><td><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td><td><?= e($row['national_code']) ?></td><td><?= e(money($row['amount'])) ?></td><td><?= e(money($row['cashback_amount'])) ?></td><td><?= ($row['status'] ?? 'active') === 'voided' ? 'ابطال' : 'فعال' ?></td><td><?= e($row['created_by_name']) ?></td><td><?= e($row['created_at']) ?></td></tr><?php endforeach; ?>
+<?php foreach ($purchases as $row): ?><tr><td><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td><td><?= e($row['national_code']) ?></td><td><?= e(money($row['amount'])) ?></td><td><?= e(money($row['cashback_amount'])) ?></td><td><?= ($row['status'] ?? 'active') === 'voided' ? 'ابطال' : 'فعال' ?></td><td><?= e($row['created_by_name']) ?></td><td><?= e(Jalali::formatDateTime($row['created_at'])) ?></td></tr><?php endforeach; ?>
 </tbody></table></div></div>
 <div class="card mb-4 mt-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -53,8 +53,8 @@
     <div class="card-body">
         <form class="row g-2 mb-3" method="get">
             <?php foreach ($filters as $k => $v): if (is_array($v)) continue; ?><input type="hidden" name="<?= e($k) ?>" value="<?= e($v) ?>"><?php endforeach; ?>
-            <div class="col-md-2"><input class="form-control ltr" type="date" name="service_date_from" value="<?= e($serviceFilters['date_from'] ?? '') ?>"></div>
-            <div class="col-md-2"><input class="form-control ltr" type="date" name="service_date_to" value="<?= e($serviceFilters['date_to'] ?? '') ?>"></div>
+            <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="service_date_from" value="<?= e($serviceFilters['date_from'] ?? '') ?>"></div>
+            <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="service_date_to" value="<?= e($serviceFilters['date_to'] ?? '') ?>"></div>
             <div class="col-md-2"><input class="form-control" name="service_q" placeholder="جستجوی مشتری" value="<?= e($serviceFilters['q'] ?? '') ?>"></div>
             <div class="col-md-2"><input class="form-control ltr" name="service_contract_number" placeholder="شماره قرارداد" value="<?= e($serviceFilters['contract_number'] ?? '') ?>"></div>
             <div class="col-md-2">

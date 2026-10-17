@@ -13,8 +13,8 @@ use App\Services\ReminderService;
 </div>
 <div class="card mb-3"><div class="card-body">
     <form class="row g-2" method="get">
-        <div class="col-md-2"><input class="form-control ltr" type="date" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>"></div>
-        <div class="col-md-2"><input class="form-control ltr" type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>"></div>
+        <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>"></div>
+        <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>"></div>
         <div class="col-md-2"><input class="form-control" name="q" placeholder="جستجو" value="<?= e($filters['q'] ?? '') ?>"></div>
         <div class="col-md-2">
             <select class="form-select" name="operator_id">
@@ -41,8 +41,8 @@ use App\Services\ReminderService;
     <tbody>
     <?php foreach ($reminders as $reminder): ?>
         <tr>
-            <td class="ltr"><?= e($reminder['remind_at']) ?></td>
-            <td><?= e($reminder['first_name'] . ' ' . $reminder['last_name']) ?></td>
+            <td class="ltr"><?= e(\App\Core\Jalali::formatDateTime($reminder['remind_at'])) ?></td>
+            <td><a href="<?= e(url('/followups/show?id=' . $reminder['followup_id'])) ?>"><?= e($reminder['first_name'] . ' ' . $reminder['last_name']) ?></a></td>
             <td><?= e($reminder['company'] ?? '') ?></td>
             <td><?= e($reminder['operator_name']) ?></td>
             <td><?= e(ReminderService::statusLabel($reminder['status'])) ?></td>

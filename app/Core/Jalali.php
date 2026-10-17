@@ -131,6 +131,42 @@ final class Jalali
         return sprintf('%04d-%02d-%02d', $gy, $gm, $gd);
     }
 
+    /** Filter input (Jalali or Gregorian) to Y-m-d; empty string when blank or invalid. */
+    public static function filterDate(mixed $input): string
+    {
+        return self::parseInputToGregorian((string) $input) ?? '';
+    }
+
+    /** Gregorian datetime (Y-m-d H:i[:s]) to Jalali "YYYY/MM/DD HH:MM". */
+    public static function formatDateTime(?string $dateTime): string
+    {
+        $dateTime = trim((string) $dateTime);
+        if ($dateTime === '' || str_starts_with($dateTime, '0000')) {
+            return '';
+        }
+        $date = self::formatDate(substr($dateTime, 0, 10));
+        $time = strlen($dateTime) >= 16 ? substr($dateTime, 11, 5) : '';
+
+        return trim($date . ' ' . $time);
+    }
+
+    /** Jalali datetime input "YYYY/MM/DD HH:MM" (or date only) to "Y-m-d H:i:s"; null when invalid, '' when blank. */
+    public static function parseDateTimeInput(string $input): ?string
+    {
+        $input = trim(\normalize_digits($input));
+        if ($input === '') {
+            return '';
+        }
+        $time = '00:00:00';
+        if (preg_match('/^(\S+)[ T](\d{1,2}):(\d{2})(?::\d{2})?$/', $input, $m)) {
+            $input = $m[1];
+            $time = sprintf('%02d:%02d:00', (int) $m[2], (int) $m[3]);
+        }
+        $date = self::parseInputToGregorian($input);
+
+        return ($date === null || $date === '') ? $date : $date . ' ' . $time;
+    }
+
     /** @return array{month: int, day: int}|null */
     public static function jalaliMonthDay(?string $gregorianDate): ?array
     {

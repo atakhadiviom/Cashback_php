@@ -5,8 +5,8 @@
 </div>
 <div class="card mb-3"><div class="card-body">
     <form class="row g-2" method="get">
-        <div class="col-md-2"><input class="form-control ltr" type="date" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>"></div>
-        <div class="col-md-2"><input class="form-control ltr" type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>"></div>
+        <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>"></div>
+        <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>"></div>
         <div class="col-md-2"><input class="form-control" name="q" placeholder="جستجو" value="<?= e($filters['q'] ?? '') ?>"></div>
         <div class="col-md-2">
             <select class="form-select" name="operator_id">
@@ -33,10 +33,10 @@
     <tbody>
     <?php foreach ($followups as $followup): ?>
         <tr>
-            <td><?= e($followup['first_name'] . ' ' . $followup['last_name']) ?></td>
+            <td><a href="<?= e(url('/followups/show?id=' . $followup['id'])) ?>"><?= e($followup['first_name'] . ' ' . $followup['last_name']) ?></a></td>
             <td><?= e($followup['company'] ?? '') ?></td>
             <td><?= e($followup['operator_name']) ?></td>
-            <td><?= e($followup['followup_date']) ?></td>
+            <td><?= e(Jalali::formatDateTime($followup['followup_date'])) ?></td>
             <td><?= e(FollowupService::salesStatusLabel($followup['sales_status'])) ?></td>
             <td><?= $followup['pre_invoice_amount'] !== null ? e(money($followup['pre_invoice_amount'])) . ' ریال' : '-' ?></td>
             <td><?= $followup['invoice_amount'] !== null ? e(money($followup['invoice_amount'])) . ' ریال' : '-' ?></td>

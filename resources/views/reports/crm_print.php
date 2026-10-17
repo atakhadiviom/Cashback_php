@@ -24,7 +24,7 @@
         <tr>
             <td><?= e($f['first_name'] . ' ' . $f['last_name']) ?></td>
             <td><?= e($f['operator_name']) ?></td>
-            <td><?= e($f['followup_date']) ?></td>
+            <td><?= e(\App\Core\Jalali::formatDateTime($f['followup_date'])) ?></td>
             <td><?= e(FollowupService::salesStatusLabel($f['sales_status'])) ?></td>
             <td><?= $f['invoice_amount'] ? e(money($f['invoice_amount'])) : '-' ?></td>
             <td><?= $f['purchase_amount'] ? 'بله' : 'خیر' ?></td>

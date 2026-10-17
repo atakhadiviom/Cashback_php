@@ -111,13 +111,13 @@ final class FollowupRepository
         $where = ['c.deleted_at IS NULL'];
         $params = [];
 
-        if (!empty($filters['date_from'])) {
+        if (\App\Core\Jalali::filterDate($filters['date_from'] ?? '') !== '') {
             $where[] = 'f.followup_date >= :date_from';
-            $params['date_from'] = $filters['date_from'] . ' 00:00:00';
+            $params['date_from'] = \App\Core\Jalali::filterDate($filters['date_from']) . ' 00:00:00';
         }
-        if (!empty($filters['date_to'])) {
+        if (\App\Core\Jalali::filterDate($filters['date_to'] ?? '') !== '') {
             $where[] = 'f.followup_date <= :date_to';
-            $params['date_to'] = $filters['date_to'] . ' 23:59:59';
+            $params['date_to'] = \App\Core\Jalali::filterDate($filters['date_to']) . ' 23:59:59';
         }
         if (!empty($filters['operator_id'])) {
             $where[] = 'f.operator_id = :operator_id';

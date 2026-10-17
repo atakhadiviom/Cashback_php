@@ -11,7 +11,7 @@
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">شرکت</div><div class="fw-bold"><?= e($followup['company'] ?? '-') ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">اپراتور</div><div class="fw-bold"><?= e($followup['operator_name']) ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">وضعیت</div><div class="fw-bold"><?= e(FollowupService::salesStatusLabel($followup['sales_status'])) ?></div></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">تاریخ پیگیری</div><div class="ltr"><?= e($followup['followup_date']) ?></div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">تاریخ پیگیری</div><div class="ltr"><?= e(\App\Core\Jalali::formatDateTime($followup['followup_date'])) ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">مبلغ پیش فاکتور</div><div><?= $followup['pre_invoice_amount'] !== null ? e(money($followup['pre_invoice_amount'])) . ' ریال' : '-' ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">مبلغ فاکتور</div><div><?= $followup['invoice_amount'] !== null ? e(money($followup['invoice_amount'])) . ' ریال' : '-' ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">تماس بعدی</div><div><?= e(Jalali::formatDate($followup['next_contact_date'] ?? null)) ?> <?= e($followup['reminder_time'] ? substr($followup['reminder_time'], 0, 5) : '') ?></div></div></div></div>

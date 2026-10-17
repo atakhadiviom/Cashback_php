@@ -37,8 +37,8 @@
 
 <div class="card mb-3"><div class="card-body">
     <form class="row g-2" method="get" action="<?= e(url('/reports/crm')) ?>">
-        <div class="col-md-2"><input class="form-control ltr" type="date" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>"></div>
-        <div class="col-md-2"><input class="form-control ltr" type="date" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>"></div>
+        <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="date_from" value="<?= e($filters['date_from'] ?? '') ?>"></div>
+        <div class="col-md-2"><input class="form-control ltr" type="text" data-jdp data-jdp-only-date autocomplete="off" placeholder="تاریخ شمسی" name="date_to" value="<?= e($filters['date_to'] ?? '') ?>"></div>
         <div class="col-md-2">
             <select class="form-select" name="operator_id">
                 <option value="">همه اپراتورها</option>
@@ -75,7 +75,7 @@
         <tr>
             <td><?= e($f['first_name'] . ' ' . $f['last_name']) ?> <?= $f['company'] ? '(' . e($f['company']) . ')' : '' ?></td>
             <td><?= e($f['operator_name']) ?></td>
-            <td><?= e($f['followup_date']) ?></td>
+            <td><?= e(\App\Core\Jalali::formatDateTime($f['followup_date'])) ?></td>
             <td><?= e(FollowupService::salesStatusLabel($f['sales_status'])) ?></td>
             <td><?= $f['invoice_amount'] ? e(money($f['invoice_amount'])) . ' ریال' : '-' ?></td>
             <td><?= e(Jalali::formatDate($f['next_contact_date'] ?? null)) ?></td>

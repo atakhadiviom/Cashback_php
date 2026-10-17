@@ -43,8 +43,8 @@ final class LoyaltyController
             'name' => trim((string) ($_POST['name'] ?? '')),
             'percent_bonus' => (float) str_replace(',', '', \normalize_digits((string) ($_POST['percent_bonus'] ?? '0'))),
             'fixed_bonus' => trim((string) ($_POST['fixed_bonus'] ?? '')) === '' ? null : (float) str_replace(',', '', \normalize_digits((string) $_POST['fixed_bonus'])),
-            'starts_at' => (string) ($_POST['starts_at'] ?? \current_datetime()),
-            'ends_at' => (string) ($_POST['ends_at'] ?? \current_datetime()),
+            'starts_at' => \App\Core\Jalali::parseDateTimeInput((string) ($_POST['starts_at'] ?? '')) ?: \current_datetime(),
+            'ends_at' => \App\Core\Jalali::parseDateTimeInput((string) ($_POST['ends_at'] ?? '')) ?: \current_datetime(),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'created_at' => \current_datetime(),
         ]);

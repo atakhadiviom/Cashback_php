@@ -7,5 +7,5 @@
 </form>
 </div></div>
 <div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>مشتری</th><th>موبایل</th><th>رویداد</th><th>وضعیت</th><th>پیام</th><th>پاسخ</th><th>تاریخ</th></tr></thead><tbody>
-<?php foreach ($logs as $log): ?><tr><td><?= e(trim(($log['first_name'] ?? '') . ' ' . ($log['last_name'] ?? ''))) ?></td><td class="ltr"><?= e($log['phone_number']) ?></td><td><?= e($log['event_type']) ?></td><td><?= e($log['status']) ?></td><td><?= e($log['message']) ?></td><td><?= e($log['provider_response']) ?></td><td><?= e($log['created_at']) ?></td></tr><?php endforeach; ?>
+<?php foreach ($logs as $log): ?><tr><td><?= e(trim(($log['first_name'] ?? '') . ' ' . ($log['last_name'] ?? ''))) ?></td><td class="ltr"><?= e($log['phone_number']) ?></td><td><?= e($log['event_type']) ?></td><td><?= e($log['status']) ?></td><td><?= e($log['message']) ?></td><td><?= e($log['provider_response']) ?></td><td><?= e(\App\Core\Jalali::formatDateTime($log['created_at'])) ?></td></tr><?php endforeach; ?>
 </tbody></table></div></div>

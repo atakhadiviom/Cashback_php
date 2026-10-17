@@ -49,7 +49,7 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
             <tbody>
             <?php foreach ($followups as $followup): ?>
                 <tr>
-                    <td><?= e($followup['followup_date']) ?></td>
+                    <td><?= e(\App\Core\Jalali::formatDateTime($followup['followup_date'])) ?></td>
                     <td><?= e($followup['operator_name']) ?></td>
                     <td><?= e(FollowupService::salesStatusLabel($followup['sales_status'])) ?></td>
                     <td><?= $followup['pre_invoice_amount'] !== null ? e(money($followup['pre_invoice_amount'])) . ' ریال' : '-' ?></td>
@@ -113,7 +113,7 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
                             <td><?= e(money($purchase['cashback_amount'])) ?></td>
                             <td><?= e($purchase['cashback_percent_applied'] ?? '-') ?>٪</td>
                             <td><?= ($purchase['status'] ?? 'active') === 'voided' ? 'ابطال' : 'فعال' ?></td>
-                            <td><?= e($purchase['created_at']) ?></td>
+                            <td><?= e(\App\Core\Jalali::formatDateTime($purchase['created_at'])) ?></td>
                             <td>
                                 <?php if ($canVoid && ($purchase['status'] ?? 'active') === 'active'): ?>
                                 <form method="post" action="<?= e(url('/purchases/void')) ?>" class="d-inline" onsubmit="return confirm('ابطال این خرید؟');">

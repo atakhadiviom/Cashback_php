@@ -153,13 +153,13 @@ class ServiceRecordRepository
         $where = ['c.deleted_at IS NULL'];
         $params = [];
 
-        if (!empty($filters['date_from'])) {
+        if (\App\Core\Jalali::filterDate($filters['date_from'] ?? '') !== '') {
             $where[] = 's.service_date >= :date_from';
-            $params['date_from'] = $filters['date_from'];
+            $params['date_from'] = \App\Core\Jalali::filterDate($filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (\App\Core\Jalali::filterDate($filters['date_to'] ?? '') !== '') {
             $where[] = 's.service_date <= :date_to';
-            $params['date_to'] = $filters['date_to'];
+            $params['date_to'] = \App\Core\Jalali::filterDate($filters['date_to']);
         }
         if (!empty($filters['technician_id'])) {
             $where[] = 's.technician_id = :technician_id';
