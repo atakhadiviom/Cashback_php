@@ -59,6 +59,12 @@ final class FollowupRepository
         $stmt->execute($data);
     }
 
+    public function delete(int $id): void
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM customer_followups WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+    }
+
     public function find(int $id): ?array
     {
         $where = ['f.id = :id'];

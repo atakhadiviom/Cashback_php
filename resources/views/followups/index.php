@@ -1,4 +1,4 @@
-<?php use App\Core\Jalali; use App\Services\FollowupService; ?>
+<?php use App\Core\Auth; use App\Core\Csrf; use App\Core\Jalali; use App\Services\FollowupService; ?>
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h1 class="h3 mb-0">پیگیری‌های فروش</h1>
     <a class="btn btn-primary" href="<?= e(url('/followups/create')) ?>">ثبت پیگیری</a>
@@ -44,6 +44,13 @@
             <td class="text-nowrap">
                 <a class="btn btn-sm btn-outline-primary" href="<?= e(url('/followups/show?id=' . $followup['id'])) ?>">مشاهده</a>
                 <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/followups/edit?id=' . $followup['id'])) ?>">ویرایش</a>
+                <?php if (Auth::isAdmin()): ?>
+                <form method="post" action="<?= e(url('/followups/delete')) ?>" class="d-inline" onsubmit="return confirm('این پیگیری فروش برای همیشه حذف شود؟');">
+                    <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
+                    <input type="hidden" name="id" value="<?= e($followup['id']) ?>">
+                    <button class="btn btn-sm btn-outline-danger">حذف</button>
+                </form>
+                <?php endif; ?>
             </td>
         </tr>
     <?php endforeach; ?>

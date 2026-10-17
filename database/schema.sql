@@ -369,7 +369,7 @@ CREATE TABLE activity_logs (
     'purchase_create','purchase_void','wallet_reduction','operator_create','operator_edit',
     'sms_sent','sms_failed','report_export','settings_update','service_create',
     'followup_create','followup_update','followup_won','followup_lost','reminder_seen','reminder_done',
-    'due_date_create','due_date_update','due_date_delete','cashback_expiry'
+    'due_date_create','due_date_update','due_date_delete','cashback_expiry','customer_tier_update','followup_delete'
   ) NOT NULL,
   description VARCHAR(500) NOT NULL,
   customer_id BIGINT UNSIGNED NULL,

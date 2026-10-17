@@ -2,6 +2,7 @@
 use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\Jalali;
+use App\Services\DueDateService;
 use App\Services\FollowupService;
 
 $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' => 'برگشت', 'expiry' => 'انقضا'];
@@ -56,7 +57,17 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
                     <td><?= $followup['invoice_amount'] !== null ? e(money($followup['invoice_amount'])) . ' ریال' : '-' ?></td>
                     <td><?= e(Jalali::formatDate($followup['next_contact_date'] ?? null)) ?> <?= e($followup['reminder_time'] ? substr($followup['reminder_time'], 0, 5) : '') ?></td>
                     <td><?= e(mb_substr($followup['conversation_notes'], 0, 80)) ?><?= mb_strlen($followup['conversation_notes']) > 80 ? '...' : '' ?></td>
-                    <td><a class="btn btn-sm btn-outline-primary" href="<?= e(url('/followups/show?id=' . $followup['id'])) ?>">مشاهده</a></td>
+                    <td class="text-nowrap">
+                        <a class="btn btn-sm btn-outline-primary" href="<?= e(url('/followups/show?id=' . $followup['id'])) ?>">مشاهده</a>
+                        <?php if (Auth::isAdmin()): ?>
+                        <form method="post" action="<?= e(url('/followups/delete')) ?>" class="d-inline" onsubmit="return confirm('این پیگیری فروش برای همیشه حذف شود؟');">
+                            <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
+                            <input type="hidden" name="id" value="<?= e($followup['id']) ?>">
+                            <input type="hidden" name="return_to" value="customer">
+                            <button class="btn btn-sm btn-outline-danger">حذف</button>
+                        </form>
+                        <?php endif; ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             <?php if (!$followups): ?><tr><td colspan="8" class="text-muted">هنوز پیگیری ثبت نشده است.</td></tr><?php endif; ?>
@@ -99,6 +110,30 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
     </div>
 </div>
 <?php endif; ?>
+<div class="card mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span>سررسیدهای پرداخت</span>
+        <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/due-dates/create?customer_id=' . $customer['id'])) ?>">ثبت سررسید</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead><tr><th>نوع</th><th>مبلغ</th><th>تاریخ سررسید</th><th>شماره مرجع</th><th>وضعیت</th><th>اپراتور</th></tr></thead>
+            <tbody>
+            <?php foreach ($dueDates as $due): ?>
+                <tr>
+                    <td><?= e(DueDateService::dueTypeLabel($due['due_type'])) ?></td>
+                    <td><?= e(money($due['amount'])) ?> ریال</td>
+                    <td><?= e(Jalali::formatDate($due['due_date'])) ?></td>
+                    <td class="ltr"><?= e($due['reference_number'] ?? '-') ?></td>
+                    <td><?= e(DueDateService::statusLabel($due['status'])) ?></td>
+                    <td><?= e($due['operator_name']) ?></td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (!$dueDates): ?><tr><td colspan="6" class="text-muted">سررسیدی ثبت نشده است.</td></tr><?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="card">

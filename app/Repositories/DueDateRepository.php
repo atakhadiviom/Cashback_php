@@ -78,6 +78,20 @@ final class DueDateRepository
         return $stmt->fetch() ?: null;
     }
 
+    public function forCustomer(int $customerId, int $limit = 50): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT d.*, u.name AS operator_name
+             FROM payment_due_dates d
+             JOIN users u ON u.id = d.operator_id
+             WHERE d.customer_id = :customer_id
+             ORDER BY d.due_date DESC, d.id DESC
+             LIMIT ' . $limit
+        );
+        $stmt->execute(['customer_id' => $customerId]);
+        return $stmt->fetchAll();
+    }
+
     public function search(array $filters, int $limit = 300): array
     {
         [$where, $params] = $this->filters($filters);

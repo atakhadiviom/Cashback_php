@@ -10,6 +10,7 @@ use App\Core\Flash;
 use App\Core\Jalali;
 use App\Core\View;
 use App\Repositories\CustomerRepository;
+use App\Repositories\DueDateRepository;
 use App\Repositories\FollowupRepository;
 use App\Repositories\PurchaseRepository;
 use App\Repositories\ServiceRecordRepository;
@@ -115,6 +116,7 @@ final class CustomerController
             'purchases' => $purchases->forCustomer($id),
             'followups' => (new FollowupRepository())->forCustomer($id),
             'services' => (new ServiceRecordRepository())->forCustomer($id),
+            'dueDates' => (new DueDateRepository())->forCustomer($id),
             'walletTransactions' => (new WalletRepository())->forCustomer($id),
             'lifetimeEarned' => $purchases->lifetimeCashbackEarned($id),
             'nextExpiry' => (new \App\Services\CashbackExpiryService())->nextExpiry($id),

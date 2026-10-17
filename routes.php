@@ -76,6 +76,7 @@ $router->post('/followups/create', [FollowupController::class, 'store']);
 $router->get('/followups/edit', [FollowupController::class, 'edit']);
 $router->post('/followups/edit', [FollowupController::class, 'update']);
 $router->get('/followups/show', [FollowupController::class, 'show']);
+$router->post('/followups/delete', [FollowupController::class, 'delete'], true, 'admin');
 $router->get('/followups/attachment', [FollowupController::class, 'attachment']);
 
 $router->get('/reminders', [ReminderController::class, 'index']);

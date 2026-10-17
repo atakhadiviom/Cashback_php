@@ -107,6 +107,24 @@ final class FollowupService
         return ['ok' => true, 'id' => $id, 'customer_id' => $data['customer_id'], 'errors' => []];
     }
 
+    public function delete(int $id): array
+    {
+        $existing = $this->followups->find($id);
+        if (!$existing) {
+            return ['ok' => false, 'errors' => ['id' => 'پیگیری یافت نشد.']];
+        }
+
+        $this->followups->delete($id);
+
+        (new ActivityLogger())->log(
+            'followup_delete',
+            'پیگیری فروش #' . $id . ' مشتری #' . (int) $existing['customer_id'] . ' حذف شد.',
+            (int) $existing['customer_id']
+        );
+
+        return ['ok' => true, 'id' => $id, 'customer_id' => (int) $existing['customer_id'], 'errors' => []];
+    }
+
     private function handleFinalization(array $existing, array $data): ?int
     {
         if ($data['sales_status'] !== 'won') {

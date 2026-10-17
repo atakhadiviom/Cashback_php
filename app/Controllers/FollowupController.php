@@ -80,6 +80,22 @@ final class FollowupController
         ]);
     }
 
+    public function delete(): void
+    {
+        Csrf::requireValid();
+        $id = (int) ($_POST['id'] ?? 0);
+        $result = (new FollowupService())->delete($id);
+        if (!$result['ok']) {
+            Flash::set('danger', 'پیگیری یافت نشد.');
+            \redirect('/followups');
+        }
+        Flash::set('success', 'پیگیری فروش حذف شد.');
+        if (($_POST['return_to'] ?? '') === 'customer') {
+            \redirect('/customers/show?id=' . $result['customer_id']);
+        }
+        \redirect('/followups');
+    }
+
     public function attachment(): void
     {
         $followup = (new FollowupRepository())->find((int) ($_GET['id'] ?? 0));

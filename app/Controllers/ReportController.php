@@ -33,6 +33,14 @@ final class ReportController
         ];
         $from = (string) ($filters['liability_from'] ?? date('Y-m-01'));
         $to = (string) ($filters['liability_to'] ?? date('Y-m-d'));
+        $crmFilters = [
+            'date_from' => $filters['crm_date_from'] ?? '',
+            'date_to' => $filters['crm_date_to'] ?? '',
+            'operator_id' => $filters['crm_operator_id'] ?? '',
+            'sales_status' => $filters['crm_sales_status'] ?? '',
+            'tier_id' => $filters['crm_tier_id'] ?? '',
+        ];
+        $crm = (new CrmReportService())->getData($crmFilters);
         View::render('reports/index', [
             'filters' => $filters,
             'summary' => $repo->summary($filters),
@@ -51,6 +59,12 @@ final class ReportController
             'services' => $serviceRepo->search($serviceFilters, 100),
             'servicesByTechnician' => $serviceRepo->byTechnician($serviceFilters),
             'serviceTypes' => ServiceRecordService::serviceTypeOptions(),
+            'crmFilters' => $crmFilters,
+            'crmSummary' => $crm['summary'],
+            'crmFollowups' => $crm['followups'],
+            'crmByOperator' => $crm['byOperator'],
+            'crmOperators' => $crm['operators'],
+            'crmTiers' => $crm['tiers'],
         ]);
     }
 

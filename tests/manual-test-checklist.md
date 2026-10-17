@@ -92,6 +92,17 @@
 - In /admin/loyalty, add a new tier with min/max lifetime spend and verify it appears in reports and tier recalculation.
 - Run `php database/migrate.php` and confirm migrations 013-016 are applied without error.
 
+## Reports Tabs, Customer Profile & Follow-up Delete (Migration 021)
+
+- Run `php database/migrate.php` and confirm `021_followup_delete.sql` applies without error; run it again and confirm nothing changes.
+- Open `/reports` and confirm it is split into tabs: «خلاصه و خریدها»، «سرویسها»، «پیگیری فروش»، «مشتریان و تولدها».
+- Apply the filter form inside each tab and confirm the same tab stays active after the page reloads.
+- Confirm the «پیگیری فروش» tab shows summary cards, operator performance, and the follow-up list.
+- Open a customer profile and confirm every section renders: follow-ups, services, payment due dates, purchase history, and wallet transactions.
+- As admin, delete a follow-up from `/followups`, from the follow-up detail page, and from the customer profile; confirm the record and its reminder disappear and an activity log entry `followup_delete` is written.
+- As a non-admin operator, confirm no delete button is shown for follow-ups and that a direct `POST /followups/delete` is rejected.
+- Confirm deleting a follow-up created from a «فروش نهایی» does not delete the auto-created purchase.
+
 ## Cashback Expiry (Migration 019)
 
 - Run `php database/migrate.php` and confirm `019_cashback_expiry.sql` applies without error; run it a second time and confirm nothing changes.
