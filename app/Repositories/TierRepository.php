@@ -21,6 +21,13 @@ final class TierRepository
         return $this->pdo->query('SELECT * FROM customer_tiers ORDER BY min_lifetime_spend DESC')->fetchAll();
     }
 
+    public function find(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM customer_tiers WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetch() ?: null;
+    }
+
     public function forLifetimeSpend(float $spend): ?array
     {
         $stmt = $this->pdo->prepare(
