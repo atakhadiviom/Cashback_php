@@ -53,6 +53,7 @@ final class FollowupRepository
                 finalized_sale_amount = :finalized_sale_amount,
                 finalized_at = :finalized_at,
                 lost_reason = :lost_reason,
+                purchase_id = :purchase_id,
                 updated_at = :updated_at
              WHERE id = :id'
         );

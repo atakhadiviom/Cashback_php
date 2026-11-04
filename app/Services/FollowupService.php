@@ -85,9 +85,7 @@ final class FollowupService
 
         $purchaseId = $this->handleFinalization($existing, $data);
         $persisted = $this->persistenceData($data);
-        if ($purchaseId) {
-            $persisted['purchase_id'] = $purchaseId;
-        }
+        $persisted['purchase_id'] = $purchaseId ?: ($existing['purchase_id'] ?? null);
 
         $this->followups->update($id, array_merge($persisted, [
             'updated_at' => \current_datetime(),
