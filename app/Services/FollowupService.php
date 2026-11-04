@@ -137,7 +137,7 @@ final class FollowupService
             return null;
         }
 
-        $settings = $this->settings->get();
+        $settings = $this->settings->settings();
         $cashbackPercent = (float) ($settings['cashback_percent'] ?? 5.00);
         $cashbackAmount = round($amount * $cashbackPercent / 100, 2);
 
