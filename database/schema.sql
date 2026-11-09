@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS followup_reminders;
 DROP TABLE IF EXISTS customer_followups;
 DROP TABLE IF EXISTS customer_tiers;
 DROP TABLE IF EXISTS schema_migrations;
+DROP TABLE IF EXISTS contract_renewals;
 DROP TABLE IF EXISTS contract_renewal_sms_history;
 DROP TABLE IF EXISTS service_records;
 DROP TABLE IF EXISTS birthday_sms_history;
@@ -349,6 +350,23 @@ CREATE TABLE contract_renewal_sms_history (
   CONSTRAINT fk_contract_renewal_sms_log FOREIGN KEY (sms_log_id) REFERENCES sms_logs(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE contract_renewals (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  customer_id BIGINT UNSIGNED NOT NULL,
+  operator_id BIGINT UNSIGNED NOT NULL,
+  previous_starts_at DATE NULL,
+  previous_ends_at DATE NULL,
+  new_starts_at DATE NULL,
+  new_ends_at DATE NOT NULL,
+  note VARCHAR(500) NULL,
+  created_at DATETIME NOT NULL,
+  INDEX idx_contract_renewals_customer_date (customer_id, created_at),
+  INDEX idx_contract_renewals_operator (operator_id),
+  INDEX idx_contract_renewals_ends_at (new_ends_at),
+  CONSTRAINT fk_contract_renewals_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_contract_renewals_operator FOREIGN KEY (operator_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE birthday_sms_history (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id BIGINT UNSIGNED NOT NULL,
@@ -369,7 +387,7 @@ CREATE TABLE activity_logs (
     'purchase_create','purchase_void','wallet_reduction','operator_create','operator_edit',
     'sms_sent','sms_failed','report_export','settings_update','service_create',
     'followup_create','followup_update','followup_won','followup_lost','reminder_seen','reminder_done',
-    'due_date_create','due_date_update','due_date_delete','cashback_expiry','customer_tier_update','followup_delete'
+    'due_date_create','due_date_update','due_date_delete','cashback_expiry','customer_tier_update','followup_delete','contract_renewal'
   ) NOT NULL,
   description VARCHAR(500) NOT NULL,
   customer_id BIGINT UNSIGNED NULL,

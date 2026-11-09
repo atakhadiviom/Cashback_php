@@ -43,6 +43,7 @@
                 'dashboard' => 'داشبورد',
                 'customers' => 'مشتریان',
                 'add_customer' => 'افزودن مشتری',
+                'contract_renewals' => 'تمدید قراردادها',
                 'purchases' => 'ثبت خرید',
                 'services' => 'سرویس‌ها',
                 'followups' => 'پیگیری فروش',

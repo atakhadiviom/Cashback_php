@@ -42,6 +42,7 @@ $mainNavItems = [
     ['/dashboard', 'داشبورد', 'bi-speedometer2', null, 'dashboard'],
     ['/customers', 'مشتریان', 'bi-people', null, 'customers'],
     ['/customers/create', 'افزودن مشتری', 'bi-person-plus', null, 'add_customer'],
+    ['/contract-renewals', 'تمدید قراردادها', 'bi-arrow-repeat', null, 'contract_renewals'],
     ['/purchases/create', 'ثبت خرید', 'bi-receipt', 'purchase', 'purchases'],
     ['/services', 'سرویس‌ها', 'bi-tools', null, 'services'],
     ['/services/create', 'ثبت سرویس', 'bi-wrench', null, 'services'],

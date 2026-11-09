@@ -14,6 +14,7 @@ use App\Controllers\Admin\SettingsController;
 use App\Controllers\Admin\SystemStatusController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\AuthController;
+use App\Controllers\ContractRenewalController;
 use App\Controllers\CronController;
 use App\Controllers\CustomerController;
 use App\Controllers\DashboardController;
@@ -92,6 +93,10 @@ $router->post('/due-dates/edit', [DueDateController::class, 'update']);
 $router->post('/due-dates/delete', [DueDateController::class, 'delete']);
 $router->get('/due-dates/export', [DueDateController::class, 'export'], true, null, 'export');
 $router->get('/due-dates/print', [DueDateController::class, 'print'], true, null, 'export');
+
+$router->get('/contract-renewals', [ContractRenewalController::class, 'index']);
+$router->get('/contract-renewals/create', [ContractRenewalController::class, 'create']);
+$router->post('/contract-renewals/create', [ContractRenewalController::class, 'store']);
 
 $router->get('/reports', [ReportController::class, 'index']);
 $router->get('/reports/export', [ReportController::class, 'export'], true, null, 'export');

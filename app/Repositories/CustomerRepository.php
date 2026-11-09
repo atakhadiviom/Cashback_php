@@ -145,6 +145,19 @@ final class CustomerRepository
         $stmt->execute(['tier_id' => $tierId, 'updated_at' => \current_datetime(), 'id' => $id]);
     }
 
+    public function updateContractDates(int $id, ?string $startsAt, ?string $endsAt): void
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE customers SET contract_starts_at = :contract_starts_at, contract_ends_at = :contract_ends_at, updated_at = :updated_at WHERE id = :id'
+        );
+        $stmt->execute([
+            'contract_starts_at' => $startsAt,
+            'contract_ends_at' => $endsAt,
+            'updated_at' => \current_datetime(),
+            'id' => $id,
+        ]);
+    }
+
     public function reduceWallet(int $id, float $amount): void
     {
         $stmt = $this->pdo->prepare('UPDATE customers SET wallet_balance = wallet_balance - :amount, updated_at = :updated_at WHERE id = :id');

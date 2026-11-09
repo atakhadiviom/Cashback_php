@@ -24,7 +24,7 @@ final class CashbackSettingsController
         $now = \current_datetime();
 
         // Build enabled_menus JSON from the checkboxes
-        $allMenuKeys = ['dashboard','customers','add_customer','purchases','services','followups','reminders','reports','sms_logs'];
+        $allMenuKeys = ['dashboard','customers','add_customer','contract_renewals','purchases','services','followups','reminders','due_dates','reports','sms_logs'];
         $enabled = [];
         foreach ($allMenuKeys as $key) {
             if (isset($_POST['menu_' . $key])) {
