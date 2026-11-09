@@ -14,6 +14,7 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
         <?php if (Auth::can('purchase')): ?><a class="btn btn-primary" href="<?= e(url('/purchases/create?customer_id=' . $customer['id'])) ?>">ثبت خرید</a><?php endif; ?>
         <a class="btn btn-success" href="<?= e(url('/followups/create?customer_id=' . $customer['id'])) ?>">ثبت پیگیری</a>
         <a class="btn btn-outline-primary" href="<?= e(url('/services/create?customer_id=' . $customer['id'])) ?>">ثبت سرویس</a>
+        <a class="btn btn-outline-primary" href="<?= e(url('/contract-renewals/create?customer_id=' . $customer['id'])) ?>">تمدید قرارداد</a>
         <?php if (Auth::can('reduce_wallet')): ?><a class="btn btn-outline-danger" href="<?= e(url('/wallet/reduce?customer_id=' . $customer['id'])) ?>">کسر کیف پول</a><?php endif; ?>
     </div>
 </div>

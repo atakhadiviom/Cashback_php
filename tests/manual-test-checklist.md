@@ -109,6 +109,7 @@
 
 - Run `php database/migrate.php` and confirm `022_contract_renewals.sql` applies without error; run it again and confirm nothing changes.
 - Open `/contract-renewals` and confirm the history list and the «ثبت تمدید قرارداد» button render.
+- From a customer profile, confirm the «تمدید قرارداد» button opens the renewal form pre-filled with that customer.
 - Register a renewal: pick a customer, set a new end date (e.g. one year later), save; confirm the row appears with previous end, new start/end, operator and date, and the customer's contract end date is updated on the profile.
 - Confirm the menu item «تمدید قراردادها» shows in the sidebar (enable it in cashback settings if menu filtering is active).
 - Enable «پیامک تمدید قرارداد» in SMS settings, set a customer's contract end date to today + 5 days, run `php cron/run.php contract_renewal`; confirm one SMS is logged.
