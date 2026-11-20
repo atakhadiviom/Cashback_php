@@ -3,7 +3,7 @@
     <div class="login-visual">
         <span class="badge text-bg-light align-self-start mb-3"><?= e(\App\Services\BrandingService::name()) ?></span>
         <h2><?= e(\App\Services\BrandingService::name()) ?></h2>
-        <p>مدیریت مشتریان، خریدها، کیف پول و پیامک‌ها در یک داشبورد سریع، امن و آماده برای هاست اشتراکی.</p>
+        <p>سامانه مدیریت مشتریان، خریدها، کیف پول و پیامک‌ها در یک داشبورد سریع، امن و آماده</p>
     </div>
     <div class="login-panel">
         <div class="card login-card">
