@@ -34,6 +34,8 @@ $totalMembers = max(1, (int) ($kpi['members'] ?? 0));
         <a class="btn btn-sm btn-outline-primary" href="<?= e(url('/reports/club/leads')) ?>">قیف سرنخ</a>
         <a class="btn btn-sm btn-outline-primary" href="<?= e(url('/reports/club/reminders')) ?>">یادآوری‌ها</a>
         <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/admin/club-reminders')) ?>">قواعد یادآوری</a>
+        <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/admin/festivals')) ?>">جشنواره‌ها</a>
+        <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/guide')) ?>">آموزش با مثال</a>
     </div>
 </div>
 

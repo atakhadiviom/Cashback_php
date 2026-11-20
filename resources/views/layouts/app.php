@@ -56,6 +56,7 @@ $mainNavItems = [
     ['/due-dates/create', 'ثبت سررسید', 'bi-calendar-plus', null, 'due_dates'],
     ['/reports', 'گزارش‌ها', 'bi-bar-chart-line', null, 'reports'],
     ['/sms/logs', 'لاگ پیامک', 'bi-chat-dots', null, 'sms_logs'],
+    ['/guide', 'آموزش و مثال‌ها', 'bi-mortarboard', null, null],
 ];
 $adminNavItems = [];
 if (Auth::isAdmin()) {

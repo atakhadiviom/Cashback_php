@@ -27,6 +27,7 @@ use App\Controllers\ReportClubController;
 use App\Controllers\DashboardController;
 use App\Controllers\DueDateController;
 use App\Controllers\FollowupController;
+use App\Controllers\GuideController;
 use App\Controllers\PortalController;
 use App\Controllers\PurchaseController;
 use App\Controllers\PurchaseVoidController;
@@ -46,6 +47,7 @@ $router->post('/login', [AuthController::class, 'authenticate'], false);
 $router->post('/logout', [AuthController::class, 'logout']);
 
 $router->get('/internal/cron', [CronController::class, 'run'], false);
+$router->get('/guide', [GuideController::class, 'index']);
 
 $router->get('/portal', [PortalController::class, 'index'], false);
 $router->post('/portal', [PortalController::class, 'requestOtp'], false);

@@ -33,6 +33,7 @@ $currentValue = (string) ($input['audience_value'] ?? '');
     <div class="d-flex gap-2">
         <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/admin/club-reminders')) ?>">قواعد یادآوری</a>
         <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/club')) ?>">داشبورد باشگاه</a>
+        <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/guide')) ?>">آموزش با مثال</a>
     </div>
 </div>
 
