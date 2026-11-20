@@ -1,5 +1,17 @@
-<?php use App\Core\Csrf; ?>
+<?php use App\Core\Csrf; use App\Services\BrandingService; ?>
 <h1 class="h3 mb-4">تنظیمات کش‌بک و کیف پول</h1>
+<div class="card mb-3"><div class="card-body">
+    <h5 class="mb-2">نام سامانه</h5>
+    <p class="text-muted small mb-2">این نام در نوار کناری، عنوان مرورگر و صفحهٔ ورود نمایش داده می‌شود.</p>
+    <form method="post" action="<?= e(url('/admin/cashback-settings')) ?>" class="row g-2 align-items-end">
+        <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
+        <div class="col-md-8">
+            <input class="form-control" name="panel_title" value="<?= e(BrandingService::name()) ?>" maxlength="150" placeholder="سامانه پیگیری فروش و باشگاه مشتریان و کش بک">
+        </div>
+        <div class="col-md-4"><button class="btn btn-primary w-100">ذخیره نام</button></div>
+    </form>
+    <div class="form-text">اگر خالی بگذاری، نام پیش‌فرض برنامه استفاده می‌شود.</div>
+</div></div>
 <div class="card"><div class="card-body">
 <form method="post" action="<?= e(url('/admin/cashback-settings')) ?>" class="row g-3">
     <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">

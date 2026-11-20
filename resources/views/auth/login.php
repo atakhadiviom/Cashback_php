@@ -1,7 +1,7 @@
 <?php use App\Core\Csrf; ?>
 <section class="login-page">
     <div class="login-visual">
-        <span class="badge text-bg-light align-self-start mb-3"><?= e(config_value('app.name', 'سیستم مدیریت ارتباط با مشتریان و کش بک')) ?></span>
+        <span class="badge text-bg-light align-self-start mb-3"><?= e(\App\Services\BrandingService::name()) ?></span>
         <h2><?= e(config_value('app.company_name', '')) ?></h2>
         <p>مدیریت مشتریان، خریدها، کیف پول و پیامک‌ها در یک داشبورد سریع، امن و آماده برای هاست اشتراکی.</p>
     </div>
@@ -9,7 +9,7 @@
         <div class="card login-card">
             <div class="card-body p-4 p-md-5">
                 <span class="brand-icon"><i class="bi bi-wallet2"></i></span>
-                <h1 class="h4 fw-bold mb-2"><?= e(config_value('app.name')) ?></h1>
+                <h1 class="h4 fw-bold mb-2"><?= e(\App\Services\BrandingService::name()) ?></h1>
                 <p class="text-muted mb-4">برای ادامه وارد حساب کاربری خود شوید.</p>
                 <form method="post" action="<?= e(url('/login')) ?>">
                     <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">

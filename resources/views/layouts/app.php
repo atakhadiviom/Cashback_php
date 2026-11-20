@@ -88,7 +88,7 @@ $adminNavItems = array_values(array_filter($adminNavItems, $canSeeNavItem));
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= e(config_value('app.name')) ?></title>
+    <title><?= e(\App\Services\BrandingService::name($settings)) ?></title>
     <link href="<?= e(asset_url('vendor/bootstrap/bootstrap.rtl.min.css')) ?>" rel="stylesheet">
     <link href="<?= e(asset_url('vendor/bootstrap-icons/bootstrap-icons.min.css')) ?>" rel="stylesheet">
     <link href="<?= e(asset_url('vendor/jalalidatepicker/jalalidatepicker.min.css')) ?>" rel="stylesheet">
@@ -116,7 +116,7 @@ foreach ($adminNavItems as [$path]) {
         <a class="brand-mark" href="<?= e(url('/dashboard')) ?>">
             <span class="brand-icon"><i class="bi bi-wallet2"></i></span>
             <span>
-                <strong><?= e(config_value('app.name', 'سیستم مدیریت مشتریان و کش‌بک')) ?></strong>
+                <strong><?= e(\App\Services\BrandingService::name($settings)) ?></strong>
                 <small><?= e(config_value('app.company_name', '')) ?></small>
             </span>
         </a>
@@ -165,7 +165,7 @@ $renderSidebar('d-none d-xl-flex');
         <header class="app-topbar">
             <div>
                 <div class="topbar-kicker">پنل مدیریت</div>
-                <h1><?= e(config_value('app.name')) ?></h1>
+                <h1><?= e(\App\Services\BrandingService::name($settings)) ?></h1>
                 <div class="text-muted small ltr">Version <?= e(app_version()) ?></div>
             </div>
             <div class="topbar-actions">

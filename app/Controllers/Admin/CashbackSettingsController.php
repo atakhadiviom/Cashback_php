@@ -59,6 +59,9 @@ final class CashbackSettingsController
         // Try to save menu visibility
         $menusSaved = $repo->updateEnabledMenus($enabledMenusJson);
 
+        // System name (migration 030); ignored when the column does not exist yet.
+        $repo->updatePanelTitle((string) ($_POST['panel_title'] ?? ''));
+
         (new ActivityLogger())->log('settings_update', 'تنظیمات کش‌بک به‌روزرسانی شد.');
 
         if (!$expirySaved) {

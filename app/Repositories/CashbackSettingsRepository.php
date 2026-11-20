@@ -97,6 +97,28 @@ final class CashbackSettingsRepository
     }
 
     /**
+     * System/panel title (migration 030). Returns false when the column is missing.
+     */
+    public function updatePanelTitle(?string $title): bool
+    {
+        $title = trim((string) $title);
+
+        try {
+            $stmt = $this->pdo->prepare(
+                'UPDATE cashback_settings SET panel_title = :panel_title, updated_at = :updated_at WHERE id = 1'
+            );
+            $stmt->execute([
+                'panel_title' => $title !== '' ? mb_substr($title, 0, 150) : null,
+                'updated_at' => \current_datetime(),
+            ]);
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
      * Safely update only the enabled_menus column.
      * Returns true if the update was applied, false if the column doesn't exist yet or on error.
      */
