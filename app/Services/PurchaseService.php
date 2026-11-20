@@ -110,6 +110,7 @@ final class PurchaseService
         }
 
         (new ReferralService())->onPurchase($customerId, $purchaseId);
+        CustomerTierService::refreshQuietly($customerId, 'purchase', true);
         (new ActivityLogger())->log('purchase_create', 'خرید ثبت شد؛ کش‌بک: ' . \money($cashback), $customerId);
         (new SmsService())->sendEvent('purchase', $customers->find($customerId) ?? $customer, [
             'purchase_amount' => $amount,

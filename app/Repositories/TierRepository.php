@@ -46,6 +46,54 @@ final class TierRepository
         return $this->forLifetimeSpend($spend);
     }
 
+    /**
+     * Next tier above the given spend (for the "progress to next tier" bar).
+     */
+    public function nextTier(float $spend): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM customer_tiers
+             WHERE is_active = 1 AND min_lifetime_spend > :spend
+             ORDER BY min_lifetime_spend ASC LIMIT 1'
+        );
+        $stmt->execute(['spend' => $spend]);
+
+        return $stmt->fetch() ?: null;
+    }
+
+    public function customerCount(int $tierId): int
+    {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM customers WHERE tier_id = :id AND deleted_at IS NULL');
+        $stmt->execute(['id' => $tierId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Delete a tier and detach it from every customer in the same transaction.
+     */
+    public function delete(int $id): void
+    {
+        $ownTransaction = !$this->pdo->inTransaction();
+        if ($ownTransaction) {
+            $this->pdo->beginTransaction();
+        }
+        try {
+            $stmt = $this->pdo->prepare('UPDATE customers SET tier_id = NULL WHERE tier_id = :id');
+            $stmt->execute(['id' => $id]);
+            $stmt = $this->pdo->prepare('DELETE FROM customer_tiers WHERE id = :id');
+            $stmt->execute(['id' => $id]);
+            if ($ownTransaction) {
+                $this->pdo->commit();
+            }
+        } catch (\Throwable $exception) {
+            if ($ownTransaction && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare(

@@ -41,6 +41,14 @@ final class PromotionRepository
         return (int) $this->pdo->lastInsertId();
     }
 
+    public function find(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM promotions WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+
+        return $stmt->fetch() ?: null;
+    }
+
     public function update(int $id, array $data): void
     {
         $data['id'] = $id;
@@ -49,5 +57,11 @@ final class PromotionRepository
              starts_at = :starts_at, ends_at = :ends_at, is_active = :is_active WHERE id = :id'
         );
         $stmt->execute($data);
+    }
+
+    public function delete(int $id): void
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM promotions WHERE id = :id');
+        $stmt->execute(['id' => $id]);
     }
 }

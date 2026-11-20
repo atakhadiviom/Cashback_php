@@ -95,6 +95,22 @@ if ($contractEndsRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', \normalize_di
         <label class="form-label">توضیحات مشتری (اختیاری)</label>
         <textarea class="form-control" name="description" rows="3"><?= e($customer['description'] ?? '') ?></textarea>
     </div>
+    <div class="col-12">
+        <label class="form-label">برچسب‌ها</label>
+        <input type="hidden" name="tags_submitted" value="1">
+        <div class="d-flex flex-wrap gap-3">
+            <?php foreach (($allTags ?? []) as $tag): ?>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="tag_ids[]" value="<?= e($tag['id']) ?>" id="tag-<?= e($tag['id']) ?>"
+                        <?= in_array((int) $tag['id'], array_map('intval', (array) ($customerTags ?? [])), true) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="tag-<?= e($tag['id']) ?>"><?= e((string) $tag['name']) ?></label>
+                </div>
+            <?php endforeach; ?>
+            <?php if (empty($allTags)): ?>
+                <span class="text-muted small">برچسبی تعریف نشده است — <a href="<?= e(url('/customers/tags')) ?>">ساخت برچسب</a></span>
+            <?php endif; ?>
+        </div>
+    </div>
 </div>
 <div class="mt-4">
     <button class="btn btn-primary">ذخیره</button>

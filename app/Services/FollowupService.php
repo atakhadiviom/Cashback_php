@@ -58,6 +58,7 @@ final class FollowupService
             'updated_at' => $now,
         ]));
         (new ReminderService())->syncForFollowup($id, $data);
+        $this->persistLeadFields($id, $data);
 
         (new ActivityLogger())->log('followup_create', 'پیگیری فروش برای مشتری #' . $data['customer_id'] . ' ثبت شد.', $data['customer_id']);
 
@@ -91,6 +92,7 @@ final class FollowupService
             'updated_at' => \current_datetime(),
         ]));
         (new ReminderService())->syncForFollowup($id, $data);
+        $this->persistLeadFields($id, $data);
 
         (new ActivityLogger())->log('followup_update', 'پیگیری فروش مشتری #' . $data['customer_id'] . ' ویرایش شد.', $data['customer_id']);
 
@@ -194,7 +196,49 @@ final class FollowupService
             'reminder_time' => $reminderTime,
             'attachment_path' => trim((string) ($data['attachment_path'] ?? '')),
             'lost_reason' => trim((string) ($data['lost_reason'] ?? '')),
+            'lead_source' => $this->normalizeSource((string) ($data['lead_source'] ?? '')),
+            'lead_probability' => $this->nullableProbability($data['lead_probability'] ?? ''),
+            'expected_close_date' => $this->normalizeDate((string) ($data['expected_close_date'] ?? '')),
         ];
+    }
+
+    /**
+     * Score and store the lead fields (migration 025).
+     *
+     * @param array<string, mixed> $data
+     */
+    private function persistLeadFields(int $id, array $data): void
+    {
+        $followupCount = max(1, $this->followups->countForCustomer((int) $data['customer_id']));
+        $score = (new LeadScorer())->score($data, $followupCount, date('Y-m-d'));
+        $probability = $data['lead_probability'];
+        if ($probability === null) {
+            $probability = LeadScorer::probabilityForStage((string) $data['sales_status']);
+        }
+
+        $this->followups->updateLeadFields($id, [
+            'lead_source' => $data['lead_source'] !== '' ? $data['lead_source'] : null,
+            'lead_score' => $score,
+            'lead_probability' => $probability,
+            'expected_close_date' => $data['expected_close_date'] !== '' ? $data['expected_close_date'] : null,
+        ]);
+    }
+
+    private function normalizeSource(string $source): string
+    {
+        $source = trim($source);
+
+        return array_key_exists($source, LeadScorer::SOURCES) ? $source : '';
+    }
+
+    private function nullableProbability($value): ?int
+    {
+        $raw = trim(\normalize_digits((string) $value));
+        if ($raw === '') {
+            return null;
+        }
+
+        return (int) max(0, min(100, (int) $raw));
     }
 
     /** @return array<string, string> */

@@ -116,4 +116,155 @@ final class CashbackSettingsRepository
             return false;
         }
     }
+
+    /**
+     * Defaults for the customer club settings (column club_options, migration 023).
+     *
+     * @return array<string, mixed>
+     */
+    public static function clubDefaults(): array
+    {
+        return [
+            'enabled' => true,
+            'tier_basis' => 'lifetime',
+            'tier_window_months' => '12',
+            'tier_downgrade_grace_days' => '30',
+            'tier_change_sms' => true,
+            'tier_change_template' => '{full_name} عزیز، سطح باشگاه شما به {tier_name} تغییر کرد.',
+            'rfm' => [
+                'r' => [15, 45, 90, 180],
+                'f' => [1, 2, 4, 8],
+                'm' => [1000000, 5000000, 20000000, 50000000],
+                'refresh_hours' => '24',
+            ],
+            'campaign_daily_limit' => '200',
+            'campaign_min_interval_days' => '7',
+        ];
+    }
+
+    /**
+     * Club settings merged over the defaults; works without the migration.
+     *
+     * @return array<string, mixed>
+     */
+    public function clubOptions(): array
+    {
+        $defaults = self::clubDefaults();
+        try {
+            $stmt = $this->pdo->prepare('SELECT club_enabled, club_options FROM cashback_settings WHERE id = 1');
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (\Throwable) {
+            return $defaults;
+        }
+        if (!is_array($row)) {
+            return $defaults;
+        }
+
+        $options = $defaults;
+        if (array_key_exists('club_enabled', $row) && $row['club_enabled'] !== null) {
+            $options['enabled'] = (int) $row['club_enabled'] === 1;
+        }
+        $raw = $row['club_options'] ?? null;
+        if (is_string($raw) && trim($raw) !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $options = self::mergeClubOptions($options, $decoded);
+            }
+        }
+
+        return $options;
+    }
+
+    public function clubEnabled(): bool
+    {
+        return !empty($this->clubOptions()['enabled']);
+    }
+
+    /** @param array<string, mixed> $options */
+    public function updateClubOptions(array $options): bool
+    {
+        $payload = self::mergeClubOptions(self::clubDefaults(), $options);
+        try {
+            $stmt = $this->pdo->prepare(
+                'UPDATE cashback_settings SET club_enabled = :club_enabled, club_options = :club_options, updated_at = :updated_at WHERE id = 1'
+            );
+            $stmt->execute([
+                'club_enabled' => !empty($payload['enabled']) ? 1 : 0,
+                'club_options' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                'updated_at' => \current_datetime(),
+            ]);
+
+            return true;
+        } catch (\Throwable) {
+            // Columns do not exist yet (migration 023 not run).
+            return false;
+        }
+    }
+
+    /**
+     * Merge raw club options over the given defaults and sanitise every value.
+     *
+     * @param array<string, mixed> $defaults
+     * @param array<string, mixed> $raw
+     * @return array<string, mixed>
+     */
+    public static function mergeClubOptions(array $defaults, array $raw): array
+    {
+        $options = $defaults;
+        foreach ($defaults as $key => $default) {
+            if (!array_key_exists($key, $raw)) {
+                continue;
+            }
+            if (is_bool($default)) {
+                $options[$key] = (bool) $raw[$key];
+            } elseif ($key === 'rfm' && is_array($raw[$key])) {
+                $rfm = $default;
+                $rfm['r'] = self::cleanRfmBand($raw[$key]['r'] ?? null, $default['r']);
+                $rfm['f'] = self::cleanRfmBand($raw[$key]['f'] ?? null, $default['f']);
+                $rfm['m'] = self::cleanRfmBand($raw[$key]['m'] ?? null, $default['m']);
+                if (isset($raw[$key]['refresh_hours'])) {
+                    $rfm['refresh_hours'] = (string) max(1, min(168, (int) $raw[$key]['refresh_hours']));
+                }
+                $options[$key] = $rfm;
+            } else {
+                $options[$key] = (string) $raw[$key];
+            }
+        }
+
+        if (!in_array($options['tier_basis'], ['lifetime', 'rolling'], true)) {
+            $options['tier_basis'] = 'lifetime';
+        }
+        $options['tier_window_months'] = (string) max(1, min(120, (int) $options['tier_window_months']));
+        $options['tier_downgrade_grace_days'] = (string) max(0, min(365, (int) $options['tier_downgrade_grace_days']));
+        $options['campaign_daily_limit'] = (string) max(0, min(5000, (int) $options['campaign_daily_limit']));
+        $options['campaign_min_interval_days'] = (string) max(0, min(365, (int) $options['campaign_min_interval_days']));
+        $options['tier_change_template'] = mb_substr(trim((string) $options['tier_change_template']), 0, 500);
+
+        return $options;
+    }
+
+    /**
+     * @param mixed $value
+     * @param list<int|float> $default
+     * @return list<float>
+     */
+    private static function cleanRfmBand(mixed $value, array $default): array
+    {
+        if (!is_array($value)) {
+            return array_map(static fn ($v): float => (float) $v, $default);
+        }
+        $numbers = [];
+        foreach ($value as $item) {
+            if (is_numeric($item)) {
+                $numbers[] = (float) $item;
+            }
+        }
+        if (count($numbers) !== 4) {
+            return array_map(static fn ($v): float => (float) $v, $default);
+        }
+        sort($numbers);
+
+        return $numbers;
+    }
 }

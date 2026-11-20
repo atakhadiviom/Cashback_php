@@ -141,8 +141,32 @@ final class CustomerRepository
 
     public function updateTier(int $id, ?int $tierId): void
     {
+        $now = \current_datetime();
+        try {
+            $stmt = $this->pdo->prepare('UPDATE customers SET tier_id = :tier_id, tier_changed_at = :tier_changed_at, updated_at = :updated_at WHERE id = :id');
+            $stmt->execute(['tier_id' => $tierId, 'tier_changed_at' => $now, 'updated_at' => $now, 'id' => $id]);
+            return;
+        } catch (\Throwable) {
+            // tier_changed_at does not exist yet (migration 023 not run).
+        }
+
         $stmt = $this->pdo->prepare('UPDATE customers SET tier_id = :tier_id, updated_at = :updated_at WHERE id = :id');
-        $stmt->execute(['tier_id' => $tierId, 'updated_at' => \current_datetime(), 'id' => $id]);
+        $stmt->execute(['tier_id' => $tierId, 'updated_at' => $now, 'id' => $id]);
+    }
+
+    /**
+     * Keyset batch of customer ids (for tier/segment recalculation jobs).
+     *
+     * @return list<int>
+     */
+    public function idsAfter(int $afterId, int $limit = 500): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id FROM customers WHERE deleted_at IS NULL AND id > :after ORDER BY id ASC LIMIT ' . max(1, $limit)
+        );
+        $stmt->execute(['after' => $afterId]);
+
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
     public function updateContractDates(int $id, ?string $startsAt, ?string $endsAt): void
@@ -220,6 +244,22 @@ final class CustomerRepository
         if (($filters['birthday_day'] ?? '') !== '') {
             $where[] = 'DAY(c.birthday) = :birthday_day';
             $params['birthday_day'] = (int) \normalize_digits((string) $filters['birthday_day']);
+        }
+        if (($filters['tier_id'] ?? '') !== '') {
+            if ((string) $filters['tier_id'] === 'none') {
+                $where[] = 'c.tier_id IS NULL';
+            } else {
+                $where[] = 'c.tier_id = :tier_id';
+                $params['tier_id'] = (int) $filters['tier_id'];
+            }
+        }
+        if (($filters['segment'] ?? '') !== '') {
+            $where[] = 'EXISTS (SELECT 1 FROM customer_segment_members sm WHERE sm.customer_id = c.id AND sm.segment_code = :segment)';
+            $params['segment'] = (string) $filters['segment'];
+        }
+        if (($filters['tag_id'] ?? '') !== '') {
+            $where[] = 'EXISTS (SELECT 1 FROM customer_tag_assignments ta WHERE ta.customer_id = c.id AND ta.tag_id = :tag_id)';
+            $params['tag_id'] = (int) $filters['tag_id'];
         }
         DataAccessControl::applyOwnerScope($where, $params, 'c.created_by');
         return [$where, $params];

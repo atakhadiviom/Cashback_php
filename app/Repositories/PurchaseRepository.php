@@ -122,6 +122,30 @@ final class PurchaseRepository
         return $id !== false ? (int) $id : null;
     }
 
+    public function spendSince(int $customerId, int $months): float
+    {
+        $months = max(1, min(120, $months));
+        $since = date('Y-m-d H:i:s', strtotime('-' . $months . ' months'));
+        $stmt = $this->pdo->prepare(
+            "SELECT COALESCE(SUM(amount), 0) FROM purchases
+             WHERE customer_id = :customer_id AND status = 'active' AND created_at >= :since"
+        );
+        $stmt->execute(['customer_id' => $customerId, 'since' => $since]);
+
+        return (float) $stmt->fetchColumn();
+    }
+
+    public function lastActivePurchaseAt(int $customerId): ?string
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT MAX(created_at) FROM purchases WHERE customer_id = :customer_id AND status = 'active'"
+        );
+        $stmt->execute(['customer_id' => $customerId]);
+        $value = $stmt->fetchColumn();
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
     /** @return array<int, array<string, mixed>> */
     public function searchForInvoicePicker(?int $customerId = null, int $limit = 500): array
     {

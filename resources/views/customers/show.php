@@ -34,6 +34,83 @@ $txLabels = ['cashback' => 'کش‌بک', 'reduction' => 'کسر', 'reversal' =>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">پایان قرارداد</div><div><?= e(Jalali::formatDate($customer['contract_ends_at'] ?? null)) ?></div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">سطح مشتری</div><div class="fw-bold"><?= e($customer['tier_name'] ?? 'نامشخص') ?></div></div></div></div>
 </div>
+
+<?php
+$clubSegment = $segment ?? null;
+$clubTags = $tags ?? [];
+$clubSpend = (float) ($tierSpend ?? 0);
+$clubNextTier = $nextTier ?? null;
+$clubProgress = $clubNextTier !== null && (float) $clubNextTier['min_lifetime_spend'] > 0
+    ? max(0.0, min(100.0, round($clubSpend / (float) $clubNextTier['min_lifetime_spend'] * 100, 1)))
+    : 100.0;
+$clubHistory = $tierHistory ?? [];
+$clubReminders = $upcomingReminders ?? [];
+?>
+<div class="card mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="fw-bold"><i class="bi bi-stars"></i> باشگاه مشتریان</span>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <?php if ($clubSegment !== null): ?>
+                <span class="badge text-bg-<?= e(\App\Services\RfmCalculator::segmentColor((string) $clubSegment['segment_code'])) ?>"><?= e(\App\Services\RfmCalculator::segmentLabel((string) $clubSegment['segment_code'])) ?></span>
+            <?php else: ?>
+                <span class="text-muted small">بخش‌بندی نشده</span>
+            <?php endif; ?>
+            <?php foreach ($clubTags as $tag): ?>
+                <span class="badge text-bg-light border"><?= e((string) $tag['name']) ?></span>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <div class="card-body row g-3">
+        <div class="col-lg-5">
+            <div class="d-flex justify-content-between small">
+                <span>سطح فعلی: <strong><?= e($customer['tier_name'] ?? 'نامشخص') ?></strong></span>
+                <span class="text-muted"><?= $clubNextTier !== null ? 'تا ' . e((string) $clubNextTier['name']) : 'بالاترین سطح' ?></span>
+            </div>
+            <div class="progress my-2" style="height:10px"><div class="progress-bar bg-success" style="width:<?= e(number_format($clubProgress, 1)) ?>%"></div></div>
+            <div class="small text-muted ltr">خرید مبنا: <?= e(money($clubSpend)) ?> ریال</div>
+            <?php if ($clubNextTier !== null): ?>
+                <div class="small text-muted ltr">باقی‌مانده تا سطح بعد: <?= e(money(max(0, (float) $clubNextTier['min_lifetime_spend'] - $clubSpend))) ?> ریال</div>
+            <?php endif; ?>
+        </div>
+        <div class="col-lg-7">
+            <div class="text-muted small mb-1">یادآوری‌های باشگاه</div>
+            <?php if ($clubReminders === []): ?>
+                <div class="text-muted small">یادآوری‌ای زمان‌بندی نشده است.</div>
+            <?php else: ?>
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>نوع</th><th>موعد</th><th>وضعیت</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($clubReminders as $reminder): ?>
+                        <tr>
+                            <td class="small"><?= e(\App\Services\ReminderSchedule::kindLabel((string) $reminder['kind'])) ?></td>
+                            <td class="small ltr"><?= e(Jalali::formatDateTime($reminder['due_at'])) ?></td>
+                            <td class="small"><?= e((string) $reminder['status']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+        <?php if ($clubHistory !== []): ?>
+            <div class="col-12">
+                <div class="text-muted small mb-1">تاریخچه تغییر سطح</div>
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>از</th><th>به</th><th>مبلغ مبنا</th><th>زمان</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($clubHistory as $history): ?>
+                        <tr>
+                            <td class="small"><?= e((string) ($history['old_tier_name'] ?? '—')) ?></td>
+                            <td class="small"><?= e((string) ($history['new_tier_name'] ?? '—')) ?></td>
+                            <td class="small ltr"><?= e(money((float) $history['spend'])) ?></td>
+                            <td class="small ltr"><?= e(Jalali::formatDateTime($history['created_at'])) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
 <?php if (!empty($customer['address']) || !empty($customer['description'])): ?>
 <div class="card mb-4"><div class="card-body row g-3">
     <div class="col-md-6"><div class="text-muted mb-1">آدرس</div><div><?= nl2br(e($customer['address'] ?? '-')) ?></div></div>

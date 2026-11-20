@@ -66,6 +66,45 @@ final class FollowupRepository
         $stmt->execute(['id' => $id]);
     }
 
+    /**
+     * Lead fields live in migration 025; keep them isolated so the CRM keeps
+     * working on a database where that migration has not been applied yet.
+     *
+     * @param array{lead_source?:?string, lead_score?:?int, lead_probability?:?int, expected_close_date?:?string} $fields
+     */
+    public function updateLeadFields(int $id, array $fields): void
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                'UPDATE customer_followups SET
+                    lead_source = :lead_source,
+                    lead_score = :lead_score,
+                    lead_probability = :lead_probability,
+                    expected_close_date = :expected_close_date,
+                    updated_at = :updated_at
+                 WHERE id = :id'
+            );
+            $stmt->execute([
+                'lead_source' => $fields['lead_source'] ?? null,
+                'lead_score' => $fields['lead_score'] ?? null,
+                'lead_probability' => $fields['lead_probability'] ?? null,
+                'expected_close_date' => $fields['expected_close_date'] ?? null,
+                'updated_at' => \current_datetime(),
+                'id' => $id,
+            ]);
+        } catch (\Throwable) {
+            // Migration 025 not applied yet.
+        }
+    }
+
+    public function countForCustomer(int $customerId): int
+    {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM customer_followups WHERE customer_id = :customer_id');
+        $stmt->execute(['customer_id' => $customerId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public function find(int $id): ?array
     {
         $where = ['f.id = :id'];
@@ -117,6 +156,15 @@ final class FollowupRepository
     {
         $where = ['c.deleted_at IS NULL'];
         $params = [];
+
+        if (($filters['lead_source'] ?? '') !== '') {
+            $where[] = 'f.lead_source = :lead_source';
+            $params['lead_source'] = (string) $filters['lead_source'];
+        }
+        if (($filters['min_score'] ?? '') !== '') {
+            $where[] = 'f.lead_score >= :min_score';
+            $params['min_score'] = (int) $filters['min_score'];
+        }
 
         if (\App\Core\Jalali::filterDate($filters['date_from'] ?? '') !== '') {
             $where[] = 'f.followup_date >= :date_from';

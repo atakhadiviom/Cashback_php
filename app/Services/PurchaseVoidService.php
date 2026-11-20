@@ -65,6 +65,7 @@ final class PurchaseVoidService
         }
 
         (new ActivityLogger())->log('purchase_void', 'خرید #' . $purchaseId . ' ابطال شد.', $customerId);
+        CustomerTierService::refreshQuietly($customerId, 'purchase_void');
         $updatedCustomer = $customers->find($customerId) ?? $customer;
         (new SmsService())->sendEvent('purchase_void', $updatedCustomer, [
             'purchase_amount' => (float) $purchase['amount'],

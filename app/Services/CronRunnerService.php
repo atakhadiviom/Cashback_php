@@ -158,10 +158,54 @@ final class CronRunnerService
     }
 
     /** @return array{ok: bool, messages: string[]} */
+    public function runClubPlan(): array
+    {
+        $result = (new ClubReminderService())->plan();
+        $this->state->markRun('club_plan');
+
+        return ['ok' => $result['ok'], 'messages' => $result['messages']];
+    }
+
+    /** @return array{ok: bool, messages: string[]} */
+    public function runClubReminders(): array
+    {
+        $result = (new ClubReminderService())->dispatch(100);
+        $this->state->markRun('club_reminders');
+
+        return ['ok' => $result['ok'], 'messages' => $result['messages']];
+    }
+
+    /** @return array{ok: bool, messages: string[]} */
+    public function runTierRefresh(): array
+    {
+        $result = (new CustomerTierService())->recomputeAll();
+        (new SegmentService())->refreshIfStale();
+        $this->state->markRun('tier_refresh');
+
+        return ['ok' => true, 'messages' => [
+            'سطح مشتریان: ' . (int) $result['changed'] . ' تغییر از ' . (int) $result['processed'] . ' مشتری بازمحاسبه شد.',
+        ]];
+    }
+
+    /** @return array{ok: bool, messages: string[]} */
+    public function runSegmentRefresh(): array
+    {
+        $result = (new SegmentService())->refreshIfStale();
+        $this->state->markRun('segment_refresh');
+        if ($result === null) {
+            return ['ok' => true, 'messages' => []];
+        }
+
+        return ['ok' => true, 'messages' => [
+            'بخش‌بندی RFM: ' . (int) $result['saved'] . ' مشتری به‌روزرسانی شد.',
+        ]];
+    }
+
+    /** @return array{ok: bool, messages: string[]} */
     public function runDailyTasks(): array
     {
         $messages = [];
-        foreach ([$this->runBirthdaySms(), $this->runContractRenewalReminders(), $this->runDueDateReminders(), $this->runCashbackExpiry()] as $result) {
+        foreach ([$this->runBirthdaySms(), $this->runContractRenewalReminders(), $this->runDueDateReminders(), $this->runCashbackExpiry(), $this->runTierRefresh(), $this->runClubPlan()] as $result) {
             $messages = array_merge($messages, $result['messages']);
         }
         return ['ok' => true, 'messages' => $messages];
@@ -177,6 +221,10 @@ final class CronRunnerService
             'due_date_reminders' => $this->runDueDateReminders(),
             'cashback_expiry' => $this->runCashbackExpiry(),
             'sms_retry' => $this->runSmsRetry(),
+            'club_plan' => $this->runClubPlan(),
+            'club_reminders' => $this->runClubReminders(),
+            'tier_refresh' => $this->runTierRefresh(),
+            'segment_refresh' => $this->runSegmentRefresh(),
             'all' => $this->runAll(),
             default => ['ok' => false, 'messages' => ['Unknown cron task.']],
         };

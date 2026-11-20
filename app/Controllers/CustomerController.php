@@ -26,12 +26,24 @@ final class CustomerController
     {
         $filters = $_GET;
         $customers = (new CustomerRepository())->search($filters);
-        View::render('customers/index', compact('customers', 'filters'));
+        $ids = array_map(static fn (array $row): int => (int) $row['id'], $customers);
+        View::render('customers/index', compact('customers', 'filters') + [
+            'segmentMap' => (new \App\Repositories\SegmentRepository())->mapForCustomers($ids),
+            'tagMap' => (new \App\Repositories\CustomerTagRepository())->mapForCustomers($ids),
+            'segments' => (new \App\Repositories\SegmentRepository())->catalog(),
+            'tiers' => (new TierRepository())->all(),
+            'allTags' => (new \App\Repositories\CustomerTagRepository())->all(),
+        ]);
     }
 
     public function create(): void
     {
-        View::render('customers/create', ['customer' => [], 'errors' => []]);
+        View::render('customers/create', [
+            'customer' => [],
+            'errors' => [],
+            'allTags' => (new \App\Repositories\CustomerTagRepository())->all(),
+            'customerTags' => [],
+        ]);
     }
 
     public function searchJson(): void
@@ -63,9 +75,15 @@ final class CustomerController
         Csrf::requireValid();
         $result = (new CustomerService())->create($_POST);
         if (!$result['ok']) {
-            View::render('customers/create', ['customer' => $_POST, 'errors' => $result['errors']]);
+            View::render('customers/create', [
+                'customer' => $_POST,
+                'errors' => $result['errors'],
+                'allTags' => (new \App\Repositories\CustomerTagRepository())->all(),
+                'customerTags' => [],
+            ]);
             return;
         }
+        $this->syncTags((int) $result['id']);
         Flash::set('success', 'مشتری با موفقیت ثبت شد.');
         \redirect('/customers/show?id=' . $result['id']);
     }
@@ -77,7 +95,12 @@ final class CustomerController
             Flash::set('danger', 'مشتری یافت نشد.');
             \redirect('/customers');
         }
-        View::render('customers/edit', ['customer' => $customer, 'errors' => []]);
+        View::render('customers/edit', [
+            'customer' => $customer,
+            'errors' => [],
+            'allTags' => (new \App\Repositories\CustomerTagRepository())->all(),
+            'customerTags' => array_map(static fn (array $tag): int => (int) $tag['id'], (new \App\Repositories\CustomerTagRepository())->forCustomer((int) $customer['id'])),
+        ]);
     }
 
     public function update(): void
@@ -91,11 +114,28 @@ final class CustomerController
         }
         $result = (new CustomerService())->update($id, $_POST);
         if (!$result['ok']) {
-            View::render('customers/edit', ['customer' => array_merge($_POST, ['id' => $id]), 'errors' => $result['errors']]);
+            $tagRepository = new \App\Repositories\CustomerTagRepository();
+            View::render('customers/edit', [
+                'customer' => array_merge($_POST, ['id' => $id]),
+                'errors' => $result['errors'],
+                'allTags' => $tagRepository->all(),
+                'customerTags' => array_map(static fn (array $tag): int => (int) $tag['id'], $tagRepository->forCustomer($id)),
+            ]);
             return;
         }
+        $this->syncTags($id);
         Flash::set('success', 'اطلاعات مشتری ویرایش شد.');
         \redirect('/customers/show?id=' . $id);
+    }
+
+    /** Replace the customer's tags when the form actually submitted the picker. */
+    private function syncTags(int $customerId): void
+    {
+        if ($customerId <= 0 || (string) ($_POST['tags_submitted'] ?? '') !== '1') {
+            return;
+        }
+        $tagIds = array_map('intval', (array) ($_POST['tag_ids'] ?? []));
+        (new \App\Repositories\CustomerTagRepository())->sync($customerId, $tagIds);
     }
 
     public function show(): void
@@ -110,6 +150,7 @@ final class CustomerController
         }
         $tier = $customer['tier_id'] ? (new TierRepository())->find((int) $customer['tier_id']) : null;
         $customer['tier_name'] = $tier['name'] ?? null;
+        $tierSpend = (new \App\Services\CustomerTierService())->basisSpend($id);
 
         View::render('customers/show', [
             'customer' => $customer,
@@ -121,6 +162,12 @@ final class CustomerController
             'lifetimeEarned' => $purchases->lifetimeCashbackEarned($id),
             'nextExpiry' => (new \App\Services\CashbackExpiryService())->nextExpiry($id),
             'canVoid' => Auth::can('void_purchase'),
+            'segment' => (new \App\Repositories\SegmentRepository())->forCustomer($id),
+            'tags' => (new \App\Repositories\CustomerTagRepository())->forCustomer($id),
+            'tierSpend' => $tierSpend,
+            'nextTier' => (new TierRepository())->nextTier($tierSpend),
+            'tierHistory' => (new \App\Repositories\TierHistoryRepository())->forCustomer($id, 10),
+            'upcomingReminders' => (new \App\Services\ClubReminderService())->upcomingForCustomer($id, 6),
         ]);
     }
 

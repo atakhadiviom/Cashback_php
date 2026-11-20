@@ -90,6 +90,29 @@ if ($reminderTimeValue !== '') {
         <input class="form-control ltr" type="time" name="reminder_time" value="<?= e($reminderTimeValue) ?>">
         <?php if (!empty($errors['reminder_time'])): ?><div class="form-text-error"><?= e($errors['reminder_time']) ?></div><?php endif; ?>
     </div>
+    <div class="col-md-4">
+        <label class="form-label">منبع سرنخ</label>
+        <select class="form-select" name="lead_source">
+            <option value="">نامشخص</option>
+            <?php foreach (\App\Services\LeadScorer::SOURCES as $sourceValue => $sourceLabel): ?>
+                <option value="<?= e($sourceValue) ?>" <?= ($followup['lead_source'] ?? '') === $sourceValue ? 'selected' : '' ?>><?= e($sourceLabel) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">احتمال موفقیت (٪)</label>
+        <input class="form-control ltr" name="lead_probability" inputmode="numeric" value="<?= e((string) ($followup['lead_probability'] ?? '')) ?>" placeholder="خودکار از مرحله">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">تاریخ بستن مورد انتظار (شمسی)</label>
+        <?php
+        $expectedClose = (string) ($followup['expected_close_date'] ?? '');
+        $expectedCloseDisplay = ($expectedClose !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $expectedClose))
+            ? Jalali::toInputValue($expectedClose)
+            : $expectedClose;
+        ?>
+        <input class="form-control ltr" type="text" name="expected_close_date" data-jdp data-jdp-only-date placeholder="1403/09/01" value="<?= e($expectedCloseDisplay) ?>" autocomplete="off">
+    </div>
     <div class="col-md-6">
         <label class="form-label">فایل ضمیمه (آپلود یا مسیر)</label>
         <input class="form-control" type="file" name="attachment_file">
