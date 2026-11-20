@@ -33,7 +33,10 @@ final class BrandingService
             }
         }
 
-        $fromConfig = trim((string) \config_value('app.name', ''));
+        $fromConfig = trim((string) \config_value('app.company_name', ''));
+        if ($fromConfig === '') {
+            $fromConfig = trim((string) \config_value('app.name', ''));
+        }
 
         self::$cached = $fromDb !== '' ? $fromDb : ($fromConfig !== '' ? $fromConfig : self::DEFAULT_NAME);
 

@@ -166,7 +166,9 @@ function installer_ensure_htaccess_files(string $root): array
 
 function installer_config(array $data): string
 {
-    $appName = 'سیستم مدیریت کش بک ' . $data['company_name'];
+    // The panel title is the store/company name; it is also used in SMS templates
+    // as {company_name}, so both keys get the same value.
+    $appName = $data['company_name'];
 
     return "<?php\n\nreturn [\n" .
         "    'app' => [\n" .
@@ -551,7 +553,7 @@ if (!$locked && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         <div class="form-text">اگر URLهای شما شامل <span class="ltr">/public</span> است، Base URL معمولاً باید <span class="ltr">/public</span> باشد.</div>
                     </div>
                     <div class="col-md-6"><label class="form-label">منطقه زمانی</label><input class="form-control ltr" name="timezone" value="<?= installer_e($values['timezone']) ?>"></div>
-                    <div class="col-md-6"><label class="form-label">نام شرکت</label><input class="form-control" name="company_name" placeholder="مثلاً نوآوران زیبایی" value="<?= installer_e($values['company_name']) ?>" required></div>
+                    <div class="col-md-6"><label class="form-label">نام شرکت / فروشگاه</label><input class="form-control" name="company_name" placeholder="مثلاً فروشگاه پرشین پارت" value="<?= installer_e($values['company_name']) ?>" required><div class="form-text">همین نام در نوار کناری پنل، عنوان مرورگر و پیامک‌های ارسالی ({company_name}) استفاده می‌شود.</div></div>
                     <div class="col-md-6 d-flex align-items-end">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="birthday_required" id="birthday_required" <?= $values['birthday_required'] ? 'checked' : '' ?>>

@@ -28,7 +28,7 @@ final class SmsTemplateRenderer
             'expiring_amount' => '',
             'expiry_date' => '',
             'date' => date('Y-m-d'),
-            'company_name' => \config_value('app.company_name', 'نوآوران زیبایی'),
+            'company_name' => \App\Services\BrandingService::name(),
         ], $vars);
 
         if (isset($vars['otp_code'])) {
