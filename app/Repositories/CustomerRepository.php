@@ -264,4 +264,28 @@ final class CustomerRepository
         DataAccessControl::applyOwnerScope($where, $params, 'c.created_by');
         return [$where, $params];
     }
+
+    /**
+     * Paginated list for the JSON API (same filters as the panel, plus offset).
+     *
+     * @param array<string, mixed> $filters
+     * @return array{items: array<int, array<string, mixed>>, total: int}
+     */
+    public function apiList(array $filters, int $limit = 50, int $offset = 0): array
+    {
+        [$where, $params] = $this->filters($filters);
+        $whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
+
+        $countStmt = $this->pdo->prepare('SELECT COUNT(*) FROM customers c' . $whereSql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        $stmt = $this->pdo->prepare(
+            'SELECT c.*, u.name AS created_by_name FROM customers c LEFT JOIN users u ON u.id = c.created_by'
+            . $whereSql . ' ORDER BY c.id DESC LIMIT ' . max(1, $limit) . ' OFFSET ' . max(0, $offset)
+        );
+        $stmt->execute($params);
+
+        return ['items' => $stmt->fetchAll(), 'total' => $total];
+    }
 }

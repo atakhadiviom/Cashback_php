@@ -84,4 +84,48 @@ final class WalletService
         ]);
         return ['ok' => true, 'errors' => []];
     }
+
+    /**
+     * Manual top-up (panel "شارژ کیف پول" and POST /api/v1/wallet/credit).
+     *
+     * @param array{reason?: string} $options
+     * @return array{ok: bool, errors: array<string, string>, balance?: float}
+     */
+    public function credit(int $customerId, $amount, string $reason = 'شارژ کیف پول', array $options = []): array
+    {
+        $amount = (float) str_replace(',', '', \normalize_digits((string) $amount));
+        if ($amount <= 0) {
+            return ['ok' => false, 'errors' => ['amount' => 'مبلغ باید مثبت باشد.']];
+        }
+
+        $customers = new CustomerRepository();
+        $customer = $customers->find($customerId);
+        if (!$customer) {
+            return ['ok' => false, 'errors' => ['customer_id' => 'مشتری یافت نشد.']];
+        }
+
+        $reason = trim($reason) !== '' ? trim($reason) : 'شارژ کیف پول';
+        $pdo = Database::pdo();
+        $pdo->beginTransaction();
+        try {
+            $customers->incrementWallet($customerId, $amount);
+            $updated = $customers->find($customerId);
+            $walletTxId = (new WalletRepository())->create(
+                $customerId,
+                'cashback',
+                $amount,
+                (float) $updated['wallet_balance'],
+                'شارژ کیف پول: ' . $reason,
+                null,
+                SystemUserService::actorId()
+            );
+            (new CashbackExpiryService())->credit($customerId, $amount, 'manual', $walletTxId);
+            $pdo->commit();
+        } catch (\Throwable $exception) {
+            $pdo->rollBack();
+            throw $exception;
+        }
+
+        return ['ok' => true, 'errors' => [], 'balance' => (float) ($updated['wallet_balance'] ?? 0)];
+    }
 }

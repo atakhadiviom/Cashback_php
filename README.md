@@ -135,31 +135,41 @@ php database/migrate.php
 
 آدرس عمومی (بدون ورود کارمند): `/portal` — مشتری با OTP پیامکی موجودی کیف پول را می‌بیند.
 
-## API (POS)
+## API (خواندن و نوشتن)
 
 هدرها:
 
 ```text
-X-Api-Key: PREFIX.SECRET
+X-API-Key: PREFIX.SECRET
 X-Idempotency-Key: unique-key-optional
 Content-Type: application/json
 ```
 
-**ثبت خرید** `POST /api/v1/purchases`
+کلید از منوی **کلید API** (مدیر) ساخته می‌شود و هر کلید `scopes` دارد: `read,write` (پیش‌فرض)، `read` یا `*`.
 
-```json
-{"customer_id": 1, "amount": 1000000, "invoice_ref": "INV-1001", "confirm_duplicate": false}
+پوشش کامل: مشتریان (فهرست/جزئیات/ایجاد/ویرایش/حذف/برچسب/کیف پول/خریدها)، خریدها (فهرست/جزئیات/ثبت/ابطال)، کیف پول (موجودی/تراکنش/کسر/شارژ)، سطح‌ها و بخش‌بندی RFM، برچسب‌ها، گزارش‌ها و یادآوری‌ها.
+
+نمونه‌ها:
+
+```text
+GET    /api/v1/health
+GET    /api/v1/customers?q=احمدی&limit=20
+POST   /api/v1/customers
+PUT    /api/v1/customers/12
+GET    /api/v1/purchases?customer_id=12&date_from=1403/01/01
+POST   /api/v1/purchases        {"customer_id":1,"amount":1000000}
+POST   /api/v1/purchases/55/void {"reason":"اشتباه ثبت شد"}
+GET    /api/v1/wallet/12
+POST   /api/v1/wallet/credit     {"customer_id":12,"amount":500000,"reason":"هدیه"}
+POST   /api/v1/wallet/reduce     {"customer_id":12,"amount":50000,"reason":"پرداخت"}
+GET    /api/v1/segments
+POST   /api/v1/segments/refresh
+GET    /api/v1/reports/summary
+GET    /api/v1/reminders/rules
+POST   /api/v1/reminders/dispatch {"limit":100}
 ```
 
-**جستجوی مشتری** `GET /api/v1/customers/by-phone?phone=09123456789`
-
-**کسر کیف پول** `POST /api/v1/wallet/reduce`
-
-```json
-{"customer_id": 1, "amount": 50000, "reason": "پرداخت فاکتور", "related_purchase_amount": 200000}
-```
-
-کلید API از منوی **کلید API** (مدیر) ساخته می‌شود.
+مسیرهای قدیمی (`POST /api/v1/purchases`, `GET /api/v1/customers/by-phone`, `POST /api/v1/wallet/reduce`) سازگار مانده‌اند. مستند کامل: [`docs/api-v1.md`](docs/api-v1.md)
 
 ## بکاپ پیشنهادی
 

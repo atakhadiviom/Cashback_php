@@ -62,31 +62,6 @@ final class Router
 
     private function dispatchApi(string $method, string $path): void
     {
-        header('Content-Type: application/json; charset=utf-8');
-        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-        $auth = new \App\Services\ApiAuthService();
-        $keyRow = $auth->authenticate($apiKey);
-        if (!$keyRow) {
-            http_response_code(401);
-            echo json_encode(['ok' => false, 'error' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        $controller = new \App\Controllers\Api\V1Controller();
-        if ($method === 'POST' && $path === '/api/v1/purchases') {
-            $controller->createPurchase();
-            return;
-        }
-        if ($method === 'GET' && $path === '/api/v1/customers/by-phone') {
-            $controller->customerByPhone();
-            return;
-        }
-        if ($method === 'POST' && $path === '/api/v1/wallet/reduce') {
-            $controller->reduceWallet();
-            return;
-        }
-
-        http_response_code(404);
-        echo json_encode(['ok' => false, 'error' => 'Not found'], JSON_UNESCAPED_UNICODE);
+        (new ApiRouter())->dispatch($method, $path);
     }
 }

@@ -146,6 +146,56 @@ final class PurchaseRepository
         return is_string($value) && $value !== '' ? $value : null;
     }
 
+    /**
+     * Paginated list for the JSON API.
+     *
+     * @param array<string, mixed> $filters customer_id, status, invoice_ref, date_from, date_to
+     * @return array{items: array<int, array<string, mixed>>, total: int}
+     */
+    public function apiSearch(array $filters, int $limit = 50, int $offset = 0): array
+    {
+        $where = ['c.deleted_at IS NULL'];
+        $params = [];
+
+        if (!empty($filters['customer_id'])) {
+            $where[] = 'p.customer_id = :customer_id';
+            $params['customer_id'] = (int) $filters['customer_id'];
+        }
+        if (!empty($filters['status']) && in_array($filters['status'], ['active', 'voided'], true)) {
+            $where[] = 'p.status = :status';
+            $params['status'] = (string) $filters['status'];
+        }
+        if (($filters['invoice_ref'] ?? '') !== '') {
+            $where[] = 'p.invoice_ref = :invoice_ref';
+            $params['invoice_ref'] = (string) $filters['invoice_ref'];
+        }
+        if (!empty($filters['date_from'])) {
+            $where[] = 'p.created_at >= :date_from';
+            $params['date_from'] = $filters['date_from'] . ' 00:00:00';
+        }
+        if (!empty($filters['date_to'])) {
+            $where[] = 'p.created_at <= :date_to';
+            $params['date_to'] = $filters['date_to'] . ' 23:59:59';
+        }
+        DataAccessControl::applyOwnerScope($where, $params, 'p.created_by');
+
+        $whereSql = ' WHERE ' . implode(' AND ', $where);
+        $base = ' FROM purchases p JOIN customers c ON c.id = p.customer_id' . $whereSql;
+
+        $countStmt = $this->pdo->prepare('SELECT COUNT(*)' . $base);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        $stmt = $this->pdo->prepare(
+            'SELECT p.*, u.name AS created_by_name, c.first_name, c.last_name, c.phone_number' . $base
+            . ' LEFT JOIN users u ON u.id = p.created_by'
+            . ' ORDER BY p.id DESC LIMIT ' . max(1, $limit) . ' OFFSET ' . max(0, $offset)
+        );
+        $stmt->execute($params);
+
+        return ['items' => $stmt->fetchAll(), 'total' => $total];
+    }
+
     /** @return array<int, array<string, mixed>> */
     public function searchForInvoicePicker(?int $customerId = null, int $limit = 500): array
     {
