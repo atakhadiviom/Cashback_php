@@ -172,6 +172,7 @@ $router->get('/reports/club/export', [ReportClubController::class, 'export'], tr
 $router->get('/admin/api-keys', [ApiKeyController::class, 'index'], true, 'admin');
 $router->post('/admin/api-keys', [ApiKeyController::class, 'store'], true, 'admin');
 $router->post('/admin/api-keys/deactivate', [ApiKeyController::class, 'deactivate'], true, 'admin');
+$router->post('/admin/api-keys/scopes', [ApiKeyController::class, 'updateScopes'], true, 'admin');
 $router->get('/admin/app-update', [AppUpdateController::class, 'index'], true, 'admin');
 $router->post('/admin/app-update', [AppUpdateController::class, 'update'], true, 'admin');
 

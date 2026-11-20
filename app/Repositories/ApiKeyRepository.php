@@ -28,20 +28,51 @@ final class ApiKeyRepository
         return $stmt->fetch() ?: null;
     }
 
-    public function create(string $name, string $keyHash, string $prefix, int $createdBy): int
+    public function create(string $name, string $keyHash, string $prefix, int $createdBy, string $scopes = 'read,write'): int
     {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO api_keys (name, key_hash, key_prefix, is_active, created_by, created_at)
-             VALUES (:name, :key_hash, :key_prefix, 1, :created_by, :created_at)'
-        );
-        $stmt->execute([
-            'name' => $name,
-            'key_hash' => $keyHash,
-            'key_prefix' => $prefix,
-            'created_by' => $createdBy,
-            'created_at' => \current_datetime(),
-        ]);
-        return (int) $this->pdo->lastInsertId();
+        try {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO api_keys (name, key_hash, key_prefix, is_active, scopes, created_by, created_at)
+                 VALUES (:name, :key_hash, :key_prefix, 1, :scopes, :created_by, :created_at)'
+            );
+            $stmt->execute([
+                'name' => $name,
+                'key_hash' => $keyHash,
+                'key_prefix' => $prefix,
+                'scopes' => $scopes,
+                'created_by' => $createdBy,
+                'created_at' => \current_datetime(),
+            ]);
+
+            return (int) $this->pdo->lastInsertId();
+        } catch (\Throwable) {
+            // scopes column does not exist yet (migration 027 not run).
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO api_keys (name, key_hash, key_prefix, is_active, created_by, created_at)
+                 VALUES (:name, :key_hash, :key_prefix, 1, :created_by, :created_at)'
+            );
+            $stmt->execute([
+                'name' => $name,
+                'key_hash' => $keyHash,
+                'key_prefix' => $prefix,
+                'created_by' => $createdBy,
+                'created_at' => \current_datetime(),
+            ]);
+
+            return (int) $this->pdo->lastInsertId();
+        }
+    }
+
+    public function updateScopes(int $id, string $scopes): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare('UPDATE api_keys SET scopes = :scopes WHERE id = :id');
+            $stmt->execute(['scopes' => $scopes, 'id' => $id]);
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     public function touchUsed(int $id): void
