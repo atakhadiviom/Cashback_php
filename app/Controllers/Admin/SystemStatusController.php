@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controllers\Admin;
 
+use App\Core\Csrf;
 use App\Core\Database;
+use App\Core\Flash;
 use App\Core\View;
 use App\Repositories\CronStateRepository;
 use App\Repositories\SmsRepository;
@@ -13,6 +15,25 @@ use App\Services\SchemaHealthService;
 
 final class SystemStatusController
 {
+    public function clearCache(): void
+    {
+        Csrf::requireValid();
+
+        $messages = [];
+        if (function_exists('opcache_reset')) {
+            $messages[] = @opcache_reset() ? 'کش OPcache پاک شد.' : 'پاک‌سازی OPcache ناموفق بود.';
+        } else {
+            $messages[] = 'OPcache روی این هاست فعال نیست.';
+        }
+        if (function_exists('apcu_clear_cache')) {
+            @apcu_clear_cache();
+            $messages[] = 'کش APCu پاک شد.';
+        }
+
+        Flash::set('success', implode(' ', $messages) . ' صفحه را با Ctrl+Shift+R تازه کنید.');
+        \redirect('/admin/system-status');
+    }
+
     public function index(): void
     {
         $root = dirname(__DIR__, 3);

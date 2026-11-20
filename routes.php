@@ -130,6 +130,7 @@ $router->post('/admin/cpanel-settings/setup-cron', [CpanelSettingsController::cl
 $router->post('/admin/cron/run', [AdminCronController::class, 'run'], true, 'admin');
 $router->post('/admin/cron/setup-cpanel', [SystemStatusController::class, 'setupCpanelCron'], true, 'admin');
 $router->post('/admin/migrations/run', [SystemStatusController::class, 'runMigrations'], true, 'admin');
+$router->post('/admin/system-status/clear-cache', [SystemStatusController::class, 'clearCache'], true, 'admin');
 $router->get('/admin/cashback-settings', [CashbackSettingsController::class, 'edit'], true, 'admin');
 $router->post('/admin/cashback-settings', [CashbackSettingsController::class, 'update'], true, 'admin');
 $router->get('/admin/customers/import', [CustomerImportController::class, 'form'], true, 'admin');

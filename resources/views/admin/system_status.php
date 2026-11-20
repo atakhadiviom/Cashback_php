@@ -4,11 +4,17 @@
         <div class="text-muted small mb-1">Health check and cron checks</div>
         <h1 class="h3 fw-bold mb-0">وضعیت سیستم</h1>
     </div>
-    <form method="post" action="<?= e(url('/admin/cron/run')) ?>" class="d-inline">
-        <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
-        <input type="hidden" name="task" value="all">
-        <button class="btn btn-primary"><i class="bi bi-play-circle"></i> اجرای دستی همه</button>
-    </form>
+    <div class="d-flex gap-2 flex-wrap">
+        <form method="post" action="<?= e(url('/admin/cron/run')) ?>" class="d-inline">
+            <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
+            <input type="hidden" name="task" value="all">
+            <button class="btn btn-primary"><i class="bi bi-play-circle"></i> اجرای دستی همه</button>
+        </form>
+        <form method="post" action="<?= e(url('/admin/system-status/clear-cache')) ?>" class="d-inline">
+            <input type="hidden" name="_csrf" value="<?= e(Csrf::token()) ?>">
+            <button class="btn btn-outline-secondary" title="اگر بعد از آپدیت تغییری ندیدی، این را بزن"><i class="bi bi-arrow-repeat"></i> پاک‌سازی کش (OPcache)</button>
+        </form>
+    </div>
 </div>
 
 <div class="row g-3 mb-4">

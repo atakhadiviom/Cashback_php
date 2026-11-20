@@ -109,6 +109,7 @@ final class AppUpdaterService
                 $copied = $this->copyTree($sourceRoot, $this->rootPath);
                 $filesCopied = true;
                 $messages[] = "Updated {$copied} files.";
+                $this->clearOpCache();
             } catch (Throwable $copyException) {
                 if (is_string($backupPath)) {
                     $messages[] = 'File copy failed. Restoring previous application files from backup...';
@@ -377,6 +378,10 @@ final class AppUpdaterService
                 throw new RuntimeException("Could not update {$relative}.");
             }
             @chmod($targetPath, 0644);
+            // Shared hosts run OPcache: without this the old bytecode keeps running.
+            if (function_exists('opcache_invalidate')) {
+                @opcache_invalidate($targetPath, true);
+            }
             $copied++;
         }
 
@@ -387,6 +392,17 @@ final class AppUpdaterService
     private function runMigrations(string $migrationDir): array
     {
         return (new MigrationRunner(Database::pdo()))->runPending($migrationDir);
+    }
+
+    /** Drop the compiled-file cache so the new code actually runs after an update. */
+    private function clearOpCache(): void
+    {
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+        if (function_exists('apcu_clear_cache')) {
+            @apcu_clear_cache();
+        }
     }
 
     private function restoreFromBackup(string $backupPath): void
