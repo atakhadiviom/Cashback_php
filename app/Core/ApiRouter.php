@@ -54,6 +54,14 @@ final class ApiRouter
         ['GET', '/api/v1/reports/cashback', [\App\Controllers\Api\ReportsController::class, 'cashback']],
         ['GET', '/api/v1/reports/liability', [\App\Controllers\Api\ReportsController::class, 'liability']],
 
+        ['GET', '/api/v1/festivals', [\App\Controllers\Api\FestivalsController::class, 'index']],
+        ['POST', '/api/v1/festivals', [\App\Controllers\Api\FestivalsController::class, 'create']],
+        ['GET', '/api/v1/festivals/{id}', [\App\Controllers\Api\FestivalsController::class, 'show']],
+        ['PUT', '/api/v1/festivals/{id}', [\App\Controllers\Api\FestivalsController::class, 'update']],
+        ['PATCH', '/api/v1/festivals/{id}', [\App\Controllers\Api\FestivalsController::class, 'update']],
+        ['DELETE', '/api/v1/festivals/{id}', [\App\Controllers\Api\FestivalsController::class, 'destroy']],
+        ['POST', '/api/v1/festivals/{id}/send', [\App\Controllers\Api\FestivalsController::class, 'send']],
+
         ['GET', '/api/v1/reminders/rules', [\App\Controllers\Api\RemindersController::class, 'rules']],
         ['POST', '/api/v1/reminders/rules', [\App\Controllers\Api\RemindersController::class, 'createRule']],
         ['PUT', '/api/v1/reminders/rules/{id}', [\App\Controllers\Api\RemindersController::class, 'updateRule']],

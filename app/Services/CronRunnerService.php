@@ -202,6 +202,17 @@ final class CronRunnerService
     }
 
     /** @return array{ok: bool, messages: string[]} */
+    public function runFestivalSend(): array
+    {
+        $result = (new FestivalService())->dispatchDue();
+        $this->state->markRun('festival_send');
+
+        return ['ok' => true, 'messages' => [
+            'جشنواره‌ها: ' . (int) $result['festivals'] . ' جشنواره، ' . (int) $result['sent'] . ' پیامک ارسال شد.',
+        ]];
+    }
+
+    /** @return array{ok: bool, messages: string[]} */
     public function runDailyTasks(): array
     {
         $messages = [];
@@ -225,6 +236,7 @@ final class CronRunnerService
             'club_reminders' => $this->runClubReminders(),
             'tier_refresh' => $this->runTierRefresh(),
             'segment_refresh' => $this->runSegmentRefresh(),
+            'festival_send' => $this->runFestivalSend(),
             'all' => $this->runAll(),
             default => ['ok' => false, 'messages' => ['Unknown cron task.']],
         };
@@ -264,6 +276,18 @@ final class CronRunnerService
         $retryMinutes = (int) \config_value('cron.sms_retry_interval_minutes', 15);
         if ($this->state->shouldRunInterval('sms_retry', $retryMinutes)) {
             $messages = array_merge($messages, $this->runSmsRetry()['messages']);
+        }
+        if ($this->state->shouldRunDaily('tier_refresh')) {
+            $messages = array_merge($messages, $this->runTierRefresh()['messages']);
+        }
+        if ($this->state->shouldRunDaily('club_plan')) {
+            $messages = array_merge($messages, $this->runClubPlan()['messages']);
+        }
+        if ($this->state->shouldRunInterval('club_reminders', $retryMinutes)) {
+            $messages = array_merge($messages, $this->runClubReminders()['messages']);
+        }
+        if ($this->state->shouldRunInterval('festival_send', $retryMinutes)) {
+            $messages = array_merge($messages, $this->runFestivalSend()['messages']);
         }
 
         return ['ok' => true, 'messages' => $messages];

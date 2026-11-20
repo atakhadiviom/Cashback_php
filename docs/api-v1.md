@@ -136,6 +136,49 @@ Content-Type: application/json
 
 انواع: `birthday`, `winback`, `points_expiry`, `service_due`, `contract_renewal`, `custom`.
 
+## جشنواره‌ها و تخفیفات ویژه
+
+| متد | مسیر | توضیح |
+|---|---|---|
+| GET | `/api/v1/festivals` | فهرست جشنواره‌ها + فهرست مخاطب‌ها |
+| POST | `/api/v1/festivals` | ساخت جشنواره (و در صورت `send_now` ارسال فوری) |
+| GET | `/api/v1/festivals/{id}` | جزئیات + تعداد مخاطب + تعداد ارسال‌شده |
+| PUT/PATCH | `/api/v1/festivals/{id}` | فقط لغو: `{"status":"cancelled"}` |
+| DELETE | `/api/v1/festivals/{id}` | حذف جشنواره و سابقه ارسال |
+| POST | `/api/v1/festivals/{id}/send` | ارسال؛ `{"dry_run":true}` برای پیش‌نمایش، `{"limit":500}` برای اندازه دسته |
+
+ساخت جشنواره:
+
+```json
+{
+  "name": "جشنواره یلدا",
+  "description": "کمپین پایان پاییز",
+  "discount_text": "۳۰٪ تخفیف روی همه خدمات",
+  "discount_percent": 30,
+  "discount_code": "YALDA30",
+  "starts_at": "1403/09/25",
+  "ends_at": "1403/09/30",
+  "send_at": "1403/09/24",
+  "send_time": "10:00",
+  "audience": "club_members",
+  "template": "{full_name} عزیز، جشنواره {festival_name} از {starts_at} تا {ends_at}؛ {discount_text} کد: {discount_code}"
+}
+```
+
+مخاطب‌ها: `all` (همه مشتریان)، `club_members` (اعضای باشگاه = دارای خرید)، `reminder_recipients` (کسانی که یادآوری دریافت کرده‌اند)، `segment` (با `audience_value` = کد بخش)، `tier` (شناسه سطح)، `tag` (شناسه برچسب).
+
+متغیرهای پیام: `{full_name}`, `{festival_name}`, `{discount_text}`, `{discount_percent}`, `{discount_code}`, `{starts_at}`, `{ends_at}`, `{wallet_balance}`.
+
+پاسخ ارسال:
+
+```json
+{"ok": true, "dry_run": false, "sent": 120, "skipped": 3, "failed": 0, "remaining": 0}
+```
+
+- هر مشتری فقط یک بار در هر جشنواره پیام می‌گیرد (جدول `club_festival_recipients`).
+- ارسال دسته‌بندی‌شده و قابل ادامه است؛ اگر تعداد مخاطب از `limit` بیشتر باشد، وضعیت `sending` می‌شود و کرون `festival_send` ادامه می‌دهد.
+- ارسال زمان‌بندی‌شده با `send_at` انجام می‌شود؛ بدون `send_at` جشنواره «پیش‌نویس» می‌ماند.
+
 ## نمونه‌های curl
 
 ```bash

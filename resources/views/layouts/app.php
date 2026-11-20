@@ -69,6 +69,7 @@ if (Auth::isAdmin()) {
         ['/admin/loyalty', 'سطوح و پروموشن', 'bi-trophy', 'manage_loyalty', null],
         ['/admin/club', 'تنظیمات باشگاه', 'bi-stars', 'manage_loyalty', null],
         ['/admin/club-reminders', 'یادآوری و کمپین', 'bi-bell', 'manage_loyalty', null],
+        ['/admin/festivals', 'جشنواره و تخفیف ویژه', 'bi-gift', 'manage_loyalty', null],
         ['/admin/api-keys', 'کلید API', 'bi-key', 'manage_api', null],
         ['/admin/customers/import', 'ورود فایل', 'bi-upload', 'import_customers', null],
         ['/admin/app-update', 'به‌روزرسانی', 'bi-cloud-download', 'manage_settings', null],

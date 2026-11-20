@@ -132,6 +132,38 @@ final class CpanelCronService
                 'weekday' => '*',
                 'command' => "{$php} {$root}/cron/run.php sms_retry",
             ],
+            [
+                'minute' => '0',
+                'hour' => '1',
+                'day' => '*',
+                'month' => '*',
+                'weekday' => '*',
+                'command' => "{$php} {$root}/cron/run.php club_plan",
+            ],
+            [
+                'minute' => '*/15',
+                'hour' => '*',
+                'day' => '*',
+                'month' => '*',
+                'weekday' => '*',
+                'command' => "{$php} {$root}/cron/run.php club_reminders",
+            ],
+            [
+                'minute' => '30',
+                'hour' => '2',
+                'day' => '*',
+                'month' => '*',
+                'weekday' => '*',
+                'command' => "{$php} {$root}/cron/run.php tier_refresh",
+            ],
+            [
+                'minute' => '*/15',
+                'hour' => '*',
+                'day' => '*',
+                'month' => '*',
+                'weekday' => '*',
+                'command' => "{$php} {$root}/cron/run.php festival_send",
+            ],
         ];
 
         $existing = $this->listCrons();

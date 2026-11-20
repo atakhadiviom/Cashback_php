@@ -11,6 +11,7 @@ use App\Controllers\Admin\CronController as AdminCronController;
 use App\Controllers\Admin\CustomerImportController;
 use App\Controllers\Admin\ClubReminderController;
 use App\Controllers\Admin\ClubSettingsController;
+use App\Controllers\Admin\FestivalController;
 use App\Controllers\Admin\LoyaltyController;
 use App\Controllers\Admin\SettingsController;
 use App\Controllers\Admin\SystemStatusController;
@@ -160,6 +161,14 @@ $router->post('/admin/club-reminders/plan', [ClubReminderController::class, 'pla
 $router->post('/admin/club-reminders/dispatch', [ClubReminderController::class, 'dispatch'], true, 'admin', 'manage_loyalty');
 $router->post('/admin/club-reminders/campaign', [ClubReminderController::class, 'campaign'], true, 'admin', 'manage_loyalty');
 $router->post('/admin/club-reminders/test', [ClubReminderController::class, 'test'], true, 'admin', 'manage_loyalty');
+
+// --- festivals / special-discount campaigns
+$router->get('/admin/festivals', [FestivalController::class, 'index'], true, 'admin', 'manage_loyalty');
+$router->post('/admin/festivals', [FestivalController::class, 'store'], true, 'admin', 'manage_loyalty');
+$router->post('/admin/festivals/send', [FestivalController::class, 'send'], true, 'admin', 'manage_loyalty');
+$router->post('/admin/festivals/cancel', [FestivalController::class, 'cancel'], true, 'admin', 'manage_loyalty');
+$router->post('/admin/festivals/delete', [FestivalController::class, 'delete'], true, 'admin', 'manage_loyalty');
+$router->get('/admin/festivals/preview', [FestivalController::class, 'preview'], true, 'admin', 'manage_loyalty');
 
 // --- customer club reports
 $router->get('/reports/club/purchases', [ReportClubController::class, 'purchases']);
