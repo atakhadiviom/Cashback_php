@@ -28,6 +28,9 @@ final class SmsService
             case 'wallet_reduction':
                 $flag = 'wallet_reduction_sms_enabled';
                 break;
+            case 'wallet_credit':
+                $flag = 'wallet_credit_sms_enabled';
+                break;
             case 'welcome':
                 $flag = 'welcome_sms_enabled';
                 break;

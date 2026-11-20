@@ -126,6 +126,14 @@ final class WalletService
             throw $exception;
         }
 
+        try {
+            (new SmsService())->sendEvent('wallet_credit', $customers->find($customerId) ?? $customer, [
+                'wallet_balance' => (float) ($updated['wallet_balance'] ?? 0),
+            ]);
+        } catch (\Throwable) {
+            // A failed SMS must never undo a top-up.
+        }
+
         return ['ok' => true, 'errors' => [], 'balance' => (float) ($updated['wallet_balance'] ?? 0)];
     }
 }

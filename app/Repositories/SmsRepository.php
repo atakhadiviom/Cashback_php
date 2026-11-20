@@ -72,6 +72,28 @@ final class SmsRepository
         $stmt->execute($data);
     }
 
+    /**
+     * Saves the wallet top-up event settings separately, so the main SMS form
+     * keeps working on a database where migration 029 has not been applied yet.
+     */
+    public function updateWalletCreditSettings(int $enabled, string $template): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                'UPDATE sms_settings SET wallet_credit_sms_enabled = :enabled, wallet_credit_template = :template, updated_at = :updated_at WHERE id = 1'
+            );
+            $stmt->execute([
+                'enabled' => $enabled,
+                'template' => $template,
+                'updated_at' => \current_datetime(),
+            ]);
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
     public function logPending(?int $customerId, string $phone, string $eventType, string $message): int
     {
         $stmt = $this->pdo->prepare('INSERT INTO sms_logs (customer_id, phone_number, event_type, message, provider, status, created_at) VALUES (:customer_id, :phone_number, :event_type, :message, "ippanel", "pending", :created_at)');

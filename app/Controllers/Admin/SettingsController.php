@@ -46,6 +46,13 @@ final class SettingsController
             'cashback_expiry_template' => (string) ($_POST['cashback_expiry_template'] ?? ''),
             'updated_at' => \current_datetime(),
         ], $token !== '');
+
+        // Wallet top-up event lives in its own guarded update (migration 029).
+        $repo->updateWalletCreditSettings(
+            isset($_POST['wallet_credit_sms_enabled']) ? 1 : 0,
+            (string) ($_POST['wallet_credit_template'] ?? '')
+        );
+
         Flash::set('success', 'تنظیمات پیامک ذخیره شد.');
         \redirect('/admin/sms-settings');
     }
